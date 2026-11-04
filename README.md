@@ -24,7 +24,7 @@ flowchart LR
 
 The analysis decision closes one round and sets the question for the next. If the next step needs new or changed data, first clarify the model-development requirements, then update the pipeline with Keir. Keep handoffs explicit: model development should share the model specification and inputs with analysis; analysis should share its evidence, limitations, and recommended next step with the team.
 
-The initial methods of interest include AR, MA, ARMA, ARCH, GARCH, and EGARCH. Potential later extensions include quantile regression and shock analysis. The methods used will depend on project findings; this list is not a commitment to implement every method.
+Early iterations may explore course methods such as AR, MA, ARMA, ARCH, GARCH, or EGARCH. As the project develops, later iterations may investigate extensions such as quantile regression or shock analysis. These are examples, not a prescribed or exhaustive method list; the team will choose methods based on project questions and findings.
 
 ## Team
 
@@ -32,7 +32,7 @@ The initial methods of interest include AR, MA, ARMA, ARCH, GARCH, and EGARCH. P
 |---|---|
 | Keir | Infrastructure, data acquisition, repository management, and presentation materials |
 | Enoch | Model development and identifying relevant variables |
-| Samuel | Model analysis, model selection (including AIC where appropriate), limitations, and next-step recommendations |
+| Samuel | Model analysis, evaluating and comparing candidate models, discussing limitations, and recommending next steps |
 
 These are areas of focus rather than exclusive ownership. Coordinate changes and handoffs when work crosses stages.
 
