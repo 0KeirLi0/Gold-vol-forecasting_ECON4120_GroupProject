@@ -1,0 +1,25 @@
+# Gold Volatility Forecasting
+
+> Context for AI assistants working on this Applied Forecasting Methods group project.
+
+This is an iterative group project on forecasting gold-market volatility. The team workflow is infrastructure → model development → model analysis and next-step decision → next iteration. The README contains a Mermaid diagram of the workflow.
+
+## Team responsibilities
+
+- **Keir:** infrastructure, data acquisition, repository management, presentation materials.
+- **Enoch:** model development and identifying relevant variables.
+- **Samuel:** model analysis, model selection (including AIC where appropriate), limitations, and next-step recommendations.
+
+Responsibilities are areas of focus; coordinate cross-stage changes and handoffs.
+
+## Method and data status
+
+Initial methods of interest include AR, MA, ARMA, ARCH, GARCH, and EGARCH. Possible later extensions include quantile regression and shock analysis, based on findings and course needs.
+
+Data requirements have not yet been identified. Wait for model development to determine the required data before designing or changing the pipeline with Keir. Model development should hand off model specifications and inputs to analysis; analysis should report evidence, limitations, and a recommended next step to the team. Do not invent data sources, schema, results, or project decisions. Capture reproducibility details, evaluation evidence, model-selection criteria, and limitations as they become known.
+
+## Project documents
+
+- [README](README.md): project overview, workflow, team, and current status.
+- [Copilot instructions](.github/copilot-instructions.md): repository-specific guidance for Copilot sessions.
+- [Git workflow](GIT_WORKFLOW.md): branch, commit, pull request, review, and merge policy.
