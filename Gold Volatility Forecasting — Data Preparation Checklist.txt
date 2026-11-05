@@ -1,0 +1,150 @@
+================================================================================
+GOLD VOLATILITY FORECASTING: DATA PREPARATION CHECKLIST
+================================================================================
+
+Purpose
+-------
+This checklist defines the data requirements for forecasting gold volatility.
+It is intended to facilitate the data preparation stage: it specifies what to
+collect, how to document each series, and how to align and evaluate the data
+without leaking future information into the forecasts.
+
+
+--------------------------------------------------------------------------------
+1. Define the forecast
+--------------------------------------------------------------------------------
+Before collecting any data, make the following design decisions and record
+them explicitly:
+
+  - Volatility measure to forecast: the target is actual (realized)
+    volatility, not implied volatility. The CBOE Gold Volatility Index
+    measures implied volatility and is therefore NOT an appropriate target
+    for this project.
+  - Data frequency: daily.
+  - Forecast horizon: to be determined. Fix this before building the data
+    pipeline, because it determines how the volatility target is computed
+    and how predictors are lagged.
+
+Keep a written record of these decisions, as every later step (target
+construction, predictor alignment, evaluation) depends on them.
+
+
+--------------------------------------------------------------------------------
+2. Core data for a baseline
+--------------------------------------------------------------------------------
+A baseline model requires only gold price data:
+
+  - Gold prices from ONE consistent source and ONE consistent instrument:
+    either spot gold or a specified futures contract. Do not mix sources or
+    contracts within the same series.
+  - For each observation: trading date, price, currency, source, and the
+    trading calendar used.
+  - Daily returns computed consistently from those prices (same price type,
+    same adjustment conventions, same return definition throughout).
+
+ARCH/GARCH-style models can use gold returns alone as a starting point; no
+additional predictors are required for the baseline.
+
+
+--------------------------------------------------------------------------------
+3. Choose a volatility measure
+--------------------------------------------------------------------------------
+Select the realized-volatility target before building the pipeline. Possible
+targets or proxies include:
+
+  - Squared daily returns (a one-day proxy for realized variance)
+  - Absolute daily returns
+  - A range-based measure computed from daily high and low prices (e.g.,
+    a Parkinson-type estimator)
+
+Define the realized-volatility calculation explicitly over the chosen
+forecast horizon, using observed gold returns (and intraday returns, if
+available). Note that these measures are NOT interchangeable: each captures
+different information. Choose the one that fits the research question and
+the available data, and document the choice.
+
+
+--------------------------------------------------------------------------------
+4. Candidate predictors
+--------------------------------------------------------------------------------
+The following are candidates to TEST, not required inputs. Motivate each
+predictor before including it, and keep the set small:
+
+  - US dollar strength (e.g., a specified dollar index)
+  - Real interest rates or Treasury yields
+  - Market uncertainty or equity volatility
+  - Equity-market returns
+  - Inflation expectations or oil prices
+  - Central-bank gold demand (only if its reporting frequency fits the
+    forecast frequency and horizon)
+
+
+--------------------------------------------------------------------------------
+5. Data to collect
+--------------------------------------------------------------------------------
+REQUIRED for a daily baseline:
+
+  - Trading date, and one consistent gold instrument/source (spot gold or
+    a specified futures contract)
+  - Daily closing price; daily high and low prices if a range-based
+    volatility measure is used
+  - Currency, units, time zone, trading calendar, and notes on holidays
+    and missing dates
+  - Daily gold returns calculated consistently from the prices
+  - A realized-volatility target calculated over the forecast horizon,
+    such as squared daily returns for a one-day proxy
+
+OPTIONAL predictor data to test (each only if motivated):
+
+  - US dollar strength (a specified dollar index)
+  - Treasury yields or real interest rates
+  - Equity-market returns and/or an equity-volatility measure
+  - Inflation expectations or oil prices
+  - Gold trading volume, if available and relevant
+  - Central-bank gold demand, if its frequency and publication timing fit
+
+DOCUMENTATION for every series (required and optional alike):
+
+  - Source and provider
+  - Units and currency
+  - Frequency
+  - Observation date (the date the value refers to)
+  - Release date, where applicable (e.g., for central-bank demand data)
+
+Alignment rules:
+
+  - Align series across different market calendars and data frequencies.
+  - Use only values that would have been available at the time each
+    forecast is made; lag predictors as necessary to respect release dates.
+
+
+--------------------------------------------------------------------------------
+6. Align and evaluate the data
+--------------------------------------------------------------------------------
+  - Use only information that would have been available at forecast time
+    (no look-ahead bias).
+  - Account for differences in market calendars and data frequencies when
+    merging series.
+  - Evaluate with a chronological holdout sample, or with rolling or
+    expanding-window forecasts.
+  - Compare model forecasts against a simple benchmark (e.g., a random-walk
+    or historical-variance benchmark).
+  - Avoid using any future information at every stage: target construction,
+    predictor alignment, and evaluation.
+
+
+--------------------------------------------------------------------------------
+7. Suggested starting point
+--------------------------------------------------------------------------------
+  1. Build a baseline using gold returns only (ARCH/GARCH-style), with a
+     clearly defined realized-volatility target.
+  2. Validate the baseline against a simple benchmark.
+  3. Only then test a small number of motivated predictors, one at a time,
+     respecting publication lags and calendar alignment.
+
+Decide the instrument, volatility target, frequency, and horizon — and
+confirm data availability — before designing the data pipeline.
+
+================================================================================
+End of checklist
+================================================================================
