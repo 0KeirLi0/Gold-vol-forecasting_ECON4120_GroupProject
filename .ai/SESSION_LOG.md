@@ -1,0 +1,27 @@
+# AI and team handoff log
+
+This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
+
+## 2026-11-06 — Default data series set to COMEX gold futures
+- Author: Keir and Copilot
+- Type: decision
+- Context: Yahoo Finance returned no data for `XAUUSD=X`; Yahoo's `GC=F` returned daily prices.
+- Outcome: The default series is Yahoo Finance `GC=F`, a COMEX gold futures continuous series. It is not spot gold or a single fixed-expiry contract. Keep its identity explicit and note potential roll effects; never silently combine it with spot observations.
+- Artifacts: `src/gold_vol_pipeline/`, `notebooks/01_inspect_gold_data.ipynb`, `README.md`, `llms.txt`, `.github/copilot-instructions.md`
+- Next: Revisit the series definition if the research question or data availability changes. Preserve source, instrument, currency, units, and dates for any alternate CSV input.
+
+## 2026-11-06 — Initial preparation choices and pipeline behavior
+- Author: Keir and Copilot
+- Type: decision
+- Context: Enoch's data checklist specifies daily actual/realized volatility, while leaving the horizon and exact realized-volatility measure for the team to choose.
+- Outcome: The implemented default horizon is five observed price sessions. The default target is forward realized variance (sum of squared close-to-close log returns); forward realized volatility (its square root) is selectable. The future window is the label for each origin, not an available predictor.
+- Artifacts: `src/gold_vol_pipeline/pipeline.py`, `tests/test_pipeline.py`, `notebooks/01_inspect_gold_data.ipynb`
+- Next: Revisit the target definition if the model-development requirements or research question call for a different measure or horizon.
+
+## 2026-11-06 — Data source and interactive workflow
+- Author: Copilot
+- Type: implementation
+- Context: The Yahoo spot symbol was unavailable, and switching to a futures symbol changes the instrument.
+- Outcome: Implemented Yahoo `GC=F` download, explicitly labeled local CSV ingestion, a command-line pipeline, and a notebook for inspecting prices, target alignment, and saved run metadata. Raw/processed data under `data/` are excluded from Git.
+- Artifacts: `pyproject.toml`, `src/gold_vol_pipeline/`, `tests/test_pipeline.py`, `notebooks/01_inspect_gold_data.ipynb`, `.gitignore`
+- Next: Review source availability and terms for the team's intended use. The current pipeline has not committed downloaded price data.

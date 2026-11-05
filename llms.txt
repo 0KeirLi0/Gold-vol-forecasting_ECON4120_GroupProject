@@ -16,10 +16,21 @@ Responsibilities are areas of focus; coordinate cross-stage changes and handoffs
 
 Early iterations may explore course methods such as AR, MA, ARMA, ARCH, GARCH, or EGARCH. Later extensions may include quantile regression or shock analysis. These are illustrative examples, not a prescribed or exhaustive method list; choose methods based on project questions and findings.
 
-Data requirements have not yet been identified. Wait for model development to determine the required data before designing or changing the pipeline with Keir. Model development should hand off model specifications and inputs to analysis; analysis should report evidence, limitations, and a recommended next step to the team. Do not invent data sources, schema, results, or project decisions. Capture reproducibility details, evaluation evidence, model-selection criteria, and limitations as they become known.
+The default Python series is Yahoo Finance `GC=F`, a COMEX gold futures continuous series (not spot and not one fixed expiry); returns can reflect contract rolls. `XAUUSD=X` spot returned no data when checked on 2026-11-06. CSV input is available through `load_gold_prices_csv`; keep instrument metadata and never mix spot/futures observations in one series. The pipeline computes close-to-close log returns and a forward five-observed-session target by default: realized variance (sum of squared daily log returns), with realized volatility (its square root) also selectable. Horizon and target are configurable. Do not commit restricted data. Raw and processed files are git-ignored under `data/`.
+
+Model development should hand off model specifications and inputs to analysis; analysis should report evidence, limitations, and a recommended next step to the team. Do not invent results or unapproved project decisions. Capture reproducibility details, evaluation evidence, model-selection criteria, and limitations as they become known.
 
 ## Project documents
 
 - [README](README.md): project overview, workflow, team, and current status.
+- [Agent instructions](AGENTS.md): shared instructions for AI coding agents.
 - [Copilot instructions](.github/copilot-instructions.md): repository-specific guidance for Copilot sessions.
+- [Shared AI memory protocol](.ai/README.md): how agents record and use project context.
+- [AI/team handoff log](.ai/SESSION_LOG.md): dated decisions, findings, and handoffs.
 - [Git workflow](GIT_WORKFLOW.md): branch, commit, pull request, review, and merge policy.
+
+## Code and tests
+
+- [Data pipeline](src/gold_vol_pipeline/pipeline.py): futures download, CSV input, and no-look-ahead target construction.
+- [Pipeline tests](tests/test_pipeline.py): `python -m pytest`; see README for a single-test command.
+- [Interactive data review notebook](notebooks/01_inspect_gold_data.ipynb): inspect prices, review target alignment, visualize series, and save a run manifest.
