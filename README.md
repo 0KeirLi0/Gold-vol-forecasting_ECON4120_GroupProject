@@ -99,10 +99,10 @@ origin_returns = dataset["log_return"].dropna()
 forecasts = baseline_forecasts(origin_returns, horizon=5)
 ```
 
-Only pass returns known at the forecast origin. These are candidate baseline
-forecasts, not a backtest or model-selection result. The project still needs
-chronological out-of-sample evaluation and comparison against prepared target
-values; no model has yet been evaluated on the team's selected gold series.
+Only pass returns known at the forecast origin. A single-origin forecast is not
+a backtest or model-selection result. `prediction_history` provides sequential
+forecast/actual series, but formal loss summaries and evaluation on a team-
+confirmed instrument remain outstanding.
 
 Run exploratory diagnostics on the prepared return series with:
 
@@ -114,11 +114,30 @@ The report includes tests for zero mean, stationarity, serial dependence,
 ARCH effects, and return normality. These are diagnostic checks, not proof
 that a model's assumptions hold or a substitute for out-of-sample evaluation.
 
+### Model-evaluation workbench
+
+Open [`notebooks/03_model_evaluation.ipynb`](notebooks/03_model_evaluation.ipynb)
+to inspect price levels and transformations, ADF unit-root tests, ACF/PACF
+plots, and return diagnostics. It fits configurable AR, MA, ARMA, ARCH, GARCH,
+and EGARCH candidate orders and displays their model names, AIC, BIC, and
+convergence status in a readable table. These are in-sample criteria for the
+same input series; they do not choose a final project model.
+
+The notebook also runs a nonseasonal Hyndman-Khandakar stepwise ARIMA search
+using KPSS differencing tests and AICc, saves raw and standardized residual
+series under the git-ignored `data/processed/` directory, plots residual panels,
+and applies Ljung-Box tests to residuals and squared standardized residuals.
+The evaluation helpers are in
+[`src/gold_vol_pipeline/model_evaluation.py`](src/gold_vol_pipeline/model_evaluation.py).
+
 As the project develops, record enough information to reproduce and interpret each iteration: data inputs and transformations, model specification, evaluation evidence, selection criteria, limitations, and the rationale for the next step. Do not publish sensitive or restricted data; document its provenance and access requirements instead.
 
 ## Repository status
 
-The repository includes a Python data-preparation module, return-only candidate baseline forecast functions, and focused tests. Chronological backtesting, model comparison, and project-specific forecast evaluation are not implemented yet.
+The repository includes a Python data-preparation module, return-only candidate
+forecasts, sequential forecast histories, exploratory model diagnostics, and
+configurable in-sample candidate comparisons. The team has not yet recorded an
+interpretation or model-selection decision based on these tools.
 
 For AI-agent collaboration guidance, see [`AGENTS.md`](AGENTS.md) and [`.github/copilot-instructions.md`](.github/copilot-instructions.md). Shared AI/team decisions and handoffs are recorded in [`.ai/SESSION_LOG.md`](.ai/SESSION_LOG.md), using the protocol in [`.ai/README.md`](.ai/README.md). The project uses a main-only Git workflow described in [`GIT_WORKFLOW.md`](GIT_WORKFLOW.md). For a compact project context and pointers, see [`llms.txt`](llms.txt).
 

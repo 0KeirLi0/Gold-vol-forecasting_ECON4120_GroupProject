@@ -20,12 +20,28 @@ from .models import (
     prediction_history,
     rolling_variance_forecast,
 )
+from .model_evaluation import (
+    ModelEvaluation,
+    adf_unit_root_test,
+    compare_candidate_models,
+    ljung_box_residual_tests,
+    plot_acf_pacf,
+    plot_residual_panel,
+    plot_series_transformations,
+    save_residuals,
+    select_arima_hk,
+    transform_price_series,
+)
 
 __all__ = [
     "DEFAULT_HORIZON",
     "DEFAULT_TARGET",
+    "ModelEvaluation",
+    "adf_unit_root_test",
+    "compare_candidate_models",
     "download_futures_prices",
     "load_gold_prices_csv",
+    "ljung_box_residual_tests",
     "arch1_variance_forecast",
     "ar1_squared_return_forecast",
     "baseline_forecasts",
@@ -37,5 +53,11 @@ __all__ = [
     "ma1_squared_return_forecast",
     "prepare_dataset",
     "prediction_history",
+    "plot_acf_pacf",
+    "plot_residual_panel",
+    "plot_series_transformations",
     "rolling_variance_forecast",
+    "save_residuals",
+    "select_arima_hk",
+    "transform_price_series",
 ]

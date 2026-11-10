@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-10 — Added model-evaluation workbench
+- Author: Copilot
+- Type: implementation
+- Context: The project needed reusable time-series transformations, candidate-model comparison, residual diagnostics, and an interactive review notebook.
+- Outcome: Added price/log/difference/return transformations; ADF unit-root tests; ACF/PACF and transformation plots; configurable AR, MA, ARMA, ARCH, GARCH, and EGARCH fits with AIC/BIC; nonseasonal Hyndman-Khandakar stepwise ARIMA selection; residual export/panels; and Ljung-Box tests. Added `notebooks/03_model_evaluation.ipynb`. These tools provide exploratory/in-sample evidence, not a model-selection decision.
+- Artifacts: `src/gold_vol_pipeline/model_evaluation.py`, `notebooks/03_model_evaluation.ipynb`, `tests/test_model_evaluation.py`, `README.md`, `presentations/project-progress.qmd`, `pyproject.toml`
+- Next: Model analysis should review the diagnostics and information-criterion limitations, then use an agreed chronological out-of-sample evaluation before recommending a model.
+
 ## 2026-11-10 — Added return-data assumption diagnostics
 - Author: Copilot
 - Type: implementation

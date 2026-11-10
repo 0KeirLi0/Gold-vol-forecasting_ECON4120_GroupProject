@@ -30,8 +30,8 @@ Each round should hand off documented inputs, evidence, limitations, and a next-
 | Stage | Current evidence | Status |
 |---|---|---|
 | Infrastructure | Python pipeline downloads Yahoo `GC=F` futures data, builds forward realized-variance labels, and saves raw/prepared CSVs. An interactive notebook and focused tests support inspection. | In progress |
-| Model development | Enoch added the data-preparation checklist and return-only candidate forecasts (expanding/rolling variance, EWMA, AR/MA of squared returns, ARCH, and GARCH). | Baselines available; evaluation pending |
-| Model analysis | No out-of-sample comparison or model-selection decision is recorded yet. | Awaiting evaluation evidence |
+| Model development | Return-only forecasts and an evaluation workbench are available: transformations, ADF/ACF/PACF diagnostics, AR/MA/ARMA and ARCH/GARCH/EGARCH candidates, AIC/BIC, residual checks, and nonseasonal HK ARIMA search. | Exploratory tools available; interpretation pending |
+| Model analysis | Candidate information criteria and residual diagnostics can be generated, but no team interpretation or model-selection decision is recorded yet. | Awaiting reviewed evidence |
 
 ## Data readiness
 

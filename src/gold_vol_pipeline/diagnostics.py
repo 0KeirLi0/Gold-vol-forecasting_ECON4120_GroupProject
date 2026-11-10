@@ -21,7 +21,7 @@ def _validated_returns(returns: Sequence[float] | pd.Series) -> np.ndarray:
         raise ValueError("returns must contain at least 20 one-dimensional observations.")
     if not np.isfinite(values).all():
         raise ValueError("returns must contain finite numeric values.")
-    if np.var(values) == 0:
+    if np.all(values == values[0]):
         raise ValueError("returns must have non-zero variance for statistical diagnostics.")
     return values
 
