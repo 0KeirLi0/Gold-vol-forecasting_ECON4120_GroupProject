@@ -1,27 +1,37 @@
-"""Command-line entry point for the gold spot data pipeline."""
+"""Command-line entry point for the gold futures data pipeline."""
 
 from __future__ import annotations
 
 import argparse
+from datetime import date
 from pathlib import Path
 
 from .pipeline import (
     DEFAULT_HORIZON,
     DEFAULT_TARGET,
-    load_spot_prices_csv,
+    YAHOO_TICKER,
+    download_futures_prices,
+    load_gold_prices_csv,
     prepare_dataset,
 )
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Prepare daily gold spot prices and a forward volatility target."
+        description="Download and prepare Yahoo COMEX gold futures prices."
     )
     parser.add_argument(
         "--input",
         type=Path,
-        required=True,
-        help="CSV file containing one consistent gold spot-price series.",
+        help="Optional input CSV; by default data are downloaded from Yahoo Finance.",
+    )
+    parser.add_argument(
+        "--start",
+        help="First download date (default: 2015-01-01).",
+    )
+    parser.add_argument(
+        "--end",
+        help="Exclusive download end date (default: today, excluding today's partial bar).",
     )
     parser.add_argument(
         "--date-column",
@@ -40,7 +50,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--instrument",
-        default="Gold spot",
+        default="Gold futures (specify contract or series)",
         help="Instrument label for --input data.",
     )
     parser.add_argument(
@@ -68,29 +78,36 @@ def main() -> None:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("data/processed/gold_spot.csv"),
-        help="Output CSV path (default: data/processed/gold_spot.csv).",
+        default=Path("data/processed/gold_futures.csv"),
+        help="Prepared output CSV (default: data/processed/gold_futures.csv).",
     )
     parser.add_argument(
         "--raw-output",
         type=Path,
-        help="Optional path for a normalized raw-price copy. The input file is "
-        "never modified or copied by default.",
+        help="Path for raw downloaded prices (default: data/raw/gold_futures.csv).",
     )
     args = parser.parse_args()
 
-    prices = load_spot_prices_csv(
-        args.input,
-        date_column=args.date_column,
-        close_column=args.close_column,
-        source=args.source,
-        instrument=args.instrument,
-        currency=args.currency,
-        price_unit=args.price_unit,
-    )
+    if args.input is not None:
+        if args.end is not None or args.start is not None:
+            parser.error("--input cannot be combined with --start or --end.")
+        prices = load_gold_prices_csv(
+            args.input,
+            date_column=args.date_column,
+            close_column=args.close_column,
+            source=args.source,
+            instrument=args.instrument,
+            currency=args.currency,
+            price_unit=args.price_unit,
+        )
+    else:
+        end = args.end or date.today().isoformat()
+        prices = download_futures_prices(args.start or "2015-01-01", end)
     dataset = prepare_dataset(prices, horizon=args.horizon, target=args.target)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     raw_output = args.raw_output
+    if raw_output is None and args.input is None:
+        raw_output = Path("data/raw/gold_futures.csv")
     if raw_output is not None:
         raw_output.parent.mkdir(parents=True, exist_ok=True)
         prices.to_csv(raw_output, index=False)

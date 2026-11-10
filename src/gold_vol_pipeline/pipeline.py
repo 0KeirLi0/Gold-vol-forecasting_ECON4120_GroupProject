@@ -1,4 +1,4 @@
-"""Load and prepare daily gold spot prices."""
+"""Download and prepare daily COMEX gold futures data."""
 
 from __future__ import annotations
 
@@ -11,27 +11,76 @@ import pandas as pd
 TargetMeasure = Literal["realized_variance", "realized_volatility"]
 DEFAULT_HORIZON = 5
 DEFAULT_TARGET: TargetMeasure = "realized_variance"
+YAHOO_TICKER = "GC=F"
 
 
-def load_spot_prices_csv(
+def download_futures_prices(start: str, end: str) -> pd.DataFrame:
+    """Download Yahoo Finance's GC=F continuous futures data for [start, end).
+
+    Yahoo's end date is exclusive. ``GC=F`` is a continuous futures series, not
+    spot gold or a single fixed-expiry contract; its history may reflect rolls.
+    """
+    import yfinance as yf
+
+    downloaded = yf.download(
+        YAHOO_TICKER,
+        start=start,
+        end=end,
+        interval="1d",
+        auto_adjust=False,
+        progress=False,
+        multi_level_index=False,
+    )
+    if downloaded.empty:
+        raise RuntimeError(
+            f"Yahoo Finance returned no gold futures data for {start} through "
+            f"{end} ({YAHOO_TICKER}). Check the date range, network access, and "
+            "Yahoo Finance availability."
+        )
+    if "Close" not in downloaded.columns:
+        raise RuntimeError(
+            f"Yahoo Finance response for {YAHOO_TICKER} has no Close column."
+        )
+
+    close = downloaded["Close"]
+    if isinstance(close, pd.DataFrame):
+        if close.shape[1] != 1:
+            raise RuntimeError("Yahoo Finance returned an unexpected Close shape.")
+        close = close.iloc[:, 0]
+
+    dates = pd.DatetimeIndex(pd.to_datetime(downloaded.index))
+    if dates.tz is not None:
+        dates = dates.tz_localize(None)
+
+    prices = pd.DataFrame({"date": dates.normalize(), "close": close.to_numpy()})
+    prices.attrs.update(
+        source="Yahoo Finance",
+        instrument="COMEX Gold Futures (continuous series, GC=F)",
+        currency="USD",
+        price_unit="USD per troy ounce",
+    )
+    return prices
+
+
+def load_gold_prices_csv(
     path: str | Path,
     *,
     date_column: str = "date",
     close_column: str = "close",
     source: str = "User-supplied CSV",
-    instrument: str = "Gold spot",
+    instrument: str = "Gold futures (specify contract or series)",
     currency: str = "USD",
     price_unit: str = "USD per troy ounce",
 ) -> pd.DataFrame:
-    """Load gold spot prices from a CSV with selected date and close columns."""
+    """Load gold prices from a CSV with explicitly selected date and close columns."""
     csv_path = Path(path)
     if not csv_path.is_file():
-        raise FileNotFoundError(f"Gold spot-price CSV not found: {csv_path}")
+        raise FileNotFoundError(f"Gold-price CSV not found: {csv_path}")
 
     try:
         raw = pd.read_csv(csv_path)
     except (OSError, pd.errors.ParserError) as error:
-        raise ValueError(f"Could not read gold spot-price CSV {csv_path}: {error}") from error
+        raise ValueError(f"Could not read gold-price CSV {csv_path}: {error}") from error
 
     missing_columns = {date_column, close_column} - set(raw.columns)
     if missing_columns:

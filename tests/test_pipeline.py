@@ -3,7 +3,8 @@ import pandas as pd
 import pytest
 
 from gold_vol_pipeline import (
-    load_spot_prices_csv,
+    download_futures_prices,
+    load_gold_prices_csv,
     prepare_dataset,
 )
 
@@ -75,7 +76,7 @@ def test_rejects_nonpositive_horizon():
 
 
 def test_loads_and_selects_csv_columns_and_records_provenance(tmp_path):
-    csv_path = tmp_path / "spot.csv"
+    csv_path = tmp_path / "gold.csv"
     pd.DataFrame(
         {
             "Date": pd.date_range("2024-01-01", periods=5),
@@ -84,7 +85,7 @@ def test_loads_and_selects_csv_columns_and_records_provenance(tmp_path):
         }
     ).to_csv(csv_path, index=False)
 
-    prices = load_spot_prices_csv(
+    prices = load_gold_prices_csv(
         csv_path,
         date_column="Date",
         close_column="USD Price",
@@ -99,15 +100,51 @@ def test_loads_and_selects_csv_columns_and_records_provenance(tmp_path):
 
 
 def test_csv_loader_reports_missing_columns(tmp_path):
-    csv_path = tmp_path / "spot.csv"
+    csv_path = tmp_path / "gold.csv"
     pd.DataFrame({"Timestamp": ["2024-01-01"], "Value": [2000]}).to_csv(
         csv_path, index=False
     )
 
     with pytest.raises(ValueError, match="CSV is missing selected column"):
-        load_spot_prices_csv(csv_path)
+        load_gold_prices_csv(csv_path)
 
 
 def test_csv_loader_reports_missing_file(tmp_path):
-    with pytest.raises(FileNotFoundError, match="Gold spot-price CSV not found"):
-        load_spot_prices_csv(tmp_path / "missing.csv")
+    with pytest.raises(FileNotFoundError, match="Gold-price CSV not found"):
+        load_gold_prices_csv(tmp_path / "missing.csv")
+
+
+def test_yahoo_downloader_returns_futures_prices_and_metadata(monkeypatch):
+    import yfinance as yf
+
+    sample = pd.DataFrame(
+        {"Close": [2000.0, 2002.0, 1999.0]},
+        index=pd.date_range("2024-01-01", periods=3),
+    )
+    calls = {}
+
+    def fake_download(ticker, **kwargs):
+        calls["ticker"] = ticker
+        calls.update(kwargs)
+        return sample
+
+    monkeypatch.setattr(yf, "download", fake_download)
+
+    prices = download_futures_prices("2024-01-01", "2024-01-04")
+    dataset = prepare_dataset(prices, horizon=1)
+
+    assert calls["ticker"] == "GC=F"
+    assert calls["start"] == "2024-01-01"
+    assert calls["end"] == "2024-01-04"
+    assert prices["close"].tolist() == [2000.0, 2002.0, 1999.0]
+    assert dataset["source"].eq("Yahoo Finance").all()
+    assert dataset["instrument"].str.contains("GC=F").all()
+
+
+def test_yahoo_downloader_surfaces_empty_data_response(monkeypatch):
+    import yfinance as yf
+
+    monkeypatch.setattr(yf, "download", lambda *args, **kwargs: pd.DataFrame())
+
+    with pytest.raises(RuntimeError, match="no gold futures data"):
+        download_futures_prices("2024-01-01", "2024-02-01")

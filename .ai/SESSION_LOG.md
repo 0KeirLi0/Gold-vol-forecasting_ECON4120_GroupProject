@@ -2,6 +2,22 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-10 — Verified end-to-end Yahoo futures CSV download
+- Author: Copilot
+- Type: finding
+- Context: Ran the default pipeline using the Yahoo Finance `GC=F` data endpoint.
+- Outcome: The API returned 2,981 daily closes from 2015-01-02 through 2026-11-09. The pipeline wrote `data/raw/gold_futures.csv` and 2,975 prepared rows to `data/processed/gold_futures.csv`; the prepared file includes Yahoo/instrument metadata and a forward five-observation realized-variance label. These data files remain local and Git-ignored.
+- Artifacts: `src/gold_vol_pipeline/`, `data/raw/gold_futures.csv`, `data/processed/gold_futures.csv`
+- Next: Inspect source quality/calendar and confirm the futures series remains the team's intended instrument before formal comparisons.
+
+## 2026-11-10 — Use Yahoo gold futures as the default downloadable series
+- Author: Keir
+- Type: decision
+- Context: The pipeline needed a runnable datasource API path and the team had not finalized spot versus futures.
+- Outcome: Use Yahoo Finance `GC=F` (COMEX gold futures continuous series) as the current default because the spot ticker `XAUUSD=X` was unavailable. The CLI and notebook should download from Yahoo by default and save raw and prepared CSVs. This is a working default, not a claim that futures and spot are interchangeable; keep any future instrument change explicit.
+- Artifacts: `src/gold_vol_pipeline/`, `notebooks/01_inspect_gold_data.ipynb`, `README.md`, `presentations/project-progress.qmd`
+- Next: Team may revisit instrument choice; if changed, verify source, instrument and pipeline behavior before using or comparing series.
+
 ## 2026-11-10 — Spot versus futures decision deferred to team meeting
 - Author: Keir
 - Type: open question

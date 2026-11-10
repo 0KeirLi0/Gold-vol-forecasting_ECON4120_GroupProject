@@ -16,7 +16,7 @@ Responsibilities are areas of focus; coordinate cross-stage changes and handoffs
 
 Early iterations may explore course methods such as AR, MA, ARMA, ARCH, GARCH, or EGARCH. Later extensions may include quantile regression or shock analysis. These are illustrative examples, not a prescribed or exhaustive method list; choose methods based on project questions and findings.
 
-The working instrument is daily gold spot. Yahoo Finance `XAUUSD=X` returned no data when checked on 2026-11-06, so the current Python pipeline accepts a local spot CSV through `load_spot_prices_csv`. Record provider, benchmark/instrument, currency, units, and observation dates; do not substitute futures (`GC=F`) or mix instrument types. The pipeline computes close-to-close log returns and a forward five-observed-session target by default: realized variance (sum of squared daily log returns), with realized volatility (its square root) also selectable. Horizon and target are configurable. Do not commit restricted data. Raw data under `data/` are git-ignored.
+The current default is Yahoo Finance `GC=F`, a COMEX gold futures continuous series, downloaded through yfinance; the CLI and notebook also accept local CSV input. This is not spot or one fixed expiry. Record provider, instrument, currency, units, and observation dates; never mix futures and spot in one series. The pipeline computes close-to-close log returns and a forward five-observed-session target by default: realized variance (sum of squared daily log returns), with realized volatility (its square root) also selectable. Horizon and target are configurable. Do not commit restricted data. Downloaded data under `data/` are git-ignored.
 
 Model development should hand off model specifications and inputs to analysis; analysis should report evidence, limitations, and a recommended next step to the team. Do not invent results or unapproved project decisions. Capture reproducibility details, evaluation evidence, model-selection criteria, and limitations as they become known.
 
@@ -31,6 +31,7 @@ Model development should hand off model specifications and inputs to analysis; a
 
 ## Code and tests
 
-- [Data pipeline](src/gold_vol_pipeline/pipeline.py): spot CSV input and no-look-ahead target construction.
+- [Data pipeline](src/gold_vol_pipeline/pipeline.py): Yahoo futures API download, CSV input, and no-look-ahead target construction.
 - [Pipeline tests](tests/test_pipeline.py): `python -m pytest`; see README for a single-test command.
 - [Interactive data review notebook](notebooks/01_inspect_gold_data.ipynb): inspect prices, review target alignment, visualize series, and save a run manifest.
+- [Project progress presentation](presentations/project-progress.qmd): stage status, open handoffs, and a Git-history-based submission record for team members.

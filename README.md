@@ -38,11 +38,11 @@ These are areas of focus rather than exclusive ownership. Coordinate changes and
 
 ## Data and reproducibility
 
-The team has not yet finalized spot versus futures; this is pending discussion at the next meeting. The current pipeline prototype accepts a local daily spot-price CSV. Yahoo Finance's `XAUUSD=X` spot ticker returned “No data found” when checked on 2026-11-06. Once the team confirms the instrument, align the pipeline and data source to that decision. Keep spot and futures as separate series, and record the actual provider and instrument in output metadata.
+The current working default is Yahoo Finance `GC=F`, a COMEX gold futures continuous series. It is not spot gold or a single fixed-expiry contract, and its history may reflect contract rolls. The CLI and notebook download daily data from Yahoo Finance by default; local CSV input is also supported. The team may revisit spot versus futures, but any change should be explicit and must not mix instrument types. Yahoo's `XAUUSD=X` spot ticker returned “No data found” when checked on 2026-11-06.
 
 The pipeline computes close-to-close log returns and a forward target over the next five observed price sessions by default. The default target is realized variance, calculated as the sum of squared daily log returns; `realized_volatility` is also available as the square root of that sum. Horizon and target are configurable. The target uses future observations only as the label for each forecast origin; predictors in this baseline contain only information available through that origin.
 
-Keep the original input file under `data/raw/` (or another documented local path); raw data are excluded from Git. Preserve it for each analysis run and record its provenance, observation date range, and pipeline options. The prepared CSV includes the forecast-origin date, close, log return, target-window dates, target value, and provider/instrument metadata. Do not mix futures and spot observations. Do not share Bloomberg or other restricted exports unless the applicable license permits it.
+Raw and prepared downloads are written under `data/` and excluded from Git. Preserve them for each analysis run and record their provenance, observation date range, and pipeline options. The prepared CSV includes the forecast-origin date, close, log return, target-window dates, target value, and provider/instrument metadata. Do not mix futures and spot observations. Do not share Bloomberg or other restricted exports unless the applicable license permits it.
 
 ### Setup and commands
 
@@ -61,17 +61,17 @@ python -m pip install -e ".[interactive]"
 python -m jupyter lab
 ```
 
-Open [`notebooks/01_inspect_gold_data.ipynb`](notebooks/01_inspect_gold_data.ipynb). The notebook lets you set the input path and column names, horizon, and target; inspect and plot spot data; check target dates and values; and save prepared CSVs with a JSON manifest.
+Open [`notebooks/01_inspect_gold_data.ipynb`](notebooks/01_inspect_gold_data.ipynb). It downloads Yahoo `GC=F` by default, and lets you choose a date range, horizon, and target; inspect and plot data; check target dates and values; and save raw/prepared CSVs with a JSON manifest. Set `DATA_SOURCE = "csv"` to use a local file instead.
 
-Prepare a spot-price CSV with `date` and `close` columns:
+Download and prepare Yahoo futures data directly (the end date is exclusive; by default it is today, avoiding a partial current-day bar):
 
 ```bash
-python -m gold_vol_pipeline --input data/raw/gold_spot.csv \
-  --source "Provider name" --instrument "Gold spot benchmark/instrument" \
-  --currency USD --price-unit "USD per troy ounce"
+python -m gold_vol_pipeline
 ```
 
-For alternate CSV headers, set `--date-column` and `--close-column`. The original input remains untouched; prepared data are saved to `data/processed/gold_spot.csv`. Override output paths with `--raw-output` and `--output`, and target settings with `--horizon` or `--target realized_variance|realized_volatility`.
+By default this downloads from 2015-01-01 to the current date (exclusive), saving the raw Yahoo prices to `data/raw/gold_futures.csv` and prepared data to `data/processed/gold_futures.csv`. Choose a range with `--start YYYY-MM-DD --end YYYY-MM-DD`, or change paths with `--raw-output` and `--output`. Set `--horizon` or `--target realized_variance|realized_volatility` to change target construction.
+
+To prepare a local CSV instead, provide `--input data/raw/your_gold_series.csv`, its `--date-column` and `--close-column`, and accurate `--source` and `--instrument` labels. The original input is not modified. The data source must represent one consistent instrument and series.
 
 Run the full test suite with `python -m pytest`. Run one test with:
 
@@ -88,3 +88,5 @@ As the project develops, record enough information to reproduce and interpret ea
 The repository now includes a Python data-preparation module and focused tests. Model training, model comparison, and project-specific forecast evaluation are not implemented yet.
 
 For AI-agent collaboration guidance, see [`AGENTS.md`](AGENTS.md) and [`.github/copilot-instructions.md`](.github/copilot-instructions.md). Shared AI/team decisions and handoffs are recorded in [`.ai/SESSION_LOG.md`](.ai/SESSION_LOG.md), using the protocol in [`.ai/README.md`](.ai/README.md). For the team’s branch, pull request, and merge process, see [`GIT_WORKFLOW.md`](GIT_WORKFLOW.md). For a compact project context and pointers, see [`llms.txt`](llms.txt).
+
+The presentation-ready progress tracker is [`presentations/project-progress.qmd`](presentations/project-progress.qmd). It summarizes stage status and reads Git submission history when rendered. Fetch branches first with `git fetch --all`, then render with `quarto render presentations/project-progress.qmd`.
