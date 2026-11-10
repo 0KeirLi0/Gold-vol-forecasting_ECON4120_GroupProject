@@ -29,26 +29,27 @@ Each round should hand off documented inputs, evidence, limitations, and a next-
 
 | Stage | Current evidence | Status |
 |---|---|---|
-| Infrastructure | Python pipeline downloads Yahoo `GC=F` futures data, builds forward realized-variance labels, and saves raw/prepared CSVs. An interactive notebook and focused tests support inspection. | In progress |
-| Model development | Return-only baselines, sequential forecast/actual charts with MAE/RMSE, and an evaluation workbench are available: transformations, ADF/ACF/PACF diagnostics, AR/MA/ARMA and ARCH/GARCH/EGARCH candidates, AIC/BIC, residual checks, and nonseasonal HK ARIMA search. A full-sample exploratory squared-return fit selected ARIMA(0,1,4); this is not out-of-sample evidence. | Exploratory tools available; interpretation pending |
-| Model analysis | `notebooks/02_models.ipynb` compares seven return-only baselines with five-session realized variance over up to 500 forecast origins using MAE/RMSE. Notebook 03 adds in-sample AIC/BIC and residual diagnostics. Automatic ARIMA is not yet included in the rolling-origin comparison; no final model decision is recorded. | Comparison evidence available; decision pending |
+| Infrastructure | The gold-pipeline prototype uses Yahoo `GC=F` (COMEX continuous futures) and supports labeled local CSV input. A Stage 2 daily predictor panel now downloads Yahoo DXY, S&P 500, and VIX observations plus FRED Treasury-yield, breakeven-inflation, and WTI series; raw data and manifests remain Git-ignored. | Stage 2 data prototype available; source-use and missingness review pending |
+| Model development | Stage 1 used traditional univariate time-series methods on one gold-derived series. On the local prepared Yahoo `GC=F` snapshot through 2026-11-02, GARCH(1,1) had the lowest MAE/RMSE across 496 completed rolling-origin forecasts; its RMSE was only 0.8% below EWMA. EGARCH(2,1) had the lowest in-sample AIC/BIC among 21 candidates, but 4 candidates did not converge and the current EGARCH setup does not include an asymmetry term. Keir selected daily DXY, nominal 10-year yield, S&P 500 returns, VIX, 10-year breakeven inflation, WTI, and optional gold-futures volume for Stage 2; no multivariate model or remaining transformations are selected. | Stage 1 evidence available; Stage 2 model specification pending |
+| Model analysis | EGARCH(2,1) residuals retained Ljung-Box autocorrelation at lag 20; squared standardized residuals did not show dependence at tested lags 10/20. A current HK rerun selected ARIMA(3,1,2), conflicting with an earlier logged ARIMA(0,1,4); resolve the data/run discrepancy before relying on either result. The automatic ARIMA selector is not in the rolling-origin comparison. | Reproducibility and evaluation design pending |
 
 ## Data readiness
 
-- The current working default is Yahoo Finance **`GC=F`**, a COMEX gold futures continuous series—not spot or a single fixed-expiry contract. The team may revisit the instrument.
+- Keir selected gold futures as the Stage 2 working instrument; the current pipeline uses Yahoo Finance **`GC=F`**, a COMEX gold futures continuous series, not a single fixed-expiry contract. This does not settle a contract-specific strategy or license/redistribution rights.
 - Yahoo Finance `XAUUSD=X` returned no data in the check recorded on 2026-11-06; `GC=F` was verified to return daily observations.
-- Running the CLI or notebook downloads raw prices from Yahoo and writes raw and prepared CSVs under the Git-ignored `data/` directory.
-- No downloaded raw market-data file is recorded in Git. Any Bloomberg export should remain local unless its license permits sharing.
-- The prototype defaults to a five-observation forward realized-variance label; the horizon and target definition should be confirmed by the team before results are treated as project decisions.
+- The candidate panel uses Yahoo `DX-Y.NYB` (DXY), `^GSPC` (S&P 500 price index and derived close-to-close log return), `^VIX`, and `GC=F` volume when returned; FRED `DGS10`, `T10YIE`, and `DCOILWTICO`. FRED values are assigned a one-business-day availability proxy, not a series-specific release timestamp or historical vintage; Yahoo closes are aligned to the same date under the after-market-publication forecast origin.
+- Central-bank gold demand is deferred until a source and publication schedule support point-in-time alignment. Gold volume is optional and is a continuous-futures series measure, not a fixed-contract or exchange-wide volume measure.
+- Raw downloads, prepared data, and manifests remain under Git-ignored `data/`. FRED API access requires a local API key. Check source-specific redistribution terms before committing any CSV; file size does not establish permission.
+- The current prototype uses a five-observation forward realized-variance label by default; confirm the target definition and horizon before treating results as project decisions or fixing pipeline requirements.
 
 ## Current handoffs
 
 | Owner | Next item |
 |---|---|
-| Team | Confirm whether the working futures series is suitable or whether the research question calls for spot data instead. |
-| Keir | Run the pipeline, inspect the downloaded CSV, and keep source, instrument, units, currency, dates, and calendar documented. If changing to spot, first identify an accessible and permitted source. |
-| Enoch | Confirm model inputs, forecast horizon, target definition, and any motivated predictors; document the candidate specifications used. |
-| Samuel | Review the available forecast-error summaries, information criteria, and residual tests; document evidence, limitations, and a recommended next step without assuming a selection criterion in advance. |
+| Enoch | Review the selected predictor set, specify modeling transformations and missing-data handling, inspect source-date freshness, and preserve Stage 1 models as univariate benchmarks. |
+| Team | Confirm that the working `GC=F` continuous futures series and selected predictor definitions answer the research question; confirm data-use permissions before sharing observations. |
+| Keir | Maintain the API/CSV pipeline, its local provenance manifest, and source-date alignment; investigate volume coverage and central-bank-demand publication timing before adding either as a model input. |
+| Samuel | Review Stage 1 evidence and, in Stage 2, assess whether additional variables improve comparable forecast results; document diagnostics, limitations, and a recommendation without assuming a selection criterion. |
 
 ## Git submissions by team member
 
@@ -134,9 +135,11 @@ quarto render presentations/project-progress.qmd
 
 ## Decisions to revisit with the team
 
-1. Whether `GC=F` is suitable or spot gold better fits the research question.
-2. Provider/security, field, units, currency, date range, observation time, and calendar.
-3. Forecast horizon and realized-volatility target calculation.
+1. Whether the working `GC=F` continuous futures series is suitable for the research question.
+2. The source, field, units, currency, date range, observation time, and calendar.
+3. Forecast horizon, target definition, predictor transformations, and missing-data policy.
 4. Data access and redistribution constraints.
 
 Update this deck and the shared [AI/team handoff log](../.ai/SESSION_LOG.md) when the team confirms decisions or completes a meaningful handoff.
+
+The model-development report is available as a [Beamer PDF](iteration-1-summary.pdf) with its [Quarto source](iteration-1-summary.qmd).

@@ -99,6 +99,24 @@ def test_loads_and_selects_csv_columns_and_records_provenance(tmp_path):
     assert len(dataset) == 2
 
 
+def test_loads_optional_gold_volume_from_csv(tmp_path):
+    csv_path = tmp_path / "gold.csv"
+    pd.DataFrame(
+        {
+            "date": pd.date_range("2024-01-01", periods=4),
+            "close": [2000, 2001, 2002, 2003],
+            "volume": [10, np.nan, 12, 13],
+        }
+    ).to_csv(csv_path, index=False)
+
+    prices = load_gold_prices_csv(csv_path)
+    dataset = prepare_dataset(prices, horizon=1)
+
+    assert prices["volume"].iloc[0] == 10
+    assert pd.isna(dataset.loc[0, "volume"])
+    assert dataset.loc[1, "volume"] == 12
+
+
 def test_csv_loader_reports_missing_columns(tmp_path):
     csv_path = tmp_path / "gold.csv"
     pd.DataFrame({"Timestamp": ["2024-01-01"], "Value": [2000]}).to_csv(
@@ -118,7 +136,7 @@ def test_yahoo_downloader_returns_futures_prices_and_metadata(monkeypatch):
     import yfinance as yf
 
     sample = pd.DataFrame(
-        {"Close": [2000.0, 2002.0, 1999.0]},
+        {"Close": [2000.0, 2002.0, 1999.0], "Volume": [100, 120, 110]},
         index=pd.date_range("2024-01-01", periods=3),
     )
     calls = {}
@@ -137,8 +155,10 @@ def test_yahoo_downloader_returns_futures_prices_and_metadata(monkeypatch):
     assert calls["start"] == "2024-01-01"
     assert calls["end"] == "2024-01-04"
     assert prices["close"].tolist() == [2000.0, 2002.0, 1999.0]
+    assert prices["volume"].tolist() == [100, 120, 110]
     assert dataset["source"].eq("Yahoo Finance").all()
     assert dataset["instrument"].str.contains("GC=F").all()
+    assert dataset["volume"].tolist() == [120]
 
 
 def test_yahoo_downloader_surfaces_empty_data_response(monkeypatch):

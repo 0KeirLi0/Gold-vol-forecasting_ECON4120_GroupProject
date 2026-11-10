@@ -2,6 +2,70 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-11 — Validated and refreshed Stage 2 handoff
+- Author: Copilot
+- Type: finding
+- Context: The Stage 2 predictor panel was implemented while the initial model report still described predictors and pipeline work as pending.
+- Outcome: Updated the report and progress tracker to reflect the selected candidate panel, source mapping, and timing limitations. Rendered both presentations successfully and ran the full test suite: 50 passed. Tests emitted existing statistical-library/deprecation warnings; the new FRED date-lag warning was removed.
+- Artifacts: `presentations/iteration-1-summary.qmd`, `presentations/iteration-1-summary.pdf`, `presentations/project-progress.qmd`, `src/gold_vol_pipeline/`
+- Next: Enoch to review predictor transformations, source-date freshness, and missing-data handling before fitting multivariate candidates.
+
+## 2026-11-11 — Added Stage 2 daily predictor pipeline
+- Author: Keir's requirements; implementation by Copilot
+- Type: implementation
+- Context: Enoch identified USD strength, rates, equity, inflation/oil, optional gold volume, and conditional central-bank demand as Stage 2 candidate data. Keir selected futures, DXY, nominal yields, both equity returns and volatility, both inflation expectations and oil, and asked for API support with CSV input where suitable.
+- Outcome: Added an API-backed daily panel for Yahoo `DX-Y.NYB`, `^GSPC`, `^VIX`, and optional `GC=F` volume, plus FRED `DGS10`, `T10YIE`, and `DCOILWTICO`. S&P 500 close-to-close log returns are derived. Yahoo values align on same-day availability after market close; FRED values use a one-business-day availability proxy, not historical release timestamps or vintages, with observation dates retained and only past-available values joined to gold origins. Central-bank demand is deferred until a source and release schedule can support point-in-time alignment. FRED requires a local API key. Raw observations remain Git-ignored; no data are committed because source-specific redistribution rights must be checked, regardless of file size. Targeted pytest execution was denied by the current environment, so test status is unverified.
+- Artifacts: `src/gold_vol_pipeline/predictors.py`, `src/gold_vol_pipeline/pipeline.py`, `tests/test_predictors.py`, `tests/test_pipeline.py`, `README.md`, `presentations/project-progress.qmd`
+- Next: Run the targeted tests when command execution is available; Enoch to review predictor transformations, missingness/freshness, and model inputs; Keir to check volume coverage and central-bank-demand publication timing before extending the panel.
+
+## 2026-11-11 — Framed next stage as multivariate modeling
+- Author: User direction, recorded by Copilot
+- Type: decision
+- Context: The project clarified that the current stage applies traditional time-series models to one variable, with the next stage intended to use multiple variables.
+- Outcome: Reframed the report and project tracker as Stage 1 univariate modeling followed by planned multivariate development. No additional predictors or multivariate method were selected; variable rationale, source, timing, and availability at the forecast origin remain prerequisites.
+- Artifacts: `presentations/iteration-1-summary.qmd`, `presentations/iteration-1-summary.pdf`, `presentations/project-progress.qmd`, `README.md`
+- Next: Enoch identifies candidate variables and timing; Keir coordinates pipeline changes after those requirements are defined; Samuel compares Stage 2 evidence with Stage 1 baselines.
+
+## 2026-11-11 — Added current-project map to model report
+- Author: Copilot
+- Type: implementation
+- Context: The model-development report needed a visual map of current project status and handoffs.
+- Outcome: Added a Metropolis-style workflow map showing open model/data requirements, the pipeline prototype, current model-development work, and the next analysis handoff, with the team decision feeding the next iteration.
+- Artifacts: `presentations/iteration-1-summary.qmd`, `presentations/iteration-1-summary.pdf`
+- Next: Follow the map's requirements-to-pipeline-to-analysis handoffs; no instrument or model decision is implied by the diagram.
+
+## 2026-11-10 — Reported initial model-development results
+- Author: Copilot
+- Type: finding
+- Context: The first-iteration deck was revised to report quantitative model evidence instead of Git contributions.
+- Outcome: On the local prepared Yahoo `GC=F` snapshot (2,975 origins through 2026-11-02), GARCH(1,1) had the lowest point-estimate errors over 496 completed recent forecast origins (MAE 0.000776, RMSE 0.001879); its RMSE was 6.1% below expanding variance and 0.8% below EWMA. EGARCH(2,1) had the lowest in-sample AIC/BIC among 21 return-series candidates, but 4 candidates did not converge; the current EGARCH comparison leaves asymmetry order at zero. EGARCH residual Ljung-Box p-value was 0.020 at lag 20. A current squared-return HK rerun selected ARIMA(3,1,2), conflicting with the earlier logged ARIMA(0,1,4); neither should be relied on until the run/input discrepancy is reconciled. These are exploratory futures-series results, not a model or instrument decision.
+- Artifacts: `presentations/iteration-1-summary.qmd`, `presentations/iteration-1-summary.pdf`, `presentations/project-progress.qmd`
+- Next: Enoch and Samuel should standardize the data snapshot and rolling-origin design, investigate non-convergence/specification, and include automatic order selection inside training windows before comparing forecasts.
+
+## 2026-11-10 — Prepared first-iteration progress handoff
+- Author: Copilot
+- Type: handoff
+- Context: The project needed a concise presentation to close the initial implementation phase and identify the next stage.
+- Outcome: Created a Beamer PDF and reproducible Quarto source covering implemented pipeline/model tools, the exploratory status and limitations of current evidence, open instrument/target/evaluation choices, and owner-specific next actions. Clarified in the progress tracker that the available futures and CSV ingestion paths do not settle the team instrument decision.
+- Artifacts: `presentations/iteration-1-summary.pdf`, `presentations/iteration-1-summary.qmd`, `presentations/project-progress.qmd`, `README.md`
+- Next: Model development should specify data requirements; the team should confirm the research choices before the next pipeline design and out-of-sample evaluation.
+
+## 2026-11-10 — Fixed notebook figure display
+- Author: Copilot
+- Type: finding
+- Context: Notebook plots were not rendering because importing `gold_vol_pipeline` imported `models.py`, which globally switched Matplotlib to the non-interactive `Agg` backend.
+- Outcome: Removed the import-time backend switch and load pyplot only when chart generation is requested, preserving the notebook's selected backend. Added a regression test for backend preservation.
+- Artifacts: `src/gold_vol_pipeline/models.py`, `tests/test_models.py`
+- Next: Rerun the affected notebook with its intended Jupyter kernel.
+
+## 2026-11-10 — Verified notebook execution
+- Author: Copilot
+- Type: finding
+- Context: The project requested an end-to-end execution check for all notebooks. The data-inspection notebook referenced an unavailable `deeplob` kernel, so execution initially stopped before running any cells.
+- Outcome: Updated its kernel metadata to the standard `python3` kernel. All three notebooks then executed without cell errors. The Yahoo download notebook validated 2,981 closes and 2,975 prepared target rows; the baseline and evaluation notebooks ran on the existing prepared dataset. Statistical-library warnings were emitted during model fitting but did not prevent execution.
+- Artifacts: `notebooks/01_inspect_gold_data.ipynb`, `notebooks/02_models.ipynb`, `notebooks/03_model_evaluation.ipynb`
+- Next: None.
+
 ## 2026-11-10 — Added sequential baseline forecast comparison
 - Author: Enoch
 - Type: implementation

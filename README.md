@@ -38,11 +38,84 @@ These are areas of focus rather than exclusive ownership. Coordinate changes and
 
 ## Data and reproducibility
 
-The current working default is Yahoo Finance `GC=F`, a COMEX gold futures continuous series. It is not spot gold or a single fixed-expiry contract, and its history may reflect contract rolls. The CLI and notebook download daily data from Yahoo Finance by default; local CSV input is also supported. The team may revisit spot versus futures, but any change should be explicit and must not mix instrument types. Yahoo's `XAUUSD=X` spot ticker returned “No data found” when checked on 2026-11-06.
+Keir selected gold futures as the Stage 2 working instrument; the current
+downloadable series is Yahoo Finance `GC=F`, a COMEX gold futures continuous
+series. It is not spot gold or a single fixed-expiry contract, and its history
+may reflect contract rolls. The CLI and notebook download daily data from
+Yahoo Finance by default; local CSV input is also supported. Revisit the series
+or instrument only by an explicit team choice, and never mix spot and futures.
+Yahoo's `XAUUSD=X` spot ticker returned “No data found” when checked on
+2026-11-06.
 
 The pipeline computes close-to-close log returns and a forward target over the next five observed price sessions by default. The default target is realized variance, calculated as the sum of squared daily log returns; `realized_volatility` is also available as the square root of that sum. Horizon and target are configurable. The target uses future observations only as the label for each forecast origin; predictors in this baseline contain only information available through that origin.
 
 Raw and prepared downloads are written under `data/` and excluded from Git. Preserve them for each analysis run and record their provenance, observation date range, and pipeline options. The prepared CSV includes the forecast-origin date, close, log return, target-window dates, target value, and provider/instrument metadata. Do not mix futures and spot observations. Do not share Bloomberg or other restricted exports unless the applicable license permits it.
+
+### Stage 2 daily predictor panel
+
+Keir selected the following daily candidates from Enoch's requirements:
+
+| Candidate | Source and series | Frequency and units |
+|---|---|---|
+| USD strength | Yahoo Finance `DX-Y.NYB`, ICE U.S. Dollar Index | Daily close, index points |
+| Equity return | Yahoo Finance `^GSPC`, S&P 500 price index | Daily close-to-close log return (derived from index points) |
+| Equity volatility | Yahoo Finance `^VIX`, CBOE VIX | Daily close, index points |
+| Nominal rate | FRED [`DGS10`](https://fred.stlouisfed.org/series/DGS10), 10-year Treasury constant-maturity yield | Daily, percent |
+| Inflation expectations | FRED [`T10YIE`](https://fred.stlouisfed.org/series/T10YIE), 10-year breakeven inflation rate | Daily, percent |
+| Oil price | FRED [`DCOILWTICO`](https://fred.stlouisfed.org/series/DCOILWTICO), WTI Cushing spot | Daily, U.S. dollars per barrel |
+| Gold volume | Yahoo Finance `GC=F` | Daily provider-reported volume, when returned |
+
+The pipeline preserves raw closes, rates, and volume; Enoch can choose and
+document further transformations for modeling. The S&P 500 input is a price
+index, not a total-return index. Breakeven inflation is market-implied
+inflation compensation, not a survey measure. Futures volume is an optional
+continuous-series measure, not a fixed-contract or exchange-wide volume
+series. Central-bank gold demand is deferred until a specific source and
+publication schedule support point-in-time alignment.
+
+Run the API-backed panel with `FRED_API_KEY` set in the local environment:
+
+```bash
+python -m gold_vol_pipeline.predictors --start 2016-01-01 --end 2026-11-01
+```
+
+The FRED API key is required and must not be stored in the repository. Yahoo
+daily closes are treated as available on their observation date because the
+forecast origin is after that date's market data have been published. FRED
+series are conservatively treated as available on the next weekday; the
+prepared dataset uses the latest value available on or before each gold
+forecast origin and retains each source observation date. Missing predictor
+values remain missing; Enoch should inspect predictor freshness and choose a
+missing-data policy before fitting models.
+The one-business-day FRED lag is an availability-date proxy, not a
+series-specific release timestamp, and the API returns current observations
+rather than historical real-time vintages. Verify release schedules and
+revisions before using this panel for a strict real-time backtest.
+
+The raw downloads, prepared dataset, and run manifest are written beneath the
+Git-ignored `data/` directory. A local normalized CSV can be used instead with
+`--predictor-input`; its `date` column must be the value's availability date,
+with optional `{predictor}_observation_date` columns to retain source dates.
+For example:
+
+```bash
+python -m gold_vol_pipeline.predictors \
+  --gold-input data/raw/gold_futures.csv \
+  --gold-source "Yahoo Finance" \
+  --gold-instrument "COMEX Gold Futures continuous series (GC=F)" \
+  --predictor-input data/raw/stage2_predictors.csv
+```
+
+The selected predictor columns are `dxy_close`, `sp500_close`, `sp500_log_return`
+(close-to-close log difference), `vix_close`, `treasury_10y_yield`,
+`breakeven_inflation_10y`, and `wti_spot`. A gold CSV passed with `--gold-input`
+may also contain `volume`.
+
+API access and small file size do not grant redistribution rights. FRED's
+series notes identify third-party copyright restrictions for some series
+(including S&P 500, VIX, and WTI); check each series' terms before sharing or
+committing data. Keep downloaded market data local unless redistribution is
+explicitly permitted, and cite the source in any analysis.
 
 ### Setup and commands
 
@@ -148,12 +221,18 @@ As the project develops, record enough information to reproduce and interpret ea
 
 ## Repository status
 
-The repository includes a Python data-preparation module, return-only candidate
-forecasts, sequential rolling-origin comparisons with MAE/RMSE, exploratory
-diagnostics, configurable in-sample candidate comparisons, and a nonseasonal
-Hyndman-Khandakar ARIMA selector. No final model-selection decision is recorded;
-the automatic ARIMA selector still needs rolling-origin evaluation.
+The first modeling stage uses traditional univariate time-series methods on one
+gold-derived series: return-only candidate forecasts, sequential rolling-origin
+comparisons with MAE/RMSE, exploratory diagnostics, configurable in-sample
+candidate comparisons, and a nonseasonal Hyndman-Khandakar ARIMA selector.
+No final model-selection decision is recorded; the automatic ARIMA selector
+still needs rolling-origin evaluation. For Stage 2, Keir selected daily DXY,
+nominal 10-year Treasury yield, S&P 500 returns, VIX, 10-year breakeven
+inflation, WTI spot, and optional gold-futures volume. The pipeline is
+implemented in `gold_vol_pipeline.predictors`; it derives close-to-close
+log-returns for the S&P 500. Central-bank demand remains deferred. No
+multivariate model or additional transformations have been selected.
 
 For AI-agent collaboration guidance, see [`AGENTS.md`](AGENTS.md) and [`.github/copilot-instructions.md`](.github/copilot-instructions.md). Shared AI/team decisions and handoffs are recorded in [`.ai/SESSION_LOG.md`](.ai/SESSION_LOG.md), using the protocol in [`.ai/README.md`](.ai/README.md). The project uses a main-only Git workflow described in [`GIT_WORKFLOW.md`](GIT_WORKFLOW.md). For a compact project context and pointers, see [`llms.txt`](llms.txt).
 
-The presentation-ready progress tracker is [`presentations/project-progress.qmd`](presentations/project-progress.qmd). It summarizes stage status and reads Git submission history when rendered. Fetch the latest `main` with `git fetch origin main`, then render with `quarto render presentations/project-progress.qmd`.
+The presentation-ready progress tracker is [`presentations/project-progress.qmd`](presentations/project-progress.qmd). It summarizes stage status and reads Git submission history when rendered. The model-development report is available as a [Beamer PDF](presentations/iteration-1-summary.pdf), with its [Quarto source](presentations/iteration-1-summary.qmd). Fetch the latest `main` with `git fetch origin main` before rendering updated presentations.

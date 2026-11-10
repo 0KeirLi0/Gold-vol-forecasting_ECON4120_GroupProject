@@ -53,6 +53,13 @@ def download_futures_prices(start: str, end: str) -> pd.DataFrame:
         dates = dates.tz_localize(None)
 
     prices = pd.DataFrame({"date": dates.normalize(), "close": close.to_numpy()})
+    if "Volume" in downloaded.columns:
+        volume = downloaded["Volume"]
+        if isinstance(volume, pd.DataFrame):
+            if volume.shape[1] != 1:
+                raise RuntimeError("Yahoo Finance returned an unexpected Volume shape.")
+            volume = volume.iloc[:, 0]
+        prices["volume"] = pd.to_numeric(volume.to_numpy(), errors="coerce")
     prices.attrs.update(
         source="Yahoo Finance",
         instrument="COMEX Gold Futures (continuous series, GC=F)",
@@ -91,16 +98,21 @@ def load_gold_prices_csv(
             f"Available columns: {available}."
         )
 
-    prices = raw.loc[:, [date_column, close_column]].rename(
+    selected_columns = [date_column, close_column]
+    if "volume" in raw.columns:
+        selected_columns.append("volume")
+    prices = raw.loc[:, selected_columns].rename(
         columns={date_column: "date", close_column: "close"}
     )
     try:
         prices["date"] = pd.to_datetime(prices["date"], errors="raise")
         prices["close"] = pd.to_numeric(prices["close"], errors="raise")
+        if "volume" in prices.columns:
+            prices["volume"] = pd.to_numeric(prices["volume"], errors="raise")
     except (TypeError, ValueError) as error:
         raise ValueError(
-            f"CSV columns {date_column!r} and {close_column!r} must contain "
-            "parseable dates and numeric prices."
+            f"CSV date/price columns and optional volume must contain "
+            "parseable dates and numeric values."
         ) from error
     if prices["date"].dt.tz is not None:
         prices["date"] = prices["date"].dt.tz_localize(None)
@@ -139,7 +151,10 @@ def prepare_dataset(
             f"{', '.join(sorted(missing_columns))}."
         )
 
-    data = prices.loc[:, ["date", "close"]].copy()
+    selected_columns = ["date", "close"]
+    if "volume" in prices.columns:
+        selected_columns.append("volume")
+    data = prices.loc[:, selected_columns].copy()
     dates = pd.to_datetime(data["date"], errors="raise")
     if dates.isna().any():
         raise ValueError("date values must not be missing.")
@@ -151,6 +166,13 @@ def prepare_dataset(
         raise ValueError("close values must be finite and not missing.")
     if (data["close"] <= 0).any():
         raise ValueError("close values must be positive.")
+    if "volume" in data.columns:
+        data["volume"] = pd.to_numeric(data["volume"], errors="raise")
+        volume_values = data["volume"].dropna().to_numpy(dtype=float)
+        if not np.isfinite(volume_values).all():
+            raise ValueError("volume values must be finite or missing.")
+        if (volume_values < 0).any():
+            raise ValueError("volume values must be non-negative.")
     if data["date"].duplicated().any():
         raise ValueError("prices must contain at most one close per date.")
 
@@ -178,10 +200,18 @@ def prepare_dataset(
             ),
         }
     )
+    if "volume" in data.columns:
+        result["volume"] = data["volume"]
     for key in ("source", "instrument", "currency", "price_unit"):
         if key in prices.attrs:
             result[key] = prices.attrs[key]
-    result = result.dropna().reset_index(drop=True)
+    required_columns = [
+        "log_return",
+        "target_start_date",
+        "target_end_date",
+        target,
+    ]
+    result = result.dropna(subset=required_columns).reset_index(drop=True)
     if result.empty:
         raise ValueError(
             f"At least {horizon + 2} dated prices are required to calculate "
