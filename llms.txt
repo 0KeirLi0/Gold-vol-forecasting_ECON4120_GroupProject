@@ -27,11 +27,12 @@ Model development should hand off model specifications and inputs to analysis; a
 - [Copilot instructions](.github/copilot-instructions.md): repository-specific guidance for Copilot sessions.
 - [Shared AI memory protocol](.ai/README.md): how agents record and use project context.
 - [AI/team handoff log](.ai/SESSION_LOG.md): dated decisions, findings, and handoffs.
-- [Git workflow](GIT_WORKFLOW.md): branch, commit, pull request, review, and merge policy.
+- [Git workflow](GIT_WORKFLOW.md): use `main` as the sole working branch; no topic branches or pull requests.
 
 ## Code and tests
 
 - [Data pipeline](src/gold_vol_pipeline/pipeline.py): Yahoo futures API download, CSV input, and no-look-ahead target construction.
 - [Pipeline tests](tests/test_pipeline.py): `python -m pytest`; see README for a single-test command.
 - [Interactive data review notebook](notebooks/01_inspect_gold_data.ipynb): inspect prices, review target alignment, visualize series, and save a run manifest.
+- [Return-only forecast baselines](src/gold_vol_pipeline/models.py): historical variance, rolling variance, EWMA, AR/MA squared returns, ARCH, and GARCH forecasts. These are candidates, not evaluated or selected models.
 - [Project progress presentation](presentations/project-progress.qmd): stage status, open handoffs, and a Git-history-based submission record for team members.

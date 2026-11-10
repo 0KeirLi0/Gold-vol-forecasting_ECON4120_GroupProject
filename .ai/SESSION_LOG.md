@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-10 — Consolidated project work on main
+- Author: Keir with Copilot
+- Type: decision
+- Context: Keir directed that all project work be consolidated into `main` and that contributors and AI agents use `main` only.
+- Outcome: Merged the Yahoo futures data pipeline and return-only model baselines into `main`; the package retains both `yfinance` and `scipy`. Confirmed the remote's advertised HEAD is `main`. Updated contributor and AI instructions to prohibit topic branches and PRs. GitHub API branch and PR listing returned 404, so PR state or review status could not be verified.
+- Artifacts: `src/gold_vol_pipeline/`, `tests/`, `README.md`, `GIT_WORKFLOW.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `llms.txt`
+- Next: Continue project changes directly on `main`; do not bypass repository protection if a direct push is rejected.
+
 ## 2026-11-10 — Verified end-to-end Yahoo futures CSV download
 - Author: Copilot
 - Type: finding
