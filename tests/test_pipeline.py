@@ -3,8 +3,7 @@ import pandas as pd
 import pytest
 
 from gold_vol_pipeline import (
-    download_gold_prices,
-    load_gold_prices_csv,
+    load_spot_prices_csv,
     prepare_dataset,
 )
 
@@ -76,7 +75,7 @@ def test_rejects_nonpositive_horizon():
 
 
 def test_loads_and_selects_csv_columns_and_records_provenance(tmp_path):
-    csv_path = tmp_path / "gold.csv"
+    csv_path = tmp_path / "spot.csv"
     pd.DataFrame(
         {
             "Date": pd.date_range("2024-01-01", periods=5),
@@ -85,7 +84,7 @@ def test_loads_and_selects_csv_columns_and_records_provenance(tmp_path):
         }
     ).to_csv(csv_path, index=False)
 
-    prices = load_gold_prices_csv(
+    prices = load_spot_prices_csv(
         csv_path,
         date_column="Date",
         close_column="USD Price",
@@ -100,45 +99,15 @@ def test_loads_and_selects_csv_columns_and_records_provenance(tmp_path):
 
 
 def test_csv_loader_reports_missing_columns(tmp_path):
-    csv_path = tmp_path / "gold.csv"
+    csv_path = tmp_path / "spot.csv"
     pd.DataFrame({"Timestamp": ["2024-01-01"], "Value": [2000]}).to_csv(
         csv_path, index=False
     )
 
     with pytest.raises(ValueError, match="CSV is missing selected column"):
-        load_gold_prices_csv(csv_path)
+        load_spot_prices_csv(csv_path)
 
 
 def test_csv_loader_reports_missing_file(tmp_path):
-    with pytest.raises(FileNotFoundError, match="Gold-price CSV not found"):
-        load_gold_prices_csv(tmp_path / "missing.csv")
-
-
-def test_yahoo_download_records_futures_instrument_metadata(monkeypatch):
-    import yfinance as yf
-
-    dates = pd.date_range("2024-01-01", periods=3)
-    sample = pd.DataFrame(
-        {"Close": [2000.0, 2002.0, 1999.0]},
-        index=dates,
-    )
-    monkeypatch.setattr(yf, "download", lambda *args, **kwargs: sample)
-
-    prices = download_gold_prices("2024-01-01", "2024-01-04")
-    dataset = prepare_dataset(prices, horizon=1)
-
-    assert prices.attrs["instrument"] == (
-        "COMEX Gold Futures (continuous series, GC=F)"
-    )
-    assert dataset["instrument"].eq(
-        "COMEX Gold Futures (continuous series, GC=F)"
-    ).all()
-
-
-def test_yahoo_empty_response_reports_futures_download_failure(monkeypatch):
-    import yfinance as yf
-
-    monkeypatch.setattr(yf, "download", lambda *args, **kwargs: pd.DataFrame())
-
-    with pytest.raises(RuntimeError, match="no gold futures prices"):
-        download_gold_prices("2020-01-01", "2020-02-01")
+    with pytest.raises(FileNotFoundError, match="Gold spot-price CSV not found"):
+        load_spot_prices_csv(tmp_path / "missing.csv")

@@ -38,11 +38,11 @@ These are areas of focus rather than exclusive ownership. Coordinate changes and
 
 ## Data and reproducibility
 
-The default series is Yahoo Finance's `GC=F`, a COMEX gold futures continuous series (typically a front-month series), not spot gold or a single fixed-expiry contract. Its returns may reflect contract rolls and futures-market effects such as contango or backwardation; record this when interpreting results. The pipeline computes close-to-close log returns and a forward target over the next five observed price sessions by default. The default target is realized variance, calculated as the sum of squared daily log returns; `realized_volatility` is also available as the square root of that sum. Horizon and target are configurable. The target uses future observations only as the label for each forecast origin; predictors in this baseline contain only information available through that origin.
+The team has not yet finalized spot versus futures; this is pending discussion at the next meeting. The current pipeline prototype accepts a local daily spot-price CSV. Yahoo Finance's `XAUUSD=X` spot ticker returned “No data found” when checked on 2026-11-06. Once the team confirms the instrument, align the pipeline and data source to that decision. Keep spot and futures as separate series, and record the actual provider and instrument in output metadata.
 
-Yahoo Finance's `XAUUSD=X` spot ticker returned “No data found” when checked on 2026-11-06. The project therefore uses the available `GC=F` futures series as its default, with the instrument change made explicit. If the project later needs spot, select a provider and use a spot CSV; do not combine spot and futures observations in one series. The CSV import accepts explicit date and close column names and records source/instrument metadata.
+The pipeline computes close-to-close log returns and a forward target over the next five observed price sessions by default. The default target is realized variance, calculated as the sum of squared daily log returns; `realized_volatility` is also available as the square root of that sum. Horizon and target are configurable. The target uses future observations only as the label for each forecast origin; predictors in this baseline contain only information available through that origin.
 
-Raw prices and prepared outputs are written under `data/` and are intentionally excluded from Git. Preserve these files for each analysis run and record the date range and pipeline options used. The prepared CSV includes the forecast-origin date, close, log return, target window dates, target value, and provider/instrument metadata. For reproducible comparisons, retain the exact raw input used rather than relying only on redownloading a potentially revised provider series.
+Keep the original input file under `data/raw/` (or another documented local path); raw data are excluded from Git. Preserve it for each analysis run and record its provenance, observation date range, and pipeline options. The prepared CSV includes the forecast-origin date, close, log return, target-window dates, target value, and provider/instrument metadata. Do not mix futures and spot observations. Do not share Bloomberg or other restricted exports unless the applicable license permits it.
 
 ### Setup and commands
 
@@ -61,23 +61,17 @@ python -m pip install -e ".[interactive]"
 python -m jupyter lab
 ```
 
-Open [`notebooks/01_inspect_gold_data.ipynb`](notebooks/01_inspect_gold_data.ipynb). The notebook lets you set the date range, horizon, and target; inspect and plot raw/processed futures data; check target dates and values; and save run-specific CSVs with a JSON manifest.
+Open [`notebooks/01_inspect_gold_data.ipynb`](notebooks/01_inspect_gold_data.ipynb). The notebook lets you set the input path and column names, horizon, and target; inspect and plot spot data; check target dates and values; and save prepared CSVs with a JSON manifest.
 
-Prepare a gold-price CSV with `date` and `close` columns:
+Prepare a spot-price CSV with `date` and `close` columns:
 
 ```bash
-python -m gold_vol_pipeline --input data/raw/gold_futures.csv \
-  --source "Provider name" --instrument "COMEX Gold Futures (continuous series)" \
+python -m gold_vol_pipeline --input data/raw/gold_spot.csv \
+  --source "Provider name" --instrument "Gold spot benchmark/instrument" \
   --currency USD --price-unit "USD per troy ounce"
 ```
 
-To download the default Yahoo continuous futures series directly, use:
-
-```bash
-python -m gold_vol_pipeline --start 2015-01-01 --end 2025-01-01
-```
-
-For alternate CSV headers, set `--date-column` and `--close-column`. The original input remains untouched; prepared data are saved to `data/processed/gold_futures.csv`. Override output paths with `--raw-output` and `--output`, and target settings with `--horizon` or `--target realized_variance|realized_volatility`. Yahoo downloads use `GC=F` and require `--start YYYY-MM-DD --end YYYY-MM-DD`; the end date is exclusive.
+For alternate CSV headers, set `--date-column` and `--close-column`. The original input remains untouched; prepared data are saved to `data/processed/gold_spot.csv`. Override output paths with `--raw-output` and `--output`, and target settings with `--horizon` or `--target realized_variance|realized_volatility`.
 
 Run the full test suite with `python -m pytest`. Run one test with:
 
