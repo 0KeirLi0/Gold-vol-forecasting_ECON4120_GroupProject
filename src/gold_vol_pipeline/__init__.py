@@ -1,5 +1,4 @@
 """Gold futures data preparation for volatility forecasting."""
-
 from .pipeline import (
     DEFAULT_HORIZON,
     DEFAULT_TARGET,
@@ -29,7 +28,6 @@ from .model_evaluation import (
     plot_residual_panel,
     plot_series_transformations,
     save_residuals,
-    select_arima_hk,
     transform_price_series,
 )
 
@@ -58,6 +56,5 @@ __all__ = [
     "plot_series_transformations",
     "rolling_variance_forecast",
     "save_residuals",
-    "select_arima_hk",
     "transform_price_series",
 ]

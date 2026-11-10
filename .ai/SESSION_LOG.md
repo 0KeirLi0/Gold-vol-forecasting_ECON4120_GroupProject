@@ -18,6 +18,14 @@ This is an append-only record of project context that may help future sessions. 
 - Artifacts: `src/gold_vol_pipeline/model_evaluation.py`, `notebooks/03_model_evaluation.ipynb`, `tests/test_model_evaluation.py`, `README.md`, `presentations/project-progress.qmd`, `pyproject.toml`
 - Next: Model analysis should review the diagnostics and information-criterion limitations, then use an agreed chronological out-of-sample evaluation before recommending a model.
 
+## 2026-11-10 — Added Hyndman-Khandakar ARIMA selection
+- Author: Copilot
+- Type: implementation
+- Context: Enoch requested automatic ARIMA parameter selection for the return-only volatility work.
+- Outcome: Added a nonseasonal Hyndman-Khandakar selector using KPSS differencing and bounded stepwise AICc search, with a CLI that fits squared returns by default and prints order, coefficients, candidate ranking, and a five-step variance-proxy forecast. On the local prepared Yahoo `GC=F` data (2,975 observations), the exploratory full-sample fit selected ARIMA(0,1,4), AICc -39098.363176; estimated trend/drift (`x1`) 3.122375346e-08, MA coefficients (-0.9178895503, 0.1926706782, -0.2153530483, 0.03742078706), and sigma2 1.183282999e-07. This is a full-sample fit, not a held-out evaluation or model-selection decision.
+- Artifacts: `src/gold_vol_pipeline/auto_arima.py`, `tests/test_auto_arima.py`, `README.md`, `presentations/project-progress.qmd`
+- Next: Include the selector in a chronological rolling-origin evaluation before comparing it with the existing baselines; confirm the target/instrument choices with the team.
+
 ## 2026-11-10 — Added return-data assumption diagnostics
 - Author: Copilot
 - Type: implementation

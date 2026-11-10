@@ -11,7 +11,6 @@ from gold_vol_pipeline.model_evaluation import (
     plot_residual_panel,
     plot_series_transformations,
     save_residuals,
-    select_arima_hk,
     transform_price_series,
 )
 
@@ -108,6 +107,7 @@ def test_ljung_box_tests_cover_residual_and_squared_standardized_series():
         "residuals",
         "squared_standardized_residuals",
     }
+    assert tests["model_df"].eq(0).all()
     assert tests["p_value"].between(0, 1).all()
 
 
@@ -141,18 +141,3 @@ def test_residuals_can_be_saved_and_plotted(tmp_path):
     saved = pd.read_csv(residual_path, index_col=0)
     assert saved.shape == evaluation.residuals.shape
     assert plot_path.exists()
-
-
-def test_hyndman_khandakar_selects_a_nonseasonal_arima():
-    rng = np.random.default_rng(23)
-    noise = rng.normal(size=120)
-    series = np.zeros_like(noise)
-    for position in range(1, len(series)):
-        series[position] = 0.6 * series[position - 1] + noise[position]
-
-    selected = select_arima_hk(series, max_p=2, max_q=2, max_d=1)
-
-    assert len(selected.order) == 3
-    assert selected.seasonal_order == (0, 0, 0, 0)
-    assert np.isfinite(selected.aic())
-    assert np.isfinite(selected.bic())

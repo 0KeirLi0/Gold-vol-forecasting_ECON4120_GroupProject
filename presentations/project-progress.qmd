@@ -30,8 +30,8 @@ Each round should hand off documented inputs, evidence, limitations, and a next-
 | Stage | Current evidence | Status |
 |---|---|---|
 | Infrastructure | Python pipeline downloads Yahoo `GC=F` futures data, builds forward realized-variance labels, and saves raw/prepared CSVs. An interactive notebook and focused tests support inspection. | In progress |
-| Model development | Return-only baselines, sequential forecast/actual charts with MAE/RMSE, and an evaluation workbench are available: transformations, ADF/ACF/PACF diagnostics, AR/MA/ARMA and ARCH/GARCH/EGARCH candidates, AIC/BIC, residual checks, and nonseasonal HK ARIMA search. | Exploratory tools available; interpretation pending |
-| Model analysis | Baseline error summaries, candidate information criteria, and residual diagnostics can be generated, but no team interpretation or model-selection decision is recorded yet. | Awaiting reviewed evidence |
+| Model development | Return-only baselines, sequential forecast/actual charts with MAE/RMSE, and an evaluation workbench are available: transformations, ADF/ACF/PACF diagnostics, AR/MA/ARMA and ARCH/GARCH/EGARCH candidates, AIC/BIC, residual checks, and nonseasonal HK ARIMA search. A full-sample exploratory squared-return fit selected ARIMA(0,1,4); this is not out-of-sample evidence. | Exploratory tools available; interpretation pending |
+| Model analysis | `notebooks/02_models.ipynb` compares seven return-only baselines with five-session realized variance over up to 500 forecast origins using MAE/RMSE. Notebook 03 adds in-sample AIC/BIC and residual diagnostics. Automatic ARIMA is not yet included in the rolling-origin comparison; no final model decision is recorded. | Comparison evidence available; decision pending |
 
 ## Data readiness
 

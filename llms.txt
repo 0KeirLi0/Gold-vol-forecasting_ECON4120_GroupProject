@@ -36,6 +36,6 @@ Model development should hand off model specifications and inputs to analysis; a
 - [Interactive data review notebook](notebooks/01_inspect_gold_data.ipynb): inspect prices, review target alignment, visualize series, and save a run manifest.
 - [Return-only forecast baselines](src/gold_vol_pipeline/models.py): historical variance, rolling variance, EWMA, AR/MA squared returns, ARCH, and GARCH forecasts. These are candidates, not evaluated or selected models.
 - [Baseline forecast comparison notebook](notebooks/02_models.ipynb): sequential forecast/actual charts and MAE/RMSE summaries for a selected origin window.
-- [Model-evaluation utilities](src/gold_vol_pipeline/model_evaluation.py): transformations, ADF/ACF/PACF diagnostics, AR/MA/ARMA and ARCH/GARCH/EGARCH AIC/BIC comparison, Hyndman-Khandakar ARIMA selection, residual export/plots, and Ljung-Box tests.
+- [Model-evaluation utilities](src/gold_vol_pipeline/model_evaluation.py): transformations, ADF/ACF/PACF diagnostics, AR/MA/ARMA and ARCH/GARCH/EGARCH AIC/BIC comparison, residual export/plots, and Ljung-Box tests. The nonseasonal Hyndman-Khandakar selector is in `src/gold_vol_pipeline/auto_arima.py`.
 - [Model-evaluation notebook](notebooks/03_model_evaluation.ipynb): interactively run the diagnostics and display the candidate comparison table; outputs stay under git-ignored `data/`.
 - [Project progress presentation](presentations/project-progress.qmd): stage status, open handoffs, and a Git-history-based submission record for team members.

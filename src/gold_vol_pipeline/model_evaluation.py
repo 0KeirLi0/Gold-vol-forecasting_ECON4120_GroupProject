@@ -323,50 +323,17 @@ def compare_candidate_models(
     )
 
 
-def select_arima_hk(
-    series: Sequence[float] | pd.Series,
-    *,
-    max_p: int = 5,
-    max_q: int = 5,
-    max_d: int = 2,
-    trace: bool = False,
-):
-    """Select a nonseasonal ARIMA model with pmdarima's HK stepwise search."""
-    values = _numeric_series(series, min_observations=30)
-    for name, value in (("max_p", max_p), ("max_q", max_q), ("max_d", max_d)):
-        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-            raise ValueError(f"{name} must be a nonnegative integer.")
-    try:
-        from pmdarima import auto_arima
-    except ImportError as error:  # pragma: no cover - dependency installation failure
-        raise ImportError(
-            'Hyndman-Khandakar selection requires pmdarima; install project dependencies with "python -m pip install -e .".'
-        ) from error
-
-    return auto_arima(
-        values,
-        start_p=0,
-        start_q=0,
-        max_p=max_p,
-        max_q=max_q,
-        max_d=max_d,
-        d=None,
-        test="kpss",
-        seasonal=False,
-        stepwise=True,
-        information_criterion="aicc",
-        error_action="raise",
-        suppress_warnings=False,
-        trace=trace,
-    )
-
-
 def ljung_box_residual_tests(
     evaluation: ModelEvaluation,
     *,
     lags: Sequence[int] = (10, 20),
+    model_df: int = 0,
 ) -> pd.DataFrame:
-    """Test residual autocorrelation and squared-standardized-residual dependence."""
+    """Test residual dependence with an optional Ljung-Box model-DF correction.
+
+    The default ``model_df=0`` reports unadjusted p-values; callers may provide
+    a correction appropriate to their fitted model and inference plan.
+    """
     test_lags = tuple(lags)
     if not test_lags or any(
         isinstance(lag, bool) or not isinstance(lag, int) or lag < 1
@@ -375,6 +342,8 @@ def ljung_box_residual_tests(
         raise ValueError("lags must contain positive integer values.")
     if len(set(test_lags)) != len(test_lags):
         raise ValueError("lags must not contain duplicates.")
+    if isinstance(model_df, bool) or not isinstance(model_df, int) or model_df < 0:
+        raise ValueError("model_df must be a nonnegative integer.")
 
     rows: list[dict[str, object]] = []
     for model_name in evaluation.residuals.columns:
@@ -390,13 +359,19 @@ def ljung_box_residual_tests(
                 raise ValueError(
                     f"residual series for {model_name} is too short for lags {test_lags}."
                 )
-            result = acorr_ljungbox(residuals, lags=valid_lags, return_df=True)
+            result = acorr_ljungbox(
+                residuals,
+                lags=valid_lags,
+                model_df=model_df,
+                return_df=True,
+            )
             for lag, row in result.iterrows():
                 rows.append(
                     {
                         "model_name": model_name,
                         "series_tested": kind,
                         "lag": int(lag),
+                        "model_df": model_df,
                         "ljung_box_statistic": float(row["lb_stat"]),
                         "p_value": float(row["lb_pvalue"]),
                     }

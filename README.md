@@ -99,12 +99,12 @@ origin_returns = dataset["log_return"].dropna()
 forecasts = baseline_forecasts(origin_returns, horizon=5)
 ```
 
-Only pass returns known at the forecast origin. A single-origin forecast is not
-a backtest or model-selection result. `prediction_history` and
-[`notebooks/02_models.ipynb`](notebooks/02_models.ipynb) provide sequential
-forecast/actual series and MAE/RMSE summaries for the selected origin window.
-These are exploratory baseline comparisons, not a final model-selection result
-or an evaluation on a team-confirmed instrument.
+Only pass returns known at the forecast origin. These are candidate baseline
+forecasts, not a backtest by themselves. `notebooks/02_models.ipynb` performs
+rolling-origin comparisons against prepared targets for up to the latest 500
+origins and reports MAE/RMSE. The current comparison uses the working `GC=F`
+series; target windows overlap, so the results are exploratory and do not yet
+constitute a final model-selection decision.
 
 Run exploratory diagnostics on the prepared return series with:
 
@@ -125,21 +125,34 @@ and EGARCH candidate orders and displays their model names, AIC, BIC, and
 convergence status in a readable table. These are in-sample criteria for the
 same input series; they do not choose a final project model.
 
-The notebook also runs a nonseasonal Hyndman-Khandakar stepwise ARIMA search
-using KPSS differencing tests and AICc, saves raw and standardized residual
-series under the git-ignored `data/processed/` directory, plots residual panels,
-and applies Ljung-Box tests to residuals and squared standardized residuals.
+The notebook also saves raw and standardized residual series under the
+git-ignored `data/processed/` directory, plots residual panels, and applies
+Ljung-Box tests to residuals and squared standardized residuals.
 The evaluation helpers are in
 [`src/gold_vol_pipeline/model_evaluation.py`](src/gold_vol_pipeline/model_evaluation.py).
+
+Select a nonseasonal ARIMA model for squared returns (the volatility proxy)
+with the Hyndman-Khandakar stepwise procedure:
+
+```bash
+python -m gold_vol_pipeline.auto_arima --input data/processed/gold_futures.csv
+```
+
+The implementation uses KPSS tests to choose the differencing order and
+stepwise AICc search for AR/MA orders. It prints the selected order, fitted
+coefficients, candidate rankings, and a five-session variance-proxy forecast.
+Selection on the full sample is exploratory; use training-only selection
+inside a chronological backtest before comparing forecast performance.
 
 As the project develops, record enough information to reproduce and interpret each iteration: data inputs and transformations, model specification, evaluation evidence, selection criteria, limitations, and the rationale for the next step. Do not publish sensitive or restricted data; document its provenance and access requirements instead.
 
 ## Repository status
 
 The repository includes a Python data-preparation module, return-only candidate
-forecasts, sequential forecast histories, exploratory model diagnostics, and
-configurable in-sample candidate comparisons. The team has not yet recorded an
-interpretation or model-selection decision based on these tools.
+forecasts, sequential rolling-origin comparisons with MAE/RMSE, exploratory
+diagnostics, configurable in-sample candidate comparisons, and a nonseasonal
+Hyndman-Khandakar ARIMA selector. No final model-selection decision is recorded;
+the automatic ARIMA selector still needs rolling-origin evaluation.
 
 For AI-agent collaboration guidance, see [`AGENTS.md`](AGENTS.md) and [`.github/copilot-instructions.md`](.github/copilot-instructions.md). Shared AI/team decisions and handoffs are recorded in [`.ai/SESSION_LOG.md`](.ai/SESSION_LOG.md), using the protocol in [`.ai/README.md`](.ai/README.md). The project uses a main-only Git workflow described in [`GIT_WORKFLOW.md`](GIT_WORKFLOW.md). For a compact project context and pointers, see [`llms.txt`](llms.txt).
 
