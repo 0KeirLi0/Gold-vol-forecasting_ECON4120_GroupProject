@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-10 — Retired superseded branch refs
+- Author: Copilot
+- Type: handoff
+- Context: After the data-pipeline and model-development work was pushed to `main`, the remaining remote branch tips were checked against `origin/main`.
+- Outcome: Confirmed each non-main branch tip was an ancestor of `origin/main`, deleted the `data/interactive-pipeline-review`, `feat/model-development`, and `docs/project-guides` remote refs, and removed the local data branch. The remote advertises `main` as HEAD. GitHub API branch and PR listing remained unavailable (404), so PR state or review status is not claimed.
+- Artifacts: `main`, `GIT_WORKFLOW.md`, `presentations/project-progress.qmd`
+- Next: Work directly on `main`; the progress deck's contribution instructions now fetch `origin main`.
+
 ## 2026-11-10 — Consolidated project work on main
 - Author: Keir with Copilot
 - Type: decision

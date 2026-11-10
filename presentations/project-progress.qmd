@@ -52,7 +52,7 @@ Each round should hand off documented inputs, evidence, limitations, and a next-
 
 ## Git submissions by team member
 
-The table and commit list below are generated from `git log --all` when this deck is rendered. They include all three team members, counting commits attributed to the author identities mapped below across locally available branches. They do not count uncommitted changes or independently enumerate GitHub PRs. Fetch branches first so recent teammate submissions appear.
+The table and commit list below are generated from `git log --all` when this deck is rendered. With the main-only workflow, they show commits reachable from the locally available `main` history, attributed using the author identities mapped below. They do not count uncommitted changes or independently enumerate GitHub PRs. Fetch `main` before rendering so recent submissions appear.
 
 ```{python}
 import subprocess
@@ -125,10 +125,10 @@ else:
         )
 ```
 
-Before rendering, fetch shared branches so the report includes their latest commits:
+Before rendering, fetch the shared `main` branch so the report includes its latest commits:
 
 ```bash
-git fetch --all
+git fetch origin main
 quarto render presentations/project-progress.qmd
 ```
 
