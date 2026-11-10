@@ -1,3 +1,5 @@
+import os
+import subprocess
 import sys
 
 import numpy as np
@@ -16,6 +18,24 @@ from gold_vol_pipeline import (
     prediction_history,
     rolling_variance_forecast,
 )
+
+
+def test_importing_package_preserves_matplotlib_backend():
+    pytest.importorskip("matplotlib")
+    subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            (
+                "import matplotlib; "
+                "before = matplotlib.get_backend(); "
+                "import gold_vol_pipeline; "
+                "assert matplotlib.get_backend() == before"
+            ),
+        ],
+        check=True,
+        env={**os.environ, "MPLBACKEND": "svg"},
+    )
 
 
 def test_main_prints_prediction_results(tmp_path, capsys, monkeypatch):

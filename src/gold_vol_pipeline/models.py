@@ -10,13 +10,6 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import minimize, minimize_scalar
 
-try:
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-except ImportError:  # pragma: no cover - optional for chart generation
-    plt = None
-
 
 def _validated_returns(returns: Sequence[float] | pd.Series) -> np.ndarray:
     try:
@@ -351,11 +344,13 @@ def generate_prediction_chart(
     target_column: str = "realized_variance",
 ) -> str:
     """Save a comparison chart of forecasted versus actual realized variance."""
-    if plt is None:
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError as error:  # pragma: no cover - depends on optional environment
         raise ImportError(
             "matplotlib is required to generate prediction charts. "
             'Install the optional interactive dependencies with "python -m pip install -e \".[interactive]\"".'
-        )
+        ) from error
 
     comparison = prediction_history(
         csv_path,
