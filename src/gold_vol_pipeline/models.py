@@ -2,11 +2,20 @@
 
 from __future__ import annotations
 
+import argparse
 from collections.abc import Sequence
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize, minimize_scalar
+
+try:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+except ImportError:  # pragma: no cover - optional for chart generation
+    plt = None
 
 
 def _validated_returns(returns: Sequence[float] | pd.Series) -> np.ndarray:
@@ -255,3 +264,190 @@ def baseline_forecasts(
         "arch1": arch1_variance_forecast(values, horizon=horizon),
         "garch11": garch11_variance_forecast(values, horizon=horizon),
     }
+
+
+def _load_returns_from_csv(csv_path: str, *, column: str = "log_return") -> pd.Series:
+    """Load a prepared dataset and return the log-return series for forecasting."""
+    frame = pd.read_csv(csv_path)
+    if column not in frame.columns:
+        raise ValueError(
+            f"Column '{column}' was not found in '{csv_path}'. "
+            f"Available columns: {list(frame.columns)}"
+        )
+    returns = frame[column].dropna()
+    if returns.empty:
+        raise ValueError(f"Column '{column}' in '{csv_path}' contains no usable values.")
+    return returns
+
+
+def _print_forecasts(forecasts: dict[str, float]) -> None:
+    """Format and print the forecast dictionary in a human-readable way."""
+    for model_name, value in forecasts.items():
+        print(f"{model_name}: {float(value):.12f}")
+
+
+def prediction_history(
+    csv_path: str,
+    *,
+    horizon: int = 5,
+    rolling_window: int = 20,
+    ewma_decay: float = 0.94,
+    column: str = "log_return",
+    target_column: str = "realized_variance",
+    sample_size: int | None = None,
+) -> pd.DataFrame:
+    """Backtest each baseline on the prepared data and compare forecasts to actuals."""
+    frame = pd.read_csv(csv_path)
+    if sample_size is not None:
+        frame = frame.tail(sample_size).reset_index(drop=True)
+    if column not in frame.columns:
+        raise ValueError(f"Column '{column}' not found in '{csv_path}'")
+    if target_column not in frame.columns:
+        raise ValueError(f"Target column '{target_column}' not found in '{csv_path}'")
+
+    rows: list[dict[str, object]] = []
+    for index in range(len(frame)):
+        origin_returns = frame.loc[:index, column].dropna()
+        if len(origin_returns) < 3:
+            continue
+        try:
+            forecast = baseline_forecasts(
+                origin_returns,
+                horizon=horizon,
+                rolling_window=rolling_window,
+                ewma_decay=ewma_decay,
+            )
+        except (RuntimeError, ValueError):
+            continue
+        row = {
+            "date": frame.iloc[index]["date"],
+            "actual": float(frame.iloc[index][target_column]),
+        }
+        row.update(forecast)
+        rows.append(row)
+
+    if not rows:
+        raise ValueError("No prediction rows were generated from the supplied dataset.")
+    return pd.DataFrame(rows)
+
+
+def generate_prediction_chart(
+    csv_path: str,
+    *,
+    horizon: int = 5,
+    rolling_window: int = 20,
+    ewma_decay: float = 0.94,
+    output_path: str = "plots/prediction_vs_actual.png",
+    sample_size: int | None = 500,
+    column: str = "log_return",
+    target_column: str = "realized_variance",
+) -> str:
+    """Save a comparison chart of forecasted versus actual realized variance."""
+    if plt is None:
+        raise ImportError(
+            "matplotlib is required to generate prediction charts. "
+            'Install the optional interactive dependencies with "python -m pip install -e \".[interactive]\"".'
+        )
+
+    comparison = prediction_history(
+        csv_path,
+        horizon=horizon,
+        rolling_window=rolling_window,
+        ewma_decay=ewma_decay,
+        column=column,
+        target_column=target_column,
+        sample_size=sample_size,
+    )
+
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+
+    figure, axis = plt.subplots(figsize=(12, 7))
+    axis.plot(comparison["date"], comparison["actual"], label="actual", color="black", linewidth=2)
+    for model_name in [
+        "historical_variance",
+        "rolling_variance",
+        "ewma_variance",
+        "ar1_squared_return",
+        "ma1_squared_return",
+        "arch1",
+        "garch11",
+    ]:
+        axis.plot(comparison["date"], comparison[model_name], label=model_name, alpha=0.8)
+    axis.set_title("Forecasted vs actual realized variance")
+    axis.set_ylabel("Realized variance")
+    axis.set_xlabel("Forecast origin date")
+    axis.legend(loc="upper right", bbox_to_anchor=(1.0, 1.0), fontsize=8)
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    figure.savefig(output, dpi=200)
+    plt.close(figure)
+    return str(output)
+
+
+def main() -> int:
+    """Run a forecast on a prepared CSV and print the prediction results."""
+    parser = argparse.ArgumentParser(
+        description="Forecast forward realized variance from a prepared log-return series."
+    )
+    parser.add_argument(
+        "--input",
+        default="data/processed/gold_futures.csv",
+        help="CSV file containing the prepared dataset.",
+    )
+    parser.add_argument(
+        "--column",
+        default="log_return",
+        help="Column with log returns to use for the forecast.",
+    )
+    parser.add_argument(
+        "--horizon",
+        type=int,
+        default=5,
+        help="Number of future observations to aggregate into the variance forecast.",
+    )
+    parser.add_argument(
+        "--rolling-window",
+        type=int,
+        default=20,
+        help="Window length for the rolling-variance baseline.",
+    )
+    parser.add_argument(
+        "--ewma-decay",
+        type=float,
+        default=0.94,
+        help="Decay parameter for the EWMA baseline.",
+    )
+    parser.add_argument(
+        "--plot-output",
+        default=None,
+        help="Optional output path for a forecast-vs-actual chart. When omitted, no chart is created.",
+    )
+    args = parser.parse_args()
+
+    returns = _load_returns_from_csv(args.input, column=args.column)
+    forecasts = baseline_forecasts(
+        returns,
+        horizon=args.horizon,
+        rolling_window=args.rolling_window,
+        ewma_decay=args.ewma_decay,
+    )
+
+    print(f"Loaded {len(returns)} return observations from {args.input}")
+    print(f"Forecast horizon: {args.horizon}")
+    _print_forecasts(forecasts)
+
+    if args.plot_output:
+        chart_path = generate_prediction_chart(
+            args.input,
+            horizon=args.horizon,
+            rolling_window=args.rolling_window,
+            ewma_decay=args.ewma_decay,
+            output_path=args.plot_output,
+        )
+        print(f"Chart saved to {chart_path}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

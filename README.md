@@ -104,6 +104,16 @@ forecasts, not a backtest or model-selection result. The project still needs
 chronological out-of-sample evaluation and comparison against prepared target
 values; no model has yet been evaluated on the team's selected gold series.
 
+Run exploratory diagnostics on the prepared return series with:
+
+```bash
+python -m gold_vol_pipeline.diagnostics --input data/processed/gold_futures.csv
+```
+
+The report includes tests for zero mean, stationarity, serial dependence,
+ARCH effects, and return normality. These are diagnostic checks, not proof
+that a model's assumptions hold or a substitute for out-of-sample evaluation.
+
 As the project develops, record enough information to reproduce and interpret each iteration: data inputs and transformations, model specification, evaluation evidence, selection criteria, limitations, and the rationale for the next step. Do not publish sensitive or restricted data; document its provenance and access requirements instead.
 
 ## Repository status

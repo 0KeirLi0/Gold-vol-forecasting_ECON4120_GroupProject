@@ -14,7 +14,10 @@ from .models import (
     ewma_variance_forecast,
     expanding_variance_forecast,
     garch11_variance_forecast,
+    generate_prediction_chart,
+    main,
     ma1_squared_return_forecast,
+    prediction_history,
     rolling_variance_forecast,
 )
 
@@ -29,7 +32,10 @@ __all__ = [
     "ewma_variance_forecast",
     "expanding_variance_forecast",
     "garch11_variance_forecast",
+    "generate_prediction_chart",
+    "main",
     "ma1_squared_return_forecast",
     "prepare_dataset",
+    "prediction_history",
     "rolling_variance_forecast",
 ]

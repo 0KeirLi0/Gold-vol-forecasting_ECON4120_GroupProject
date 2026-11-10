@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-10 — Added return-data assumption diagnostics
+- Author: Copilot
+- Type: implementation
+- Context: The return-only baseline models needed a repeatable way to inspect whether prepared returns display properties relevant to their assumptions.
+- Outcome: Added `gold_vol_pipeline.diagnostics` with checks for mean-zero evidence, return/squared-return stationarity, serial dependence, ARCH effects, and normality. The tests are exploratory diagnostics; they do not establish assumptions or select a model.
+- Artifacts: `src/gold_vol_pipeline/diagnostics.py`, `tests/test_diagnostics.py`, `pyproject.toml`, `README.md`
+- Next: Run the report on each analysis dataset and interpret results alongside chronological out-of-sample comparisons.
+
 ## 2026-11-10 — Retired superseded branch refs
 - Author: Copilot
 - Type: handoff

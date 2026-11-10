@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -10,8 +12,39 @@ from gold_vol_pipeline import (
     expanding_variance_forecast,
     garch11_variance_forecast,
     ma1_squared_return_forecast,
+    main,
     rolling_variance_forecast,
 )
+
+
+def test_main_prints_prediction_results(tmp_path, capsys, monkeypatch):
+    csv_path = tmp_path / "returns.csv"
+    pd.DataFrame({"log_return": [0.01, -0.02, 0.03, 0.02, -0.01]}).to_csv(
+        csv_path, index=False
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "models.py",
+            "--input",
+            str(csv_path),
+            "--horizon",
+            "2",
+            "--rolling-window",
+            "3",
+            "--ewma-decay",
+            "0.9",
+        ],
+    )
+
+    result = main()
+    captured = capsys.readouterr().out
+
+    assert result == 0
+    assert "Forecast horizon: 2" in captured
+    assert "historical_variance:" in captured
+    assert "garch11:" in captured
 
 
 def test_historical_and_rolling_variance_forecasts_sum_over_horizon():
