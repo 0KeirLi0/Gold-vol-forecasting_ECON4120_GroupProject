@@ -100,9 +100,11 @@ forecasts = baseline_forecasts(origin_returns, horizon=5)
 ```
 
 Only pass returns known at the forecast origin. These are candidate baseline
-forecasts, not a backtest or model-selection result. The project still needs
-chronological out-of-sample evaluation and comparison against prepared target
-values; no model has yet been evaluated on the team's selected gold series.
+forecasts, not a backtest by themselves. `notebooks/02_models.ipynb` performs
+rolling-origin comparisons against prepared targets for up to the latest 500
+origins and reports MAE/RMSE. The current comparison uses the working `GC=F`
+series; target windows overlap, so the results are exploratory and do not yet
+constitute a final model-selection decision.
 
 Run exploratory diagnostics on the prepared return series with:
 
@@ -114,11 +116,28 @@ The report includes tests for zero mean, stationarity, serial dependence,
 ARCH effects, and return normality. These are diagnostic checks, not proof
 that a model's assumptions hold or a substitute for out-of-sample evaluation.
 
+Select a nonseasonal ARIMA model for squared returns (the volatility proxy)
+with the Hyndman-Khandakar stepwise procedure:
+
+```bash
+python -m gold_vol_pipeline.auto_arima --input data/processed/gold_futures.csv
+```
+
+The implementation uses KPSS tests to choose the differencing order and
+stepwise AICc search for AR/MA orders. It prints the selected order, fitted
+coefficients, candidate rankings, and a five-session variance-proxy forecast.
+Selection on the full sample is exploratory; use training-only selection
+inside a chronological backtest before comparing forecast performance.
+
 As the project develops, record enough information to reproduce and interpret each iteration: data inputs and transformations, model specification, evaluation evidence, selection criteria, limitations, and the rationale for the next step. Do not publish sensitive or restricted data; document its provenance and access requirements instead.
 
 ## Repository status
 
-The repository includes a Python data-preparation module, return-only candidate baseline forecast functions, and focused tests. Chronological backtesting, model comparison, and project-specific forecast evaluation are not implemented yet.
+The repository includes a Python data-preparation module, return-only baseline
+forecasts, return-data diagnostics, and a nonseasonal Hyndman-Khandakar ARIMA
+selector. The notebook compares the baseline forecasts with realized variance;
+the automatic ARIMA selector still needs rolling-origin evaluation before it
+can be included in that comparison.
 
 For AI-agent collaboration guidance, see [`AGENTS.md`](AGENTS.md) and [`.github/copilot-instructions.md`](.github/copilot-instructions.md). Shared AI/team decisions and handoffs are recorded in [`.ai/SESSION_LOG.md`](.ai/SESSION_LOG.md), using the protocol in [`.ai/README.md`](.ai/README.md). The project uses a main-only Git workflow described in [`GIT_WORKFLOW.md`](GIT_WORKFLOW.md). For a compact project context and pointers, see [`llms.txt`](llms.txt).
 

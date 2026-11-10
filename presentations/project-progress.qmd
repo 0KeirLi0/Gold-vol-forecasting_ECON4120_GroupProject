@@ -30,8 +30,8 @@ Each round should hand off documented inputs, evidence, limitations, and a next-
 | Stage | Current evidence | Status |
 |---|---|---|
 | Infrastructure | Python pipeline downloads Yahoo `GC=F` futures data, builds forward realized-variance labels, and saves raw/prepared CSVs. An interactive notebook and focused tests support inspection. | In progress |
-| Model development | Enoch added the data-preparation checklist and return-only candidate forecasts (expanding/rolling variance, EWMA, AR/MA of squared returns, ARCH, and GARCH). | Baselines available; evaluation pending |
-| Model analysis | No out-of-sample comparison or model-selection decision is recorded yet. | Awaiting evaluation evidence |
+| Model development | Enoch added return-only candidate forecasts and a nonseasonal Hyndman-Khandakar ARIMA selector for squared returns (KPSS differencing plus stepwise AICc). The current full-sample exploratory fit selected ARIMA(0,1,4); this is not out-of-sample evidence. | Candidate methods available; evaluation continues |
+| Model analysis | `notebooks/02_models.ipynb` compares seven return-only baselines with five-session realized variance over the latest up to 500 forecast origins using MAE/RMSE. Automatic ARIMA is not yet included in that rolling-origin comparison; no final model decision is recorded. | Comparison evidence available; decision pending |
 
 ## Data readiness
 
