@@ -81,11 +81,34 @@ python -m pytest tests/test_pipeline.py::test_default_target_is_forward_five_ses
 
 There is no configured linter yet.
 
+### Return-only baseline forecasts
+
+The `gold_vol_pipeline` package also provides return-only variance forecasts:
+expanding historical variance, rolling historical variance, EWMA, AR(1) and
+MA(1) models of squared returns, ARCH(1), and GARCH(1,1). Each forecast
+function accepts returns available through a forecast origin and a configurable
+horizon; it returns the expected variance summed over the next horizon
+observations, matching the pipeline's realized-variance target definition.
+For example:
+
+```python
+from gold_vol_pipeline import baseline_forecasts, prepare_dataset
+
+dataset = prepare_dataset(prices, horizon=5)
+origin_returns = dataset["log_return"].dropna()
+forecasts = baseline_forecasts(origin_returns, horizon=5)
+```
+
+Only pass returns known at the forecast origin. These are candidate baseline
+forecasts, not a backtest or model-selection result. The project still needs
+chronological out-of-sample evaluation and comparison against prepared target
+values; no model has yet been evaluated on the team's selected gold series.
+
 As the project develops, record enough information to reproduce and interpret each iteration: data inputs and transformations, model specification, evaluation evidence, selection criteria, limitations, and the rationale for the next step. Do not publish sensitive or restricted data; document its provenance and access requirements instead.
 
 ## Repository status
 
-The repository now includes a Python data-preparation module and focused tests. Model training, model comparison, and project-specific forecast evaluation are not implemented yet.
+The repository includes a Python data-preparation module, return-only candidate baseline forecast functions, and focused tests. Chronological backtesting, model comparison, and project-specific forecast evaluation are not implemented yet.
 
 For AI-agent collaboration guidance, see [`AGENTS.md`](AGENTS.md) and [`.github/copilot-instructions.md`](.github/copilot-instructions.md). Shared AI/team decisions and handoffs are recorded in [`.ai/SESSION_LOG.md`](.ai/SESSION_LOG.md), using the protocol in [`.ai/README.md`](.ai/README.md). For the team’s branch, pull request, and merge process, see [`GIT_WORKFLOW.md`](GIT_WORKFLOW.md). For a compact project context and pointers, see [`llms.txt`](llms.txt).
 
