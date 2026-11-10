@@ -100,9 +100,11 @@ forecasts = baseline_forecasts(origin_returns, horizon=5)
 ```
 
 Only pass returns known at the forecast origin. A single-origin forecast is not
-a backtest or model-selection result. `prediction_history` provides sequential
-forecast/actual series, but formal loss summaries and evaluation on a team-
-confirmed instrument remain outstanding.
+a backtest or model-selection result. `prediction_history` and
+[`notebooks/02_models.ipynb`](notebooks/02_models.ipynb) provide sequential
+forecast/actual series and MAE/RMSE summaries for the selected origin window.
+These are exploratory baseline comparisons, not a final model-selection result
+or an evaluation on a team-confirmed instrument.
 
 Run exploratory diagnostics on the prepared return series with:
 

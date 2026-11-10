@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-10 — Added sequential baseline forecast comparison
+- Author: Enoch
+- Type: implementation
+- Context: Baseline variance forecasts needed a time-ordered comparison with realized-variance targets.
+- Outcome: `prediction_history` now supports evaluating a recent window of forecast origins while using all prior returns at each origin. The model notebook summarizes MAE/RMSE and plots actual versus forecast values by baseline. This is exploratory evidence, not a final model-selection decision.
+- Artifacts: `src/gold_vol_pipeline/models.py`, `notebooks/02_models.ipynb`, `plots/prediction_vs_actual.png`, `tests/test_models.py`
+- Next: Confirm the evaluation window, target, and selection criteria with the team before interpreting results.
+
 ## 2026-11-10 — Added model-evaluation workbench
 - Author: Copilot
 - Type: implementation

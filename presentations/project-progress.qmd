@@ -30,8 +30,8 @@ Each round should hand off documented inputs, evidence, limitations, and a next-
 | Stage | Current evidence | Status |
 |---|---|---|
 | Infrastructure | Python pipeline downloads Yahoo `GC=F` futures data, builds forward realized-variance labels, and saves raw/prepared CSVs. An interactive notebook and focused tests support inspection. | In progress |
-| Model development | Return-only forecasts and an evaluation workbench are available: transformations, ADF/ACF/PACF diagnostics, AR/MA/ARMA and ARCH/GARCH/EGARCH candidates, AIC/BIC, residual checks, and nonseasonal HK ARIMA search. | Exploratory tools available; interpretation pending |
-| Model analysis | Candidate information criteria and residual diagnostics can be generated, but no team interpretation or model-selection decision is recorded yet. | Awaiting reviewed evidence |
+| Model development | Return-only baselines, sequential forecast/actual charts with MAE/RMSE, and an evaluation workbench are available: transformations, ADF/ACF/PACF diagnostics, AR/MA/ARMA and ARCH/GARCH/EGARCH candidates, AIC/BIC, residual checks, and nonseasonal HK ARIMA search. | Exploratory tools available; interpretation pending |
+| Model analysis | Baseline error summaries, candidate information criteria, and residual diagnostics can be generated, but no team interpretation or model-selection decision is recorded yet. | Awaiting reviewed evidence |
 
 ## Data readiness
 
@@ -47,8 +47,8 @@ Each round should hand off documented inputs, evidence, limitations, and a next-
 |---|---|
 | Team | Confirm whether the working futures series is suitable or whether the research question calls for spot data instead. |
 | Keir | Run the pipeline, inspect the downloaded CSV, and keep source, instrument, units, currency, dates, and calendar documented. If changing to spot, first identify an accessible and permitted source. |
-| Enoch | Confirm model inputs, forecast horizon, target definition, and any motivated predictors. |
-| Samuel | After model results exist, document comparison evidence, limitations, and the recommended next step without assuming a selection criterion in advance. |
+| Enoch | Confirm model inputs, forecast horizon, target definition, and any motivated predictors; document the candidate specifications used. |
+| Samuel | Review the available forecast-error summaries, information criteria, and residual tests; document evidence, limitations, and a recommended next step without assuming a selection criterion in advance. |
 
 ## Git submissions by team member
 
