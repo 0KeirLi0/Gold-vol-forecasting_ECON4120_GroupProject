@@ -299,14 +299,22 @@ def prediction_history(
     """Backtest each baseline on the prepared data and compare forecasts to actuals."""
     frame = pd.read_csv(csv_path)
     if sample_size is not None:
-        frame = frame.tail(sample_size).reset_index(drop=True)
+        if (
+            isinstance(sample_size, bool)
+            or not isinstance(sample_size, int)
+            or sample_size < 1
+        ):
+            raise ValueError("sample_size must be a positive integer or None.")
+        first_origin = max(0, len(frame) - sample_size)
+    else:
+        first_origin = 0
     if column not in frame.columns:
         raise ValueError(f"Column '{column}' not found in '{csv_path}'")
     if target_column not in frame.columns:
         raise ValueError(f"Target column '{target_column}' not found in '{csv_path}'")
 
     rows: list[dict[str, object]] = []
-    for index in range(len(frame)):
+    for index in range(first_origin, len(frame)):
         origin_returns = frame.loc[:index, column].dropna()
         if len(origin_returns) < 3:
             continue
