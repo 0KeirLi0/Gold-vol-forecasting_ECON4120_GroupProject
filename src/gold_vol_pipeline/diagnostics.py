@@ -65,6 +65,18 @@ def check_return_assumptions(
             }
         )
 
+    def add_unavailable(name: str, null_hypothesis: str, reason: str) -> None:
+        rows.append(
+            {
+                "diagnostic": name,
+                "statistic": np.nan,
+                "p_value": np.nan,
+                "result": "not testable",
+                "interpretation": reason,
+                "null_hypothesis": null_hypothesis,
+            }
+        )
+
     mean_test = ttest_1samp(values, popmean=0)
     add_test(
         "mean_zero_t_test",
@@ -76,6 +88,13 @@ def check_return_assumptions(
     )
 
     for label, series in (("returns", values), ("squared_returns", values**2)):
+        if np.all(series == series[0]):
+            add_unavailable(
+                f"{label}_adf_stationarity",
+                "The series has a unit root.",
+                "The series is constant, so the unit-root test is not defined.",
+            )
+            continue
         adf_lags = min(lags, max(0, len(series) // 2 - 2))
         adf_stat, adf_p_value, *_ = adfuller(
             series, maxlag=adf_lags, regression="c", autolag="AIC"
@@ -90,6 +109,13 @@ def check_return_assumptions(
         )
 
     for label, series in (("returns", values), ("squared_returns", values**2)):
+        if np.all(series == series[0]):
+            add_unavailable(
+                f"{label}_ljung_box",
+                f"No autocorrelation through lag {test_lags}.",
+                "The series is constant, so the autocorrelation test is not informative.",
+            )
+            continue
         result = acorr_ljungbox(series, lags=[test_lags], return_df=True)
         add_test(
             f"{label}_ljung_box",
@@ -100,15 +126,22 @@ def check_return_assumptions(
             "No serial dependence is detected at the tested lags.",
         )
 
-    arch_stat, arch_p_value, _, _ = het_arch(values, nlags=test_lags)
-    add_test(
-        "arch_lm",
-        arch_stat,
-        arch_p_value,
-        f"No ARCH effects through lag {test_lags}.",
-        "Conditional heteroskedasticity is detected; ARCH/GARCH-style models may be relevant.",
-        "No ARCH effects are detected at the tested lags.",
-    )
+    if np.all(values**2 == (values**2)[0]):
+        add_unavailable(
+            "arch_lm",
+            f"No ARCH effects through lag {test_lags}.",
+            "Squared returns are constant, so the ARCH test is not informative.",
+        )
+    else:
+        arch_stat, arch_p_value, _, _ = het_arch(values, nlags=test_lags)
+        add_test(
+            "arch_lm",
+            arch_stat,
+            arch_p_value,
+            f"No ARCH effects through lag {test_lags}.",
+            "Conditional heteroskedasticity is detected; ARCH/GARCH-style models may be relevant.",
+            "No ARCH effects are detected at the tested lags.",
+        )
 
     jb = jarque_bera(values)
     add_test(

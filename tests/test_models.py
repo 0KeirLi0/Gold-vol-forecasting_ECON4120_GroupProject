@@ -13,6 +13,7 @@ from gold_vol_pipeline import (
     garch11_variance_forecast,
     ma1_squared_return_forecast,
     main,
+    prediction_history,
     rolling_variance_forecast,
 )
 
@@ -45,6 +46,26 @@ def test_main_prints_prediction_results(tmp_path, capsys, monkeypatch):
     assert "Forecast horizon: 2" in captured
     assert "historical_variance:" in captured
     assert "garch11:" in captured
+
+
+def test_prediction_history_uses_full_prior_history_for_recent_origins(tmp_path):
+    returns = np.array([0.01, -0.02, 0.03, -0.01, 0.02])
+    csv_path = tmp_path / "prepared.csv"
+    pd.DataFrame(
+        {
+            "date": pd.date_range("2025-01-01", periods=len(returns)),
+            "log_return": returns,
+            "realized_variance": np.full(len(returns), 0.001),
+        }
+    ).to_csv(csv_path, index=False)
+
+    comparison = prediction_history(str(csv_path), horizon=2, sample_size=1)
+
+    assert len(comparison) == 1
+    assert comparison.iloc[0]["date"] == "2025-01-05"
+    assert comparison.iloc[0]["historical_variance"] == pytest.approx(
+        2 * np.mean(returns**2)
+    )
 
 
 def test_historical_and_rolling_variance_forecasts_sum_over_horizon():

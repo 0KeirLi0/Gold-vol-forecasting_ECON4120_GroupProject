@@ -25,12 +25,12 @@ def test_diagnostics_return_expected_model_checks():
 
 def test_diagnostics_detect_volatility_clustering_signal():
     rng = np.random.default_rng(7)
-    shocks = rng.normal(size=500)
-    variance = np.empty_like(shocks)
-    variance[0] = 1
-    for index in range(1, len(shocks)):
-        variance[index] = 0.05 + 0.9 * variance[index - 1] + 0.05 * shocks[index - 1] ** 2
-    returns = shocks * np.sqrt(variance) * 0.01
+    shocks = rng.normal(size=2000)
+    returns = np.empty_like(shocks)
+    variance = 1.0
+    for index, shock in enumerate(shocks):
+        returns[index] = shock * np.sqrt(variance)
+        variance = 0.1 + 0.8 * returns[index] ** 2
 
     report = check_return_assumptions(returns)
     arch_result = report.loc[report["diagnostic"] == "arch_lm", "result"].iloc[0]
