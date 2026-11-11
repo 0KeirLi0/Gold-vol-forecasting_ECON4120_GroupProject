@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-11 — Documented LSEG export schema
+- Author: Keir's request; implementation by Copilot
+- Type: implementation
+- Context: The LSEG Workspace downloader needed a handoff schema explaining per-RIC files, returned columns, manifest contents, and series meanings.
+- Outcome: Documented expected CSV filenames, date/field columns, the combined workbook and manifest, and requested-series meanings in the README. CSV and workbook exports now label the history index `Date`; instrument-specific units and quote conventions remain subject to Workspace verification.
+- Artifacts: `README.md`, `scripts/download_lseg_data.py`
+- Next: Keir to validate vendor field definitions and candidate RIC mappings against his Workspace account.
+
 ## 2026-11-11 — Added optional LSEG Workspace export helper
 - Author: Keir's request; implementation by Copilot
 - Type: implementation

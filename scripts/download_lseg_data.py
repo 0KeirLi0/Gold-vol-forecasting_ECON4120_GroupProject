@@ -153,7 +153,7 @@ def main() -> int:
                     continue
 
                 csv_path = args.output_dir / f"{_safe_filename(ric)}.csv"
-                frame.to_csv(csv_path, index=True)
+                frame.to_csv(csv_path, index=True, index_label="Date")
                 results[ric] = frame
                 entry.update(
                     {
@@ -181,6 +181,7 @@ def main() -> int:
                     writer,
                     sheet_name=_sheet_name(ric, used_sheet_names),
                     index=True,
+                index_label="Date",
                 )
         print(f"Combined workbook saved: {workbook_path}")
 

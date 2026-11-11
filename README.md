@@ -137,6 +137,51 @@ reconstruct point-in-time release availability, so they are not automatically
 a leakage-safe `--predictor-input` panel. Keep licensed data local unless
 redistribution is explicitly permitted.
 
+#### LSEG export file and column schema
+
+Each successful RIC request produces one CSV. The filename is the RIC with
+characters other than letters, digits, `.`, `_`, and `-` replaced by `_`, then
+leading/trailing dots and underscores removed. The first column is always
+`Date` (the LSEG history index); the remaining columns are the requested field
+codes returned by Workspace. A RIC with no data or an error has no CSV; check
+`download_manifest.json` for its status and error message.
+
+| CSV file | RIC | Series meaning and requested fields |
+|---|---|---|
+| `GCc1.csv` | `GCc1` | First generic COMEX gold futures contract: `TRDPRC_1`, `OPEN_PRC`, `HIGH_1`, `LOW_1`, `ACVOL_1`, `OPINT_1` |
+| `GCc2.csv` | `GCc2` | Second generic gold futures contract; same fields as `GCc1` |
+| `GCc3.csv` | `GCc3` | Third generic gold futures contract; same fields as `GCc1` |
+| `XAUFIX.csv` | `XAUFIX=` | Gold fixing series: `TRDPRC_1` |
+| `XAU.csv` | `XAU=` | Gold spot series: `TRDPRC_1` |
+| `XAU1MO_R.csv`, `XAU2MO_R.csv`, `XAU3MO_R.csv`, `XAU6MO_R.csv`, `XAU1YO_R.csv` | Corresponding `XAU{tenor}=R` RIC | Gold implied-volatility tenors 1M, 2M, 3M, 6M, and 1Y: `MID_PRICE` |
+| `XAU1MRR.csv` | `XAU1MRR=` | 1M gold risk-reversal quote: `MID_PRICE` |
+| `XAU1MBF.csv` | `XAU1MBF=` | 1M gold butterfly quote: `MID_PRICE` |
+| `DXY.csv` | `.DXY` | Candidate USD-strength index: `TRDPRC_1` |
+| `SPX.csv` | `.SPX` | Candidate S&P 500 price index: `TRDPRC_1` |
+| `VIX.csv` | `.VIX` | Candidate VIX level: `TRDPRC_1` |
+| `US10YT_RR.csv` | `US10YT=RR` | Candidate 10-year US Treasury yield: `BID`, `ASK` |
+| `USBEI10Y_RR.csv` | `USBEI10Y=RR` | Candidate 10-year breakeven inflation quote: `BID`, `ASK` |
+| `USCRWT_ECI.csv` | `USCRWT=ECI` | Candidate WTI spot price: `TRDPRC_1` |
+
+Field-code meanings: `TRDPRC_1` is the vendor's last-traded price field;
+`OPEN_PRC`, `HIGH_1`, and `LOW_1` are the session open, high, and low;
+`ACVOL_1` is accumulated trading volume; `OPINT_1` is open interest;
+`MID_PRICE` is a midpoint quote; `BID` and `ASK` are bid and ask quotes.
+Confirm the instrument-specific field description, units, quote convention,
+and availability in Workspace. In particular, `MID_PRICE` for volatility
+instruments may be quoted in volatility points, while risk-reversal and
+butterfly signs/conventions are instrument-specific.
+
+`ALL_LSEG_DATA.xlsx` has one worksheet per successful RIC, with the same
+`Date` and field columns as that RIC's CSV. `download_manifest.json` records
+the provider, requested date range, availability caveat, and for each RIC its
+category, requested fields, status, returned columns, row count, and CSV name
+(or an error/no-data message). This export does not calculate S&P 500 returns,
+Treasury bid/ask midpoints, or predictor availability dates; those are later
+transformations and must be documented before modeling. For exact returned
+headers, consult the manifest because Workspace entitlements and instrument
+definitions can differ.
+
 API access and small file size do not grant redistribution rights. FRED's
 series notes identify third-party copyright restrictions for some series
 (including S&P 500, VIX, and WTI); check each series' terms before sharing or
