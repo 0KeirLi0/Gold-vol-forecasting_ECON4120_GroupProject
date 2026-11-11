@@ -114,6 +114,29 @@ The selected predictor columns are `dxy_close`, `sp500_close`, `sp500_log_return
 `breakeven_inflation_10y`, and `wti_spot`. A gold CSV passed with `--gold-input`
 may also contain `volume`.
 
+### Optional LSEG Workspace export
+
+For a computer with LSEG Workspace, [`scripts/download_lseg_data.py`](scripts/download_lseg_data.py)
+exports the supplied `GCc1`–`GCc3`, gold spot/fixing, and implied-volatility
+examples, plus editable candidate RIC mappings for the Stage 2 variables.
+It writes one CSV per RIC, a combined `ALL_LSEG_DATA.xlsx`, and a JSON
+download manifest under `data/refinitiv/`:
+
+```bash
+python -m pip install lseg-data pandas openpyxl
+python scripts/download_lseg_data.py --start 2010-01-01
+```
+
+Workspace must be installed, signed in, and open. Review
+`PROJECT_PANEL_REQUESTS` in the script and confirm each RIC, field, units, and
+history in Workspace before relying on the data; provider symbology and field
+entitlements may differ. The script preserves series separately: do not mix
+spot/fixing with the working gold-futures series, or treat `GCc1`–`GCc3` as
+equivalent to Yahoo `GC=F`. These exports retain observation dates and do not
+reconstruct point-in-time release availability, so they are not automatically
+a leakage-safe `--predictor-input` panel. Keep licensed data local unless
+redistribution is explicitly permitted.
+
 API access and small file size do not grant redistribution rights. FRED's
 series notes identify third-party copyright restrictions for some series
 (including S&P 500, VIX, and WTI); check each series' terms before sharing or

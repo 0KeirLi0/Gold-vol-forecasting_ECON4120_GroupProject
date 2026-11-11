@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-11 — Added optional LSEG Workspace export helper
+- Author: Keir's request; implementation by Copilot
+- Type: implementation
+- Context: Keir requested one Python downloader combining his LSEG gold futures, spot/fixing, and implied-volatility examples with the project's selected Stage 2 daily predictor candidates.
+- Outcome: Added a standalone script that saves per-RIC CSVs, a combined workbook, and a manifest. Candidate Stage 2 RIC/field mappings are explicitly provisional and need validation in Workspace; exports preserve series separately and do not claim point-in-time release availability. The existing Yahoo/FRED panel and working futures-series decision are unchanged.
+- Artifacts: `scripts/download_lseg_data.py`, `README.md`
+- Next: Keir to run on the Workspace computer, verify RICs/fields/units/history and data-use terms, and coordinate any later conversion into the model panel with Enoch.
+
 ## 2026-11-11 — Added exploratory multivariate model notebook
 - Author: User direction; implementation by Copilot
 - Type: finding
