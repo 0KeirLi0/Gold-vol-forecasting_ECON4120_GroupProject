@@ -10,9 +10,14 @@ from gold_vol_pipeline import (
     arch1_variance_forecast,
     ar1_squared_return_forecast,
     baseline_forecasts,
+    egarch_asym_forecast,
+    ewma_estimated_forecast,
     ewma_variance_forecast,
     expanding_variance_forecast,
+    garch_t_forecast,
+    garchx_forecast,
     garch11_variance_forecast,
+    gjr_garch_forecast,
     ma1_squared_return_forecast,
     main,
     prediction_history,
@@ -151,6 +156,33 @@ def test_fitted_baselines_forecast_multiple_periods(forecast):
 
     assert np.isfinite(value)
     assert value >= 0
+
+
+@pytest.mark.parametrize(
+    "forecast",
+    [gjr_garch_forecast, egarch_asym_forecast, garch_t_forecast],
+)
+def test_arch_extensions_return_valid_multi_step_forecasts(forecast):
+    returns = np.random.default_rng(12).normal(0, 0.01, size=100)
+
+    value = forecast(returns, horizon=5)
+
+    assert np.isfinite(value)
+    assert value >= 0
+
+
+def test_estimated_ewma_and_garchx_skip_are_explicit():
+    returns = pd.Series(
+        np.random.default_rng(13).normal(0, 0.01, size=100),
+        index=pd.bdate_range("2020-01-01", periods=100),
+    )
+    predictors = pd.DataFrame(
+        {"vix_close": np.full(len(returns), 20.0)}, index=returns.index
+    )
+
+    assert ewma_estimated_forecast(returns, horizon=5) >= 0
+    with pytest.raises(NotImplementedError, match="GARCH-X is skipped"):
+        garchx_forecast(returns, predictors, horizon=5)
 
 
 @pytest.mark.parametrize(

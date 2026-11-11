@@ -35,6 +35,11 @@ Model development should hand off model specifications and inputs to analysis; a
 - [Pipeline tests](tests/test_pipeline.py): `python -m pytest`; see README for a single-test command.
 - [Interactive data review notebook](notebooks/01_inspect_gold_data.ipynb): inspect prices, review target alignment, visualize series, and save a run manifest.
 - [Return-only forecast baselines](src/gold_vol_pipeline/models.py): historical variance, rolling variance, EWMA, AR/MA squared returns, ARCH, and GARCH forecasts. These are candidates, not evaluated or selected models.
+- [Volatility extensions](src/gold_vol_pipeline/models.py): asymmetric GJR-GARCH and EGARCH, Student-t GARCH, and QLIKE-selected EWMA forecasts; GARCH-X is explicitly skipped pending a leakage-safe two-step design.
+- [Regression and VAR forecasts](src/gold_vol_pipeline/regression_models.py): HAR/HARX, standardized lasso/ridge with purged time-series cross-validation, and optional small VAR.
+- [Rolling-origin evaluation](src/gold_vol_pipeline/evaluation.py): MSE, MAE, QLIKE, Diebold-Mariano and Mincer-Zarnowitz inference, forecast combinations, common-origin evaluation, and summary tables.
+- [Final evaluation notebook](notebooks/06_final_evaluation.ipynb): full-sample forecast comparison, diagnostics, and report-ready plots; run after preparing the Stage 2 panel.
+- [Reproduction steps](REPRODUCE.md): environment setup, data acquisition, predictor preparation, evaluation commands, and data-access notes.
 - [Baseline forecast comparison notebook](notebooks/02_models.ipynb): sequential forecast/actual charts and MAE/RMSE summaries for a selected origin window.
 - [Model-evaluation utilities](src/gold_vol_pipeline/model_evaluation.py): transformations, ADF/ACF/PACF diagnostics, AR/MA/ARMA and ARCH/GARCH/EGARCH AIC/BIC comparison, residual export/plots, and Ljung-Box tests. The nonseasonal Hyndman-Khandakar selector is in `src/gold_vol_pipeline/auto_arima.py`.
 - [Model-evaluation notebook](notebooks/03_model_evaluation.ipynb): interactively run the diagnostics and display the candidate comparison table; outputs stay under git-ignored `data/`.

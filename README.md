@@ -349,6 +349,17 @@ after Holm correction, and the gradient-boosting model underperforms the
 expanding-variance benchmark on the holdout; no final multivariate model or
 variable-selection decision is recorded. Central-bank demand remains deferred.
 
+Stage 3 adds origin-wise HAR/HARX, penalized, and optional VAR forecasts;
+asymmetric GJR-GARCH and EGARCH, Student-t GARCH, and training-selected EWMA;
+and a shared rolling-origin evaluation with target-end-date purging. The
+GARCH-X extension is explicitly skipped because a leakage-safe two-step design
+is not implemented. `notebooks/06_final_evaluation.ipynb` runs the full-sample
+comparison and saves forecasts, a run manifest, and labeled figures. The
+full-sample run is underway; no Stage 3 performance or model-selection result
+is asserted here yet. See [`REPRODUCE.md`](REPRODUCE.md) for the ordered data
+and notebook commands and the source-access caveats.
+
+
 For AI-agent collaboration guidance, see [`AGENTS.md`](AGENTS.md) and [`.github/copilot-instructions.md`](.github/copilot-instructions.md). Shared AI/team decisions and handoffs are recorded in [`.ai/SESSION_LOG.md`](.ai/SESSION_LOG.md), using the protocol in [`.ai/README.md`](.ai/README.md). The project uses a main-only Git workflow described in [`GIT_WORKFLOW.md`](GIT_WORKFLOW.md). For a compact project context and pointers, see [`llms.txt`](llms.txt).
 
 The presentation-ready progress tracker is [`presentations/project-progress.qmd`](presentations/project-progress.qmd). It summarizes stage status and reads Git submission history when rendered. The model-development report is available as a [Beamer PDF](presentations/iteration-1-summary.pdf), with its [Quarto source](presentations/iteration-1-summary.qmd). Fetch the latest `main` with `git fetch origin main` before rendering updated presentations.

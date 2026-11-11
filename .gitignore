@@ -1,9 +1,12 @@
 .venv/
 __pycache__/
+.ipynb_checkpoints/
 .pytest_cache/
 *.py[cod]
+*.pyc
 *.egg-info/
 data/
 /presentations/project-progress.html
 /presentations/project-progress_files/
 /presentations/iteration-1-summary_files/
+presentations/*_files/

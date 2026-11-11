@@ -2,6 +2,30 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-11 — Started Stage 3 full-sample evaluation
+- Author: User-directed execution by Copilot
+- Type: finding
+- Context: The Stage 3 notebook was launched against the prepared panel using the current working settings (`min_train=750`, expanding window, and five-session origin steps).
+- Outcome: Notebook execution is still running; it has not produced a completed forecast table or performance results yet. No Stage 3 model ranking or selection conclusion is available.
+- Artifacts: `notebooks/06_final_evaluation.ipynb`; ignored execution output under `data/processed/`
+- Next: Enoch to review completed forecasts and convergence failures; Samuel to assess the reported loss and inference evidence before recommending a next step.
+
+## 2026-11-11 — Implemented Stage 3 forecasting and evaluation workflow
+- Author: User-directed implementation by Copilot
+- Type: implementation
+- Context: Stage 3 requested regression and volatility extensions, a common no-look-ahead evaluation, an auto-ARIMA reproducibility check, and updated notebook/docs.
+- Outcome: Added HAR/HARX, penalized, and BIC-selected VAR functions; GJR-GARCH, asymmetric EGARCH, Student-t GARCH, and training-selected EWMA; a purged rolling-origin evaluator and inference summaries; and a full-sample evaluation notebook. GARCH-X is explicitly skipped because its proposed two-step regressors cannot be constructed without historical-origin leakage. The Stage 2 holdout notebook now purges training targets at the first test origin. The fixed local ARIMA slice (2,975 rows; 2015-01-05 through 2026-11-02) selected ARIMA(2,1,1) identically on two runs; this does not establish which earlier order is correct. The full evaluation notebook remains unrun, so no Stage 3 performance conclusion is recorded.
+- Artifacts: `src/gold_vol_pipeline/regression_models.py`, `src/gold_vol_pipeline/models.py`, `src/gold_vol_pipeline/evaluation.py`, `notebooks/05_advanced_models.ipynb`, `notebooks/06_final_evaluation.ipynb`, `scripts/check_auto_arima_reproducibility.py`, `docs/arima_discrepancy.md`, `tests/`, `README.md`, `llms.txt`, `REPRODUCE.md`, `presentations/project-progress.qmd`
+- Next: Enoch to run the full prepared-data evaluation; Samuel to review the resulting loss, DM, MZ, and convergence evidence before any model-selection recommendation.
+
+## 2026-11-11 — Added Stage 3 regression forecasts
+- Author: User-directed implementation by Copilot
+- Type: implementation
+- Context: Stage 3 Task 1 adds HAR/HARX, penalized regression, and a secondary VAR for the five-session realized-variance target.
+- Outcome: Added origin-wise regression forecast functions with target-end metadata and training-row purging at the supplied forecast origin; promoted scikit-learn to a core dependency. Module compilation and a synthetic smoke check of HAR, HARX, lasso, VAR, and target alignment passed. This does not constitute a backtest or model-selection decision.
+- Artifacts: `src/gold_vol_pipeline/regression_models.py`, `pyproject.toml`
+- Next: Continue with Stage 3 Task 2 after team review/continuation; unified evaluation and dedicated regression tests remain pending.
+
 ## 2026-11-11 — Added LSEG import to the Stage 2 pipeline
 - Author: Keir's request; implementation by Copilot
 - Type: implementation

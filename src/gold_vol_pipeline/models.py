@@ -6,6 +6,7 @@ import argparse
 from collections.abc import Sequence
 from pathlib import Path
 
+from arch import arch_model
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize, minimize_scalar
@@ -221,6 +222,150 @@ def garch11_variance_forecast(
 ) -> float:
     """Fit a Gaussian GARCH(1,1) model and forecast summed future variance."""
     return _arch_garch_forecast(returns, horizon=horizon, garch=True)
+
+
+def _arch_package_forecast(
+    returns: Sequence[float] | pd.Series,
+    *,
+    horizon: int,
+    vol: str = "GARCH",
+    p: int = 1,
+    o: int = 0,
+    q: int = 1,
+    dist: str = "normal",
+    simulation: bool = False,
+) -> float:
+    """Fit an arch volatility model to scaled returns and sum forecast variances."""
+    values = _validated_returns(returns)
+    horizon = _validated_horizon(horizon)
+    if len(values) < 30:
+        raise ValueError(f"{vol} forecasts require at least 30 returns.")
+    if not np.any(values):
+        return 0.0
+
+    fit = arch_model(
+        values * 100,
+        mean="Constant",
+        vol=vol,
+        p=p,
+        o=o,
+        q=q,
+        dist=dist,
+        rescale=False,
+    ).fit(disp="off", show_warning=False)
+    convergence_flag = int(getattr(fit, "convergence_flag", 1))
+    if convergence_flag != 0:
+        raise RuntimeError(
+            f"{vol} model did not converge (arch convergence flag "
+            f"{convergence_flag})."
+        )
+
+    forecast_options: dict[str, object] = {}
+    if simulation:
+        forecast_options = {
+            "method": "simulation",
+            "simulations": 1000,
+            "rng": np.random.default_rng(42).standard_normal,
+        }
+    variance = fit.forecast(horizon=horizon, **forecast_options).variance.iloc[-1]
+    forecast = float(variance.sum()) / 10_000
+    if not np.isfinite(forecast) or forecast < 0:
+        raise RuntimeError(f"{vol} model produced an invalid variance forecast.")
+    return forecast
+
+
+def gjr_garch_forecast(
+    returns: Sequence[float] | pd.Series, *, horizon: int = 1
+) -> float:
+    """Fit a Gaussian asymmetric GJR-GARCH(1,1,1) and sum future variance."""
+    return _arch_package_forecast(
+        returns, horizon=horizon, vol="GARCH", p=1, o=1, q=1
+    )
+
+
+def egarch_asym_forecast(
+    returns: Sequence[float] | pd.Series, *, horizon: int = 1
+) -> float:
+    """Fit asymmetric EGARCH(1,1,1), using simulation for multi-step forecasts."""
+    return _arch_package_forecast(
+        returns,
+        horizon=horizon,
+        vol="EGARCH",
+        p=1,
+        o=1,
+        q=1,
+        simulation=horizon > 1,
+    )
+
+
+def garch_t_forecast(
+    returns: Sequence[float] | pd.Series, *, horizon: int = 1
+) -> float:
+    """Fit a Student-t GARCH(1,1) and sum future variance."""
+    return _arch_package_forecast(
+        returns, horizon=horizon, vol="GARCH", p=1, o=0, q=1, dist="t"
+    )
+
+
+def garchx_forecast(
+    returns: Sequence[float] | pd.Series,
+    predictors: pd.DataFrame,
+    *,
+    horizon: int = 1,
+) -> float:
+    """Reserve GARCH-X until a no-look-ahead two-step design is implemented.
+
+    The proposed regression would require historical-origin GARCH forecasts
+    paired with lagged VIX and purged multi-step targets. A single fitted
+    conditional-variance path would leak future fitted parameters into those
+    historical regressors, so this extension is intentionally not estimated.
+    """
+    _validated_returns(returns)
+    _validated_horizon(horizon)
+    if not isinstance(predictors, pd.DataFrame) or "vix_close" not in predictors:
+        raise ValueError("predictors must include a 'vix_close' column.")
+    raise NotImplementedError(
+        "GARCH-X is skipped: a leakage-safe two-step historical-origin "
+        "regression design is not implemented."
+    )
+
+
+def ewma_estimated_forecast(
+    returns: Sequence[float] | pd.Series, *, horizon: int = 1
+) -> float:
+    """Select EWMA decay by in-window QLIKE over a fixed 0.80–0.99 grid."""
+    values = _validated_returns(returns)
+    horizon = _validated_horizon(horizon)
+    squared = np.square(values)
+    if not np.any(squared):
+        return 0.0
+    if len(squared) < 3:
+        raise ValueError("Estimated EWMA forecasts require at least 3 returns.")
+
+    decay_grid = np.linspace(0.80, 0.99, 20)
+    epsilon = max(float(squared.mean()) * 1e-12, np.finfo(float).tiny)
+    best_decay: float | None = None
+    best_loss = np.inf
+    for decay in decay_grid:
+        variance = float(squared[0])
+        losses: list[float] = []
+        for observed in squared[1:]:
+            forecast = max(variance, epsilon)
+            actual = max(float(observed), epsilon)
+            ratio = actual / forecast
+            losses.append(ratio - np.log(ratio) - 1)
+            variance = decay * variance + (1 - decay) * float(observed)
+        mean_loss = float(np.mean(losses))
+        if mean_loss < best_loss:
+            best_loss = mean_loss
+            best_decay = float(decay)
+    if best_decay is None or not np.isfinite(best_loss):
+        raise RuntimeError("EWMA decay selection failed.")
+
+    variance = float(squared[0])
+    for observed in squared[1:]:
+        variance = best_decay * variance + (1 - best_decay) * float(observed)
+    return float(horizon * variance)
 
 
 def baseline_forecasts(
