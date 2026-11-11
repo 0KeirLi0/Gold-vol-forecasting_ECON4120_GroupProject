@@ -2,6 +2,38 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-11 — Added exploratory multivariate model notebook
+- Author: User direction; implementation by Copilot
+- Type: finding
+- Context: The Stage 2 model request asked to include all candidate predictors and to assess predictor significance before modeling. After clarification, the requested significance target was predictor associations, for which a paired t-test is not appropriate.
+- Outcome: On the first 80% of 2,976 complete observations (2015-01-05 through 2024-06-21), OLS of log forward realized variance on seven standardized predictors with HAC lags=4 and Holm correction found VIX significant (adjusted p=0.000308); other predictors were not. On the final 596 origins, HistGradientBoosting RMSE was 0.001883, versus 0.001833 for the expanding-variance benchmark and 0.001855 for the training-mean benchmark. The notebook runs end to end; all project tests pass (50 passed). Results are exploratory and do not imply a final model choice.
+- Artifacts: `notebooks/05_advanced_models.ipynb`, `pyproject.toml`, `README.md`, `presentations/project-progress.qmd`
+- Next: Samuel to review the predictor screen and comparable out-of-sample evidence; Enoch to review data timing and candidate inputs before any model-selection recommendation.
+
+## 2026-11-11 — Executed Stage 2 predictor notebook without a key
+- Author: Copilot
+- Type: finding
+- Context: The public FRED CSV downloader replaced the API-key-gated requests in the Stage 2 workflow.
+- Outcome: Executed `notebooks/04_predictors.ipynb`; it downloaded FRED and Yahoo data and produced 2,976 forecast rows (2015-01-05 through 2026-11-03). All six selected predictor values are non-missing across those rows. The focused predictor tests pass. Execution also exposed and fixed incompatible pandas datetime units at the gold/predictor join. Existing yfinance deprecation warnings remain.
+- Artifacts: `notebooks/04_predictors.ipynb`, `data/processed/stage2_multivariate.csv`, `data/processed/stage2_multivariate_manifest.json`, `src/gold_vol_pipeline/predictors.py`, `tests/test_predictors.py`
+- Next: Enoch to review source freshness and timing assumptions before model fitting.
+
+## 2026-11-11 — Use public FRED CSV downloads
+- Author: User direction; implementation by Copilot
+- Type: implementation
+- Context: The Stage 2 notebook should not depend on `FRED_API_KEY`; use the downloadable series data from FRED's website instead.
+- Outcome: Replaced keyed API observation requests with the public FRED graph CSV endpoint using explicit inclusive date bounds, and removed the API-key gate from the downloader and notebook. The existing one-weekday availability proxy and current-vintage limitation are unchanged.
+- Artifacts: `src/gold_vol_pipeline/predictors.py`, `tests/test_predictors.py`, `notebooks/04_predictors.ipynb`, `README.md`
+- Next: Run the focused tests and execute the notebook download; inspect data freshness and missingness before modeling.
+
+## 2026-11-11 — Added Stage 2 predictor download notebook
+- Author: Copilot
+- Type: implementation
+- Context: The Stage 2 predictor panel needed a notebook entry point for running the existing acquisition and alignment CLI.
+- Outcome: Added `notebooks/04_predictors.ipynb` to invoke `python -m gold_vol_pipeline.predictors`, preview the generated panel and manifest, and stop before network requests when `FRED_API_KEY` is absent. The key is read from the Jupyter kernel environment and is never embedded in the notebook. The notebook and code-cell syntax were validated, but the API download could not be run because this environment has no configured FRED key.
+- Artifacts: `notebooks/04_predictors.ipynb`, `README.md`
+- Next: Set `FRED_API_KEY` before starting Jupyter, run the notebook, then review source-date freshness and missingness before model fitting.
+
 ## 2026-11-11 — Validated and refreshed Stage 2 handoff
 - Author: Copilot
 - Type: finding

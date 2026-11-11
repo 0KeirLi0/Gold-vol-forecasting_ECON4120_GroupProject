@@ -1,6 +1,9 @@
+from types import SimpleNamespace
+
 import numpy as np
 import pytest
 
+import gold_vol_pipeline.auto_arima as auto_arima
 from gold_vol_pipeline.auto_arima import hyndman_khandakar
 
 
@@ -31,6 +34,28 @@ def test_hyndman_khandakar_differences_a_random_walk():
 
     assert selected.order[1] >= 1
     assert len(selected.differencing_p_values) == selected.order[1] + 1
+
+
+def test_hyndman_khandakar_retries_nonconvergent_candidate_with_powell(monkeypatch):
+    original_fit = auto_arima.ARIMA.fit
+    fit_calls = []
+
+    def fail_first_fit(self, *args, **kwargs):
+        fit_calls.append(kwargs)
+        if len(fit_calls) == 1:
+            return SimpleNamespace(mle_retvals={"converged": False})
+        return original_fit(self, *args, **kwargs)
+
+    monkeypatch.setattr(auto_arima.ARIMA, "fit", fail_first_fit)
+    series = np.random.default_rng(42).normal(size=100)
+
+    selected = hyndman_khandakar(
+        series, max_p=0, max_q=0, max_order=0
+    )
+
+    assert selected.order == (0, 0, 0)
+    assert len(fit_calls) == 2
+    assert fit_calls[1]["method_kwargs"]["method"] == "powell"
 
 
 @pytest.mark.parametrize(

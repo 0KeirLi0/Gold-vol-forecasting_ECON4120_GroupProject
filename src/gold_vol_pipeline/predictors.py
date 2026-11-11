@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import argparse
+from io import BytesIO
 import json
-import os
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -101,39 +101,24 @@ def _download_yahoo_series(
     return series
 
 
-def _fred_api_key(api_key: str | None) -> str:
-    key = api_key or os.environ.get("FRED_API_KEY")
-    if not key:
-        raise RuntimeError(
-            "FRED_API_KEY is required for FRED series. Register a free FRED API key "
-            "and set it in the environment; never commit the key."
-        )
-    return key
-
-
 def _download_fred_series(
     feature: str,
     series_id: str,
     start: str,
     end: str,
-    api_key: str,
 ) -> pd.DataFrame:
     start_date, end_date = _date_range(start, end)
     params = urlencode(
         {
-            "api_key": api_key,
-            "file_type": "json",
-            "observation_start": start_date.date().isoformat(),
-            "observation_end": (
-                end_date.date() - timedelta(days=1)
-            ).isoformat(),
-            "series_id": series_id,
+            "id": series_id,
+            "cosd": start_date.date().isoformat(),
+            "coed": (end_date.date() - timedelta(days=1)).isoformat(),
         }
     )
-    request_url = f"https://api.stlouisfed.org/fred/series/observations?{params}"
+    request_url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?{params}"
     try:
         with urlopen(request_url, timeout=30) as response:
-            payload = json.loads(response.read())
+            observations = pd.read_csv(BytesIO(response.read()))
     except HTTPError as error:
         raise RuntimeError(
             f"FRED request for {series_id} failed with HTTP {error.code}."
@@ -142,18 +127,17 @@ def _download_fred_series(
         raise RuntimeError(
             f"FRED request for {series_id} could not be completed."
         ) from None
-    except (json.JSONDecodeError, UnicodeDecodeError):
-        raise RuntimeError(f"FRED returned an invalid response for {series_id}.") from None
+    except (pd.errors.ParserError, UnicodeDecodeError):
+        raise RuntimeError(f"FRED returned an invalid CSV for {series_id}.") from None
 
-    if not isinstance(payload, dict) or "observations" not in payload:
-        raise RuntimeError(f"FRED response for {series_id} has no observations.")
-    observations = pd.DataFrame(payload["observations"])
-    if observations.empty or not {"date", "value"}.issubset(observations.columns):
+    if observations.empty or not {"observation_date", series_id}.issubset(
+        observations.columns
+    ):
         raise RuntimeError(f"FRED returned no observations for {series_id}.")
 
-    observation_dates = _normalized_dates(observations["date"])
+    observation_dates = _normalized_dates(observations["observation_date"])
     values = pd.to_numeric(
-        observations["value"].replace(".", np.nan), errors="coerce"
+        observations[series_id].replace(".", np.nan), errors="coerce"
     )
     numeric_values = values.dropna().to_numpy(dtype=float)
     if not np.isfinite(numeric_values).all():
@@ -192,7 +176,7 @@ def _combine_predictor_series(series_list: list[pd.DataFrame]) -> pd.DataFrame:
 
 
 def download_stage2_predictors(
-    start: str, end: str, *, api_key: str | None = None
+    start: str, end: str
 ) -> pd.DataFrame:
     """Download selected daily predictors for [start, end).
 
@@ -205,7 +189,6 @@ def download_stage2_predictors(
     source observation date for audit and freshness checks.
     """
     _date_range(start, end)
-    key = _fred_api_key(api_key)
 
     series = [
         _download_yahoo_series(feature, ticker, start, end)
@@ -217,7 +200,7 @@ def download_stage2_predictors(
         "sp500_close_observation_date"
     ]
     series.extend(
-        _download_fred_series(feature, series_id, start, end, key)
+        _download_fred_series(feature, series_id, start, end)
         for feature, (series_id, _) in FRED_SERIES.items()
     )
     predictors = _combine_predictor_series(series)
@@ -230,7 +213,7 @@ def download_stage2_predictors(
             "Close-to-close log difference calculated from Yahoo Finance ^GSPC"
         ),
         **{
-            feature: f"FRED {series_id} ({description})"
+            feature: f"FRED public CSV download {series_id} ({description})"
             for feature, (series_id, description) in FRED_SERIES.items()
         },
     }
@@ -339,6 +322,8 @@ def prepare_multivariate_dataset(
     """
     gold = prepare_dataset(gold_prices, horizon=horizon, target=target)
     panel = _normalize_predictor_panel(predictors)
+    gold["date"] = pd.to_datetime(gold["date"]).astype("datetime64[ns]")
+    panel["date"] = pd.to_datetime(panel["date"]).astype("datetime64[ns]")
     dataset = pd.merge_asof(
         gold.sort_values("date"),
         panel,
@@ -356,7 +341,7 @@ def main() -> None:
         description="Download and prepare the selected Stage 2 daily predictor panel."
     )
     parser.add_argument(
-        "--start", default="2015-01-01", help="First API download date."
+        "--start", default="2015-01-01", help="First download date."
     )
     parser.add_argument(
         "--end",

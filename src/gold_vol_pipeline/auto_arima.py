@@ -115,9 +115,18 @@ def hyndman_khandakar(
                     order=(p, d, q),
                     trend="c" if d == 0 else "t" if d == 1 else "n",
                 ).fit()
+                converged = bool(
+                    getattr(fit, "mle_retvals", {}).get("converged", True)
+                )
+                if not converged:
+                    fit = ARIMA(
+                        values,
+                        order=(p, d, q),
+                        trend="c" if d == 0 else "t" if d == 1 else "n",
+                    ).fit(method_kwargs={"method": "powell", "maxiter": 1000})
             converged = bool(getattr(fit, "mle_retvals", {}).get("converged", True))
             if not converged:
-                record["message"] = "optimizer did not converge"
+                record["message"] = "LBFGS and Powell optimizers did not converge"
             else:
                 parameter_count = len(fit.params)
                 observations = float(fit.nobs)

@@ -1,12 +1,9 @@
-import json
-
 import numpy as np
 import pandas as pd
 import pytest
 
 from gold_vol_pipeline.predictors import (
     _download_fred_series,
-    _fred_api_key,
     _normalize_predictor_panel,
     download_stage2_predictors,
     load_predictor_csv,
@@ -31,13 +28,10 @@ def test_fred_observations_are_available_next_weekday(monkeypatch):
             return None
 
         def read(self):
-            return json.dumps(
-                {
-                    "observations": [
-                        {"date": "2024-01-05", "value": "4.12"},
-                        {"date": "2024-01-08", "value": "."},
-                    ]
-                }
+            return (
+                "observation_date,DGS10\n"
+                "2024-01-05,4.12\n"
+                "2024-01-08,.\n"
             ).encode()
 
     calls = {}
@@ -54,23 +48,20 @@ def test_fred_observations_are_available_next_weekday(monkeypatch):
         "DGS10",
         "2024-01-01",
         "2024-01-10",
-        "fake-api-key",
     )
 
     assert calls["timeout"] == 30
-    assert "series_id=DGS10" in calls["url"]
+    assert calls["url"].startswith(
+        "https://fred.stlouisfed.org/graph/fredgraph.csv?"
+    )
+    assert "id=DGS10" in calls["url"]
+    assert "cosd=2024-01-01" in calls["url"]
+    assert "coed=2024-01-09" in calls["url"]
     assert series.loc[0, "date"] == pd.Timestamp("2024-01-08")
     assert series.loc[0, "treasury_10y_yield"] == 4.12
     assert series.loc[0, "treasury_10y_yield_observation_date"] == pd.Timestamp(
         "2024-01-05"
     )
-
-
-def test_fred_api_key_must_be_configured(monkeypatch):
-    monkeypatch.delenv("FRED_API_KEY", raising=False)
-
-    with pytest.raises(RuntimeError, match="FRED_API_KEY is required"):
-        _fred_api_key(None)
 
 
 def test_stage2_download_combines_selected_sources_and_preserves_availability(
@@ -88,7 +79,7 @@ def test_stage2_download_combines_selected_sources_and_preserves_availability(
             }
         )
 
-    def fake_fred(feature, series_id, start, end, api_key):
+    def fake_fred(feature, series_id, start, end):
         observed_date = pd.Timestamp("2024-01-02")
         available_date = pd.Timestamp("2024-01-03")
         return pd.DataFrame(
@@ -106,9 +97,7 @@ def test_stage2_download_combines_selected_sources_and_preserves_availability(
         "gold_vol_pipeline.predictors._download_fred_series", fake_fred
     )
 
-    panel = download_stage2_predictors(
-        "2024-01-01", "2024-01-05", api_key="fake-api-key"
-    )
+    panel = download_stage2_predictors("2024-01-01", "2024-01-05")
 
     assert {
         "dxy_close",
@@ -131,12 +120,14 @@ def test_stage2_download_combines_selected_sources_and_preserves_availability(
 
 def test_multivariate_dataset_uses_only_predictors_available_at_origin():
     gold_prices = make_gold_prices()
+    gold_prices["date"] = gold_prices["date"].astype("datetime64[s]")
     predictors = pd.DataFrame(
         {
             "date": [pd.Timestamp("2024-01-08"), pd.Timestamp("2024-01-03")],
             "dxy_close": [110.0, 100.0],
         }
     )
+    predictors["date"] = predictors["date"].astype("datetime64[us]")
 
     dataset = prepare_multivariate_dataset(gold_prices, predictors, horizon=2)
 

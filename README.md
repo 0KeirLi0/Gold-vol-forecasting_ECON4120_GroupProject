@@ -73,24 +73,27 @@ continuous-series measure, not a fixed-contract or exchange-wide volume
 series. Central-bank gold demand is deferred until a specific source and
 publication schedule support point-in-time alignment.
 
-Run the API-backed panel with `FRED_API_KEY` set in the local environment:
+Run the daily predictor panel; FRED observations are downloaded as CSV directly
+from the public FRED website and do not require an API key:
 
 ```bash
 python -m gold_vol_pipeline.predictors --start 2016-01-01 --end 2026-11-01
 ```
 
-The FRED API key is required and must not be stored in the repository. Yahoo
-daily closes are treated as available on their observation date because the
-forecast origin is after that date's market data have been published. FRED
+[`notebooks/04_predictors.ipynb`](notebooks/04_predictors.ipynb) provides a
+notebook interface for this CLI and previews the saved panel and manifest.
+
+Yahoo daily closes are treated as available on their observation date because
+the forecast origin is after that date's market data have been published. FRED
 series are conservatively treated as available on the next weekday; the
 prepared dataset uses the latest value available on or before each gold
 forecast origin and retains each source observation date. Missing predictor
 values remain missing; Enoch should inspect predictor freshness and choose a
 missing-data policy before fitting models.
 The one-business-day FRED lag is an availability-date proxy, not a
-series-specific release timestamp, and the API returns current observations
-rather than historical real-time vintages. Verify release schedules and
-revisions before using this panel for a strict real-time backtest.
+series-specific release timestamp, and the website download returns current
+observations rather than historical real-time vintages. Verify release schedules
+and revisions before using this panel for a strict real-time backtest.
 
 The raw downloads, prepared dataset, and run manifest are written beneath the
 Git-ignored `data/` directory. A local normalized CSV can be used instead with
@@ -174,10 +177,12 @@ forecasts = baseline_forecasts(origin_returns, horizon=5)
 
 Only pass returns known at the forecast origin. These are candidate baseline
 forecasts, not a backtest by themselves. `notebooks/02_models.ipynb` performs
-rolling-origin comparisons against prepared targets for up to the latest 500
-origins and reports MAE/RMSE. The current comparison uses the working `GC=F`
-series; target windows overlap, so the results are exploratory and do not yet
-constitute a final model-selection decision.
+rolling-origin comparisons against prepared targets over the latest 20 common
+origins and reports MAE/RMSE. The Hyndman-Khandakar order is reselected using
+only returns available at each origin. The current comparison uses the working
+`GC=F` series; target windows overlap and the evaluation window is small, so
+the results are exploratory and do not constitute a final model-selection
+decision.
 
 Run exploratory diagnostics on the prepared return series with:
 
@@ -225,13 +230,19 @@ The first modeling stage uses traditional univariate time-series methods on one
 gold-derived series: return-only candidate forecasts, sequential rolling-origin
 comparisons with MAE/RMSE, exploratory diagnostics, configurable in-sample
 candidate comparisons, and a nonseasonal Hyndman-Khandakar ARIMA selector.
-No final model-selection decision is recorded; the automatic ARIMA selector
-still needs rolling-origin evaluation. For Stage 2, Keir selected daily DXY,
+No final model-selection decision is recorded. The automatic ARIMA selector
+is included in an exploratory 20-origin rolling comparison; a broader,
+standardized evaluation remains pending. For Stage 2, Keir selected daily DXY,
 nominal 10-year Treasury yield, S&P 500 returns, VIX, 10-year breakeven
 inflation, WTI spot, and optional gold-futures volume. The pipeline is
 implemented in `gold_vol_pipeline.predictors`; it derives close-to-close
-log-returns for the S&P 500. Central-bank demand remains deferred. No
-multivariate model or additional transformations have been selected.
+log-returns for the S&P 500. `notebooks/05_advanced_models.ipynb` provides an
+exploratory all-predictor gradient-boosting forecast with a training-only
+HAC-robust coefficient significance screen. In the current snapshot, only VIX
+remains significant after Holm correction, and the gradient-boosting model
+underperforms the expanding-variance benchmark on the holdout; no final
+multivariate model or variable-selection decision is recorded. Central-bank
+demand remains deferred.
 
 For AI-agent collaboration guidance, see [`AGENTS.md`](AGENTS.md) and [`.github/copilot-instructions.md`](.github/copilot-instructions.md). Shared AI/team decisions and handoffs are recorded in [`.ai/SESSION_LOG.md`](.ai/SESSION_LOG.md), using the protocol in [`.ai/README.md`](.ai/README.md). The project uses a main-only Git workflow described in [`GIT_WORKFLOW.md`](GIT_WORKFLOW.md). For a compact project context and pointers, see [`llms.txt`](llms.txt).
 
