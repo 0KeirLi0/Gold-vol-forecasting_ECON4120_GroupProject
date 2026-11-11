@@ -21,6 +21,7 @@ from .pipeline import (
     download_futures_prices,
 )
 from .pipeline import load_gold_prices_csv, prepare_dataset
+from .lseg import load_lseg_workspace_data
 
 YAHOO_SERIES = {
     "dxy_close": ("DX-Y.NYB", "ICE U.S. Dollar Index"),
@@ -32,8 +33,22 @@ FRED_SERIES = {
     "breakeven_inflation_10y": ("T10YIE", "10-year breakeven inflation rate"),
     "wti_spot": ("DCOILWTICO", "WTI Cushing spot price"),
 }
+LSEG_OPTION_COLUMNS = (
+    "gold_iv_1m",
+    "gold_iv_2m",
+    "gold_iv_3m",
+    "gold_iv_6m",
+    "gold_iv_1y",
+    "gold_1m_risk_reversal",
+    "gold_1m_butterfly",
+)
 PREDICTOR_COLUMNS = tuple(
-    (*YAHOO_SERIES.keys(), "sp500_log_return", *FRED_SERIES.keys())
+    (
+        *YAHOO_SERIES.keys(),
+        "sp500_log_return",
+        *FRED_SERIES.keys(),
+        *LSEG_OPTION_COLUMNS,
+    )
 )
 
 
@@ -338,7 +353,9 @@ def prepare_multivariate_dataset(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Download and prepare the selected Stage 2 daily predictor panel."
+        description=(
+            "Download or import data and prepare a Stage 2 multivariate dataset."
+        )
     )
     parser.add_argument(
         "--start", default="2015-01-01", help="First download date."
@@ -368,40 +385,59 @@ def main() -> None:
         type=Path,
         help="Optional normalized predictor CSV; its date column is availability date.",
     )
+    parser.add_argument(
+        "--lseg-input-dir",
+        type=Path,
+        help="Import the LSEG Workspace CSV exports from this directory.",
+    )
     parser.add_argument("--horizon", type=int, default=DEFAULT_HORIZON)
     parser.add_argument(
         "--target",
         choices=("realized_variance", "realized_volatility"),
         default=DEFAULT_TARGET,
     )
-    parser.add_argument(
-        "--gold-raw-output", type=Path, default=Path("data/raw/stage2_gold.csv")
-    )
+    parser.add_argument("--gold-raw-output", type=Path)
     parser.add_argument(
         "--predictor-raw-output",
         type=Path,
-        default=Path("data/raw/stage2_predictors.csv"),
+        help="Output path for the normalized predictor panel.",
     )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        default=Path("data/processed/stage2_multivariate.csv"),
-    )
+    parser.add_argument("--output", type=Path)
     args = parser.parse_args()
 
-    if args.gold_input is None:
-        gold_prices = download_futures_prices(args.start, args.end)
-    else:
-        gold_prices = load_gold_prices_csv(
-            args.gold_input,
-            source=args.gold_source,
-            instrument=args.gold_instrument,
+    if args.lseg_input_dir is not None:
+        if args.gold_input is not None or args.predictor_input is not None:
+            parser.error(
+                "--lseg-input-dir cannot be combined with --gold-input or "
+                "--predictor-input."
+            )
+        gold_prices, predictors = load_lseg_workspace_data(args.lseg_input_dir)
+        default_gold_output = Path("data/raw/stage2_lseg_gold.csv")
+        default_predictor_output = Path("data/raw/stage2_lseg_predictors.csv")
+        default_dataset_output = Path(
+            "data/processed/stage2_lseg_multivariate.csv"
         )
-
-    if args.predictor_input is None:
-        predictors = download_stage2_predictors(args.start, args.end)
     else:
-        predictors = load_predictor_csv(args.predictor_input)
+        if args.gold_input is None:
+            gold_prices = download_futures_prices(args.start, args.end)
+        else:
+            gold_prices = load_gold_prices_csv(
+                args.gold_input,
+                source=args.gold_source,
+                instrument=args.gold_instrument,
+            )
+
+        if args.predictor_input is None:
+            predictors = download_stage2_predictors(args.start, args.end)
+        else:
+            predictors = load_predictor_csv(args.predictor_input)
+        default_gold_output = Path("data/raw/stage2_gold.csv")
+        default_predictor_output = Path("data/raw/stage2_predictors.csv")
+        default_dataset_output = Path("data/processed/stage2_multivariate.csv")
+
+    gold_raw_output = args.gold_raw_output or default_gold_output
+    predictor_raw_output = args.predictor_raw_output or default_predictor_output
+    dataset_output = args.output or default_dataset_output
 
     dataset = prepare_multivariate_dataset(
         gold_prices,
@@ -409,23 +445,33 @@ def main() -> None:
         horizon=args.horizon,
         target=args.target,
     )
-    args.gold_raw_output.parent.mkdir(parents=True, exist_ok=True)
-    args.predictor_raw_output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    gold_prices.to_csv(args.gold_raw_output, index=False)
-    predictors.to_csv(args.predictor_raw_output, index=False)
-    dataset.to_csv(args.output, index=False)
+    gold_raw_output.parent.mkdir(parents=True, exist_ok=True)
+    predictor_raw_output.parent.mkdir(parents=True, exist_ok=True)
+    dataset_output.parent.mkdir(parents=True, exist_ok=True)
+    gold_prices.to_csv(gold_raw_output, index=False)
+    predictors.to_csv(predictor_raw_output, index=False)
+    dataset.to_csv(dataset_output, index=False)
 
     manifest = {
         "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
         "download_range": (
             {"start": args.start, "end_exclusive": args.end}
-            if args.gold_input is None or args.predictor_input is None
+            if args.lseg_input_dir is None
+            and (args.gold_input is None or args.predictor_input is None)
             else None
         ),
-        "gold_input": args.gold_input.name if args.gold_input is not None else None,
+        "gold_input": (
+            "GCc1.csv"
+            if args.lseg_input_dir is not None
+            else args.gold_input.name
+            if args.gold_input is not None
+            else None
+        ),
         "predictor_input": (
             args.predictor_input.name if args.predictor_input is not None else None
+        ),
+        "lseg_input_dir": (
+            str(args.lseg_input_dir) if args.lseg_input_dir is not None else None
         ),
         "gold_date_range": {
             "start": pd.to_datetime(gold_prices["date"]).min().date().isoformat(),
@@ -442,9 +488,15 @@ def main() -> None:
         "predictor_sources": predictors.attrs.get(
             "sources", {"source": predictors.attrs.get("source", "User-supplied CSV")}
         ),
-        "fred_availability_lag": predictors.attrs.get(
-            "fred_availability_lag", "as encoded by the input availability dates"
+        "fred_availability_lag": predictors.attrs.get("fred_availability_lag"),
+        "predictor_availability_lag": predictors.attrs.get(
+            "lseg_availability_lag",
+            predictors.attrs.get(
+                "fred_availability_lag",
+                "as encoded by the input availability dates",
+            ),
         ),
+        "lseg_import": predictors.attrs.get("lseg_import"),
         "alignment": (
             "latest predictor availability date on or before each gold forecast "
             "origin; source observation dates are retained in the CSV"
@@ -452,17 +504,17 @@ def main() -> None:
         "horizon": args.horizon,
         "target": args.target,
         "files": {
-            "gold_raw": str(args.gold_raw_output),
-            "predictors_raw": str(args.predictor_raw_output),
-            "prepared": str(args.output),
+            "gold_raw": str(gold_raw_output),
+            "predictors_raw": str(predictor_raw_output),
+            "prepared": str(dataset_output),
         },
     }
-    manifest_path = args.output.with_name(
-        f"{args.output.stem}_manifest.json"
+    manifest_path = dataset_output.with_name(
+        f"{dataset_output.stem}_manifest.json"
     )
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(
-        f"Wrote {len(dataset)} forecast rows to {args.output}; "
+        f"Wrote {len(dataset)} forecast rows to {dataset_output}; "
         f"run metadata saved to {manifest_path}."
     )
 

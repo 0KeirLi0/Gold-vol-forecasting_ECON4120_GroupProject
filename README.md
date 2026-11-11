@@ -182,6 +182,39 @@ transformations and must be documented before modeling. For exact returned
 headers, consult the manifest because Workspace entitlements and instrument
 definitions can differ.
 
+#### Import LSEG exports into the forecasting pipeline
+
+The pipeline can normalize the local exports and prepare a separate LSEG
+dataset without overwriting the existing Yahoo/FRED Stage 2 output:
+
+```bash
+python -m gold_vol_pipeline.predictors --lseg-input-dir data/refinitiv
+```
+
+By default this writes normalized gold and predictor CSVs under `data/raw/`,
+plus `data/processed/stage2_lseg_multivariate.csv` and its manifest. The
+importer uses only `GCc1.csv` as the gold target; it never substitutes spot,
+fixing, `GCc2`, or `GCc3`. It drops `GCc1` rows whose `TRDPRC_1` close is
+missing, uses `ACVOL_1` as volume only when that field is actually present,
+derives `sp500_log_return` from the S&P 500 closes, and derives the 10-year
+yield as the midpoint of `BID` and `ASK` when the Treasury file is present.
+Available gold implied-volatility, risk-reversal, and butterfly quotes are
+preserved as additional columns (`gold_iv_1m`, `gold_iv_2m`, `gold_iv_3m`,
+`gold_iv_6m`, `gold_iv_1y`, `gold_1m_risk_reversal`, and
+`gold_1m_butterfly`). These additional option features are not part of the
+existing seven-variable model specification.
+
+All imported predictors are assigned an availability date one weekday after
+their observation date as a conservative proxy; both dates are retained.
+This does not reconstruct exact publication times or historical vintages.
+Files absent from the export are skipped and listed in the generated manifest.
+In the current local export, `GCc1.csv` has no `ACVOL_1`; breakeven-inflation
+and WTI files are absent, and LSEG spot/fixing requests failed. Consequently
+the prepared LSEG dataset is a partial predictor panel, not a replacement for
+the seven-variable Yahoo/FRED dataset or a drop-in input for the existing
+seven-variable Stage 2 model notebook. Review `data/refinitiv/download_manifest.json`
+and coordinate feature changes with model development before estimating models.
+
 API access and small file size do not grant redistribution rights. FRED's
 series notes identify third-party copyright restrictions for some series
 (including S&P 500, VIX, and WTI); check each series' terms before sharing or
@@ -304,13 +337,17 @@ standardized evaluation remains pending. For Stage 2, Keir selected daily DXY,
 nominal 10-year Treasury yield, S&P 500 returns, VIX, 10-year breakeven
 inflation, WTI spot, and optional gold-futures volume. The pipeline is
 implemented in `gold_vol_pipeline.predictors`; it derives close-to-close
-log-returns for the S&P 500. `notebooks/05_advanced_models.ipynb` provides an
-exploratory all-predictor gradient-boosting forecast with a training-only
-HAC-robust coefficient significance screen. In the current snapshot, only VIX
-remains significant after Holm correction, and the gradient-boosting model
-underperforms the expanding-variance benchmark on the holdout; no final
-multivariate model or variable-selection decision is recorded. Central-bank
-demand remains deferred.
+log-returns for the S&P 500. An optional LSEG importer can prepare a separate
+dataset from `data/refinitiv/`; the available export includes a partial
+predictor panel plus gold-option quotes, while breakeven inflation, WTI, spot,
+and gold volume are unavailable in that snapshot. It does not replace the
+Yahoo/FRED panel or the current seven-feature model input.
+`notebooks/05_advanced_models.ipynb` provides an exploratory all-predictor
+gradient-boosting forecast with a training-only HAC-robust coefficient
+significance screen. In the current snapshot, only VIX remains significant
+after Holm correction, and the gradient-boosting model underperforms the
+expanding-variance benchmark on the holdout; no final multivariate model or
+variable-selection decision is recorded. Central-bank demand remains deferred.
 
 For AI-agent collaboration guidance, see [`AGENTS.md`](AGENTS.md) and [`.github/copilot-instructions.md`](.github/copilot-instructions.md). Shared AI/team decisions and handoffs are recorded in [`.ai/SESSION_LOG.md`](.ai/SESSION_LOG.md), using the protocol in [`.ai/README.md`](.ai/README.md). The project uses a main-only Git workflow described in [`GIT_WORKFLOW.md`](GIT_WORKFLOW.md). For a compact project context and pointers, see [`llms.txt`](llms.txt).
 

@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-11 — Added LSEG import to the Stage 2 pipeline
+- Author: Keir's request; implementation by Copilot
+- Type: implementation
+- Context: Keir requested that the Stage 2 pipeline use the downloaded exports in `data/refinitiv/`.
+- Outcome: Added `--lseg-input-dir` to normalize `GCc1`, available DXY/S&P 500/VIX/Treasury data, and available gold option quotes into a separate prepared dataset. Predictor values use a one-weekday availability proxy and retain observation dates; the importer drops missing gold closes and never substitutes spot or other futures ranks. On the local export it produced 4,058 origins through 2026-11-03 from 4,064 `GCc1` closes; `ACVOL_1` was not returned, while breakeven inflation, WTI, and spot/fixing exports were unavailable. The existing Yahoo/FRED panel and seven-feature model specification remain unchanged. Full test suite passed (51 tests).
+- Artifacts: `src/gold_vol_pipeline/lseg.py`, `src/gold_vol_pipeline/predictors.py`, `tests/test_predictors.py`, `README.md`, `presentations/project-progress.qmd`, `data/processed/stage2_lseg_multivariate.csv` (local/ignored)
+- Next: Enoch to review the partial LSEG input and decide whether the option quotes or alternate source mappings warrant model-development follow-up; Keir to resolve missing RIC permissions/fields and verify quote units before interpretation.
+
 ## 2026-11-11 — Documented LSEG export schema
 - Author: Keir's request; implementation by Copilot
 - Type: implementation
