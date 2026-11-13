@@ -25,6 +25,13 @@ intensive; plan for several hours on a typical laptop. Actual runtime depends
 on hardware and the input snapshot. The final output notebook is stored under
 `data/processed/` so it does not overwrite the source notebook.
 
+The same run compares the seven-predictor specification with reduced
+VIX-only and DXY-plus-VIX specifications for HARX, lasso, and ridge, using the
+same forecast origins. It writes the focused loss and Diebold-Mariano
+comparison table to `data/processed/predictor_set_comparison.csv`. DXY-plus-VIX
+is a sensitivity set informed by the separate LSEG screen; it should not be
+interpreted as a Yahoo/FRED significance finding.
+
 The first command prepares the gold futures series. The second downloads and
 aligns the Stage 2 predictor panel and writes
 `data/processed/stage2_multivariate.csv`. The final command runs all cells in

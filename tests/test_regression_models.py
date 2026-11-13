@@ -77,9 +77,11 @@ def test_penalized_forecast_uses_only_training_window_scaling():
     changed = predictors.copy()
     changed.iloc[-1] = changed.iloc[-1] * 1000
 
-    original = penalized_forecast(returns, predictors, horizon=5, method="lasso")
+    original = penalized_forecast(
+        returns, predictors, horizon=5, method="lasso", exog=("vix_close",)
+    )
     forecast_only_change = penalized_forecast(
-        returns, changed, horizon=5, method="lasso"
+        returns, changed, horizon=5, method="lasso", exog=("vix_close",)
     )
 
     assert original.alpha == forecast_only_change.alpha
@@ -102,3 +104,28 @@ def test_regression_models_validate_predictor_alignment_and_penalty_method():
         harx_forecast(returns, shifted, horizon=5)
     with pytest.raises(ValueError, match="method"):
         penalized_forecast(returns, predictors, horizon=5, method="elasticnet")
+    with pytest.raises(ValueError, match="unique"):
+        penalized_forecast(
+            returns,
+            predictors,
+            horizon=5,
+            exog=("vix_close", "vix_close"),
+        )
+
+
+def test_penalized_forecast_accepts_a_reduced_predictor_set():
+    returns, predictors = _synthetic_inputs(size=180)
+
+    forecast = penalized_forecast(
+        returns,
+        predictors,
+        horizon=5,
+        method="ridge",
+        exog=("dxy_close", "vix_close"),
+    )
+
+    assert forecast.forecast >= 0
+    assert set(forecast.coefficients.index).issubset(
+        {"rv_d", "rv_w", "rv_m", "dxy_close", "vix_close",
+         "dxy_close_lag1", "vix_close_lag1"}
+    )

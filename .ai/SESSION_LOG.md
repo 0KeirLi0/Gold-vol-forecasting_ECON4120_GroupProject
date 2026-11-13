@@ -2,6 +2,22 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-11 — Re-ran Stage 1 baselines and generated plots
+- Author: Copilot at user's request
+- Type: finding
+- Context: Re-ran the seven return-only baselines on the 500 most recent origins from the prepared Yahoo `GC=F` snapshot, with the five-session forward realized-variance target.
+- Outcome: The shared sample contains 488 forecasts from 2024-11-07 through 2026-11-02. GARCH(1,1) fitting failed at 12 origins; the existing comparison helper omits an origin when any baseline fails. GARCH(1,1) retained the lowest MAE (0.000783) and RMSE (0.001891), with RMSE 6.3% below expanding variance and 1.0% below EWMA. The sample size and point estimates differ slightly from the older 496-origin Stage 1 PDF, so treat this as a rerun finding, not a model decision.
+- Artifacts: `plots/model_comparisons/` (seven per-model charts, an overlay, and an RMSE comparison), `data/processed/stage1_baseline_500_origin_forecasts.csv` and `data/processed/stage1_baseline_500_origin_metrics.csv` (local/ignored), `presentations/project-progress.qmd`
+- Next: Enoch to review GARCH fitting failures and maintain the distinction between these point estimates and a model-selection conclusion.
+
+## 2026-11-11 — Screened LSEG predictor importance
+- Author: Copilot at Enoch's request
+- Type: finding
+- Context: Prepared the available LSEG Workspace exports as a separate `GCc1` dataset and repeated the Stage 2 training-only, standardized OLS screen for the 11 available predictors: DXY, S&P 500 log return, VIX, 10-year Treasury yield, five gold implied-volatility tenors, 1M risk reversal, and 1M butterfly. The 4,057 complete origins span 2010-01-06 through 2026-11-03; a chronological 80/20 split with four overlapping target rows purged leaves 3,241 training rows through 2023-06-09 and 812 holdout rows from 2023-06-16 onward. Inference uses `log1p` five-session forward realized variance and HAC lag 4.
+- Outcome: DXY has a negative conditional coefficient per training SD (-0.000122; HAC p=0.000094; Holm p=0.00103) and VIX a positive coefficient (0.000137; HAC p=0.00124; Holm p=0.0124); these are the only individual predictors significant at 5% after Holm correction across 11 tests. No individual option feature survives correction. A secondary joint HAC test finds the five IV tenors significant as a block (F=17.42; Holm-adjusted p=9.26e-17 across three group tests), while risk reversal plus butterfly are not (adjusted p=0.386). IV tenors are highly collinear (maximum absolute pairwise correlation 0.991), so their individual coefficients do not identify a preferred tenor. This is exploratory conditional association, not evidence of out-of-sample importance or a final variable-selection decision. Availability is proxied as one weekday after observation; option quote units remain unverified. The current export has no gold volume, breakeven inflation, or WTI, and spot/fixing requests failed.
+- Artifacts: `notebooks/05_advanced_models.ipynb`, `README.md`, `presentations/project-progress.qmd`, `data/processed/stage2_lseg_multivariate.csv` (local/ignored)
+- Next: Enoch to verify LSEG field units and availability assumptions, then compare a reduced predictor set using the purged out-of-sample evaluation before selecting model inputs.
+
 ## 2026-11-11 — Started Stage 3 full-sample evaluation
 - Author: User-directed execution by Copilot
 - Type: finding
@@ -9,6 +25,14 @@ This is an append-only record of project context that may help future sessions. 
 - Outcome: Notebook execution is still running; it has not produced a completed forecast table or performance results yet. No Stage 3 model ranking or selection conclusion is available.
 - Artifacts: `notebooks/06_final_evaluation.ipynb`; ignored execution output under `data/processed/`
 - Next: Enoch to review completed forecasts and convergence failures; Samuel to assess the reported loss and inference evidence before recommending a next step.
+
+## 2026-11-11 — Rechecked Stage 2 predictor significance
+- Author: Copilot at Enoch's request
+- Type: finding
+- Context: Re-screened the current 2,976-row Yahoo/FRED Stage 2 panel through 2026-11-03 using the existing training-only HAC regression and Holm correction across the seven core predictors.
+- Outcome: The complete sample has 2,376 training rows (2015-01-05 through 2024-06-14) after purging 4 rows whose five-session targets overlap the holdout; the 596-row holdout starts 2024-06-24. With log1p forward realized variance, predictors standardized on training data, and HAC max lag 4, only VIX is significant at 5% after Holm correction (standardized coefficient 0.000268, HAC p=0.0000435, Holm-adjusted p=0.000305). Breakeven inflation is nominally significant before correction (p=0.0455) but not after (adjusted p=0.273); the other five predictors are not significant. This is an association screen, not evidence that excluded variables lack out-of-sample value or a final model-selection decision. The partial LSEG option panel was not included.
+- Artifacts: `data/processed/stage2_multivariate.csv`, `notebooks/05_advanced_models.ipynb`
+- Next: Enoch to treat VIX as the leading statistically supported candidate under this screen and assess incremental out-of-sample value before dropping other predictors.
 
 ## 2026-11-11 — Implemented Stage 3 forecasting and evaluation workflow
 - Author: User-directed implementation by Copilot

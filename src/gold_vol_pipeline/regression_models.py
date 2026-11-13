@@ -266,17 +266,20 @@ def penalized_forecast(
     *,
     horizon: int,
     method: str = "lasso",
+    exog: Sequence[str] = PREDICTOR_COLUMNS,
 ) -> PenalizedForecast:
     """Tune a standardized HAR-plus-predictor Lasso or Ridge using purged CV."""
     series = _validated_returns(returns)
     horizon = _validated_horizon(horizon)
     if method not in {"lasso", "ridge"}:
         raise ValueError("method must be 'lasso' or 'ridge'.")
+    if not exog or len(set(exog)) != len(exog):
+        raise ValueError("exog must contain unique predictor column names.")
     train_x, train_y, forecast_x, _ = _forecast_design(
         series,
         horizon,
         log_space=True,
-        exog=PREDICTOR_COLUMNS,
+        exog=exog,
         predictors=predictors,
         include_lags=True,
     )

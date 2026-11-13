@@ -215,6 +215,43 @@ the seven-variable Yahoo/FRED dataset or a drop-in input for the existing
 seven-variable Stage 2 model notebook. Review `data/refinitiv/download_manifest.json`
 and coordinate feature changes with model development before estimating models.
 
+#### Exploratory LSEG predictor significance
+
+The LSEG predictor screen is in
+[`notebooks/05_advanced_models.ipynb`](notebooks/05_advanced_models.ipynb).
+It uses the current prepared `GCc1` panel, an 80/20 chronological split, and
+purges training rows whose five-session target overlaps the first holdout
+origin. The 4,057 complete observations span 2010-01-06 through 2026-11-03;
+3,241 training rows remain after purging four rows. The model regresses
+`log1p` five-session forward realized variance on standardized predictors,
+uses HAC standard errors with four lags, and applies Holm correction across
+the 11 individual predictor tests.
+
+| Predictor | Direction in fitted model | Holm-adjusted p-value | Significant at 5% |
+|---|---:|---:|:---:|
+| DXY close | Negative | 0.00103 | Yes |
+| VIX close | Positive | 0.0124 | Yes |
+| 2M gold implied volatility | Positive | 0.140 | No |
+| S&P 500 log return | Negative | 1.000 | No |
+| 10-year Treasury yield | Positive | 1.000 | No |
+| 1M gold implied volatility | Positive | 1.000 | No |
+| 3M gold implied volatility | Positive | 1.000 | No |
+| 6M gold implied volatility | Negative | 1.000 | No |
+| 1Y gold implied volatility | Negative | 1.000 | No |
+| 1M gold risk reversal | Positive | 1.000 | No |
+| 1M gold butterfly | Positive | 1.000 | No |
+
+The five implied-volatility tenors are significant as a joint block (HAC
+F=17.42; Holm-adjusted p=9.26e-17 across three group tests), while the 1M risk
+reversal and butterfly are not jointly significant (adjusted p=0.386).
+Individual IV-tenor coefficients do not identify a preferred tenor: their
+maximum absolute pairwise training correlation is 0.991. These are exploratory
+conditional associations, not proof of out-of-sample predictive value or a
+final feature-selection decision. The dataset uses a one-weekday availability
+proxy, not verified historical publication times; confirm LSEG field units and
+quote conventions before interpreting the option results. Available results
+cover only the successful exports listed in the manifest.
+
 API access and small file size do not grant redistribution rights. FRED's
 series notes identify third-party copyright restrictions for some series
 (including S&P 500, VIX, and WTI); check each series' terms before sharing or
@@ -347,18 +384,29 @@ gradient-boosting forecast with a training-only HAC-robust coefficient
 significance screen. In the current snapshot, only VIX remains significant
 after Holm correction, and the gradient-boosting model underperforms the
 expanding-variance benchmark on the holdout; no final multivariate model or
-variable-selection decision is recorded. Central-bank demand remains deferred.
+variable-selection decision is recorded. On the separate LSEG `GCc1` panel,
+the training-only HAC screen found DXY and VIX individually significant after
+Holm correction; the gold implied-volatility tenors were significant jointly
+but highly collinear (maximum pairwise correlation 0.991), so their individual
+importance is unresolved. The LSEG panel is partial, and its quote units and
+one-weekday availability proxy require verification. These association results
+do not establish out-of-sample predictive value or a final variable-selection
+decision. Central-bank demand remains deferred.
 
 Stage 3 adds origin-wise HAR/HARX, penalized, and optional VAR forecasts;
 asymmetric GJR-GARCH and EGARCH, Student-t GARCH, and training-selected EWMA;
 and a shared rolling-origin evaluation with target-end-date purging. The
 GARCH-X extension is explicitly skipped because a leakage-safe two-step design
-is not implemented. `notebooks/06_final_evaluation.ipynb` runs the full-sample
-comparison and saves forecasts, a run manifest, and labeled figures. The
-full-sample run is underway; no Stage 3 performance or model-selection result
-is asserted here yet. See [`REPRODUCE.md`](REPRODUCE.md) for the ordered data
-and notebook commands and the source-access caveats.
-
+is not implemented. `notebooks/06_final_evaluation.ipynb` compares the full
+seven-predictor set with VIX-only and DXY-plus-VIX sets for HARX, lasso, and
+ridge, alongside the return-only and volatility candidates. DXY-plus-VIX is a
+sensitivity set motivated by the separate LSEG screen; significance on LSEG
+does not imply significance on Yahoo/FRED. These models share weekly forecast
+origins and a purged expanding training window; their losses and paired
+Diebold-Mariano comparisons are reported against each model family’s full-set
+version. The unified evaluation is still running, so no Stage 3 performance or
+feature-selection result is asserted here. See [`REPRODUCE.md`](REPRODUCE.md)
+for the ordered data and notebook commands and source-access caveats.
 
 For AI-agent collaboration guidance, see [`AGENTS.md`](AGENTS.md) and [`.github/copilot-instructions.md`](.github/copilot-instructions.md). Shared AI/team decisions and handoffs are recorded in [`.ai/SESSION_LOG.md`](.ai/SESSION_LOG.md), using the protocol in [`.ai/README.md`](.ai/README.md). The project uses a main-only Git workflow described in [`GIT_WORKFLOW.md`](GIT_WORKFLOW.md). For a compact project context and pointers, see [`llms.txt`](llms.txt).
 
