@@ -2,6 +2,30 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-13 — Added VAR to aligned Stage 3 comparison
+- Author: User-directed implementation by Copilot
+- Type: finding
+- Context: The Stage 3 report and aligned comparison had omitted VAR even though the modeling package contained a BIC-selected VAR implementation.
+- Outcome: Refit the established VAR using log daily squared returns and log VIX, selecting up to five lags by BIC at each of the 445 forecast origins. VAR returned forecasts at all origins; the balanced comparison remains 435 origins because GARCH(1,1) failed at 10. The 19-model results show VAR MSE and QLIKE above expanding historical variance (ratios 1.229 and 7.259); Holm-adjusted DM p-values are 0.000071 and 1.42e-7. Added a reproducible evaluator, manifest, forecast-versus-actual chart, report entries, and reproduction instructions. Refreshed the report PDF and project progress HTML.
+- Artifacts: `scripts/evaluate_stage3_var.py`, `data/processed/stage3_var_forecasts.csv`, `data/processed/stage3_var_manifest.json`, `scripts/plot_stage3_all_model_forecasts.py`, `reports/model-performance-stage2-stage3.qmd`, `reports/model-performance-stage2-stage3.pdf`, `presentations/project-progress.qmd`
+- Next: Samuel to review the aligned loss and test evidence, including the VAR's higher losses, before making any model recommendation.
+
+## 2026-11-13 — Added all Stage 3 model forecasts to appendix
+- Author: User-directed implementation by Copilot
+- Type: implementation
+- Context: The report appendix initially showed forecast-versus-actual charts only for the seven Stage 1 baselines, while the aligned Stage 3 comparison contains 18 models.
+- Outcome: Added a reproducible plotting script that reads the saved combined forecasts without refitting models, generates one chart per model over the 445 requested origins, and validates all 18 model names and origin counts. Updated the appendix to include all charts and regenerated the 24-page PDF. GARCH(1,1) gaps remain visible for its 10 failed fits; the comparison table continues to use the 435-origin balanced subset.
+- Artifacts: `scripts/plot_stage3_all_model_forecasts.py`, `reports/figures/stage3_all_model_forecasts/`, `reports/model-performance-stage2-stage3.qmd`, `reports/model-performance-stage2-stage3.pdf`
+- Next: Samuel to review the aligned loss, DM, and Mincer-Zarnowitz evidence and recommend a next step without assuming a selection criterion.
+
+## 2026-11-13 — Aligned Stage 1 baselines with Stage 3 evaluation
+- Author: User-directed implementation by Copilot
+- Type: finding
+- Context: The Stage 1 baselines were freshly rerun on Stage 3's 445 requested weekly dates so the final model comparison would use common origins.
+- Outcome: Six baselines forecast all dates; GARCH(1,1) failed at 10. The combined comparison and report use 435 dates with complete forecasts for all 18 models. GARCH(1,1) had the lowest point MSE, RMSE, and MAE, but no candidate beat historical variance after Holm correction for MSE or QLIKE. Rendered and checked the 13-page PDF report, including all seven baseline forecast-versus-actual appendix charts, and refreshed the progress presentation HTML/source. Results remain exploratory; no model decision is asserted.
+- Artifacts: `scripts/evaluate_stage1_on_stage3_origins.py`, `data/processed/stage1_on_stage3_origins_*`, `data/processed/evaluation_*_with_stage1*`, `reports/model-performance-stage2-stage3.qmd`, `reports/model-performance-stage2-stage3.pdf`, `reports/figures/stage1_on_stage3_origins/`, `presentations/project-progress.qmd`
+- Next: Samuel to review the aligned loss, DM, and Mincer-Zarnowitz evidence and recommend a next step without assuming a selection criterion.
+
 ## 2026-11-13 — Drafted Stage 2 and Stage 3 performance report
 - Author: User-directed implementation by Copilot
 - Type: finding

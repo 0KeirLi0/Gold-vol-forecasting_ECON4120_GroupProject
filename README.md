@@ -393,8 +393,8 @@ one-weekday availability proxy require verification. These association results
 do not establish out-of-sample predictive value or a final variable-selection
 decision. Central-bank demand remains deferred.
 
-Stage 3 adds origin-wise HAR/HARX and penalized forecasts, with optional VAR
-and volatility extensions available in the modeling package. The GARCH-X
+Stage 3 adds origin-wise HAR/HARX and penalized forecasts and the BIC-selected
+VAR, with further volatility extensions available in the modeling package. The GARCH-X
 extension is explicitly skipped because a leakage-safe two-step design is not
 implemented. The short evaluation in `notebooks/06_final_evaluation.ipynb`
 reuses the completed forecasts for return-only baselines, HAR/HARX, and the
@@ -402,19 +402,25 @@ full seven-predictor, VIX-only, and DXY-plus-VIX HARX/lasso/ridge variants.
 Models are compared on their common weekly origins; previously completed
 500-origin Stage 1 metrics are shown separately because they use a different
 sample. Repeated auto-ARIMA, VAR, and extended-GARCH fits are excluded from
-this short run for runtime reasons, not because they have been judged
-unsuitable. DXY-plus-VIX remains a sensitivity set motivated by the separate
+the cached notebook run; VAR is separately refit at the 445 saved forecast
+origins with `scripts/evaluate_stage3_var.py`. DXY-plus-VIX remains a
+sensitivity set motivated by the separate
 LSEG screen; significance on LSEG does not imply significance on Yahoo/FRED.
 The comparison is exploratory and no feature-selection or final model
 decision is asserted. See [`REPRODUCE.md`](REPRODUCE.md) for the short
-forecast-reuse workflow and source-access caveats. On 445 common weekly
-origins (2018-01-05 to 2026-11-03) across 17 already-completed forecasts,
-EWMA had the lowest MSE (9.76e-7; RMSE 0.000988) and HAR the lowest MAE
-(0.000416). Within the nine predictor-set variants, VIX-only lasso had the
-lowest MSE (9.85e-7). No candidate beat the historical-variance benchmark
-after Holm correction for either MSE or QLIKE. The prior 500-origin
-GARCH(1,1) result is separate-sample context and is not directly ranked
-against these weekly forecasts.
+forecast-reuse workflow and source-access caveats. The seven Stage 1 baselines
+have since been freshly evaluated at the same 445 weekly origin dates. The
+BIC-selected VAR uses log daily squared returns and log VIX, and succeeded at
+all 445 origins. GARCH failed to converge at 10 dates, so the final 19-model
+comparison uses the 435 dates with valid forecasts for every model. GARCH(1,1)
+had the lowest point MSE (9.77e-7; RMSE 0.000988) and MAE (0.000411), but did
+not significantly beat historical variance after Holm correction for MSE or
+QLIKE. VAR had larger MSE and QLIKE than historical variance, with
+Holm-adjusted DM p-values of 0.000071 and 1.42e-7. The result remains
+exploratory, with convergence failure and overlapping targets noted.
+The [Stage 2–3 report](reports/model-performance-stage2-stage3.qmd) includes
+the aligned comparison and forecast-vs-actual appendix charts for all 19
+models.
 
 For AI-agent collaboration guidance, see [`AGENTS.md`](AGENTS.md) and [`.github/copilot-instructions.md`](.github/copilot-instructions.md). Shared AI/team decisions and handoffs are recorded in [`.ai/SESSION_LOG.md`](.ai/SESSION_LOG.md), using the protocol in [`.ai/README.md`](.ai/README.md). The project uses a main-only Git workflow described in [`GIT_WORKFLOW.md`](GIT_WORKFLOW.md). For a compact project context and pointers, see [`llms.txt`](llms.txt).
 

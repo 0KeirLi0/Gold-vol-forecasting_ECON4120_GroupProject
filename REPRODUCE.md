@@ -29,8 +29,25 @@ figures under `plots/final_evaluation/`. The
 executed notebook is stored under `data/processed/`, leaving the source
 notebook unchanged.
 
-Repeated auto-ARIMA, VAR, GJR-GARCH, asymmetric EGARCH, Student-t GARCH, and
-GARCH-X fits are omitted from this short run. Their code remains available
+To refit the seven Stage 1 baselines at the exact same 445 weekly origin dates
+and add the BIC-selected VAR at those dates without refitting the other
+completed Stage 3 models, run:
+
+```bash
+python scripts/evaluate_stage1_on_stage3_origins.py
+python scripts/evaluate_stage3_var.py
+python scripts/plot_stage3_all_model_forecasts.py
+quarto render reports/model-performance-stage2-stage3.qmd --to pdf
+```
+
+GARCH(1,1) failed to converge at 10 of the 445 dates in the current run. The
+VAR succeeded at all 445 dates. The combined 19-model comparison therefore
+uses the 435-origin intersection with valid forecasts for every model; each
+Stage 1 baseline and VAR is still attempted on all 445 dates and the appendix
+charts retain all attempts.
+
+Repeated auto-ARIMA, GJR-GARCH, asymmetric EGARCH, Student-t GARCH, and
+GARCH-X fits remain omitted from this short run. Their code remains available
 where implemented, but no new performance evidence for them is claimed here.
 This runtime-based scope is not a model-selection decision. To rebuild inputs
 from raw sources instead, use the pipeline commands in [`README.md`](README.md)

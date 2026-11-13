@@ -1,51 +1,19 @@
 {
-  "evaluation": "reused completed forecasts; no model refits",
-  "target": "five-session forward realized variance",
-  "horizon": 5,
-  "common_origin_count": 445,
-  "origin_range": {
-    "start": "2018-01-05",
+  "data_range": {
+    "start": "2015-01-05",
     "end": "2026-11-03"
   },
-  "models": [
-    "ar1_squared_return",
-    "arch1",
-    "ewma",
-    "ewma_fixed",
-    "har",
-    "harx_dxy_vix",
-    "harx_full",
-    "harx_vix",
-    "historical_variance",
-    "lasso_dxy_vix",
-    "lasso_full",
-    "lasso_vix",
-    "ma1_squared_return",
-    "ridge_dxy_vix",
-    "ridge_full",
-    "ridge_vix",
-    "rolling_variance"
-  ],
-  "source_files": [
-    "data/processed/evaluation_forecasts_by_model/ar1_squared_return.csv",
-    "data/processed/evaluation_forecasts_by_model/arch1.csv",
-    "data/processed/evaluation_forecasts_by_model/ewma.csv",
-    "data/processed/evaluation_forecasts_by_model/ewma_fixed.csv",
-    "data/processed/evaluation_forecasts_by_model/har.csv",
-    "data/processed/evaluation_forecasts_by_model/historical_variance.csv",
-    "data/processed/evaluation_forecasts_by_model/ma1_squared_return.csv",
-    "data/processed/evaluation_forecasts_by_model/rolling_variance.csv",
-    "data/processed/predictor_set_variant_forecasts.csv"
-  ],
-  "excluded_slow_fits": [
-    "auto_arima",
-    "var",
-    "gjr_garch",
-    "egarch_asym",
-    "garch_t",
-    "garchx"
-  ],
-  "excluded_due_to_sample_mismatch": [
-    "garch11 500-origin forecasts"
-  ]
+  "horizon": 5,
+  "min_train": 750,
+  "step": 5,
+  "window": "expanding",
+  "package_versions": {
+    "numpy": "2.4.6",
+    "pandas": "2.3.3",
+    "scipy": "1.15.2",
+    "statsmodels": "0.14.6",
+    "arch": "8.0.0",
+    "scikit-learn": "1.7.0"
+  },
+  "run_timestamp_utc": "2026-11-13T08:22:30.257370+00:00"
 }

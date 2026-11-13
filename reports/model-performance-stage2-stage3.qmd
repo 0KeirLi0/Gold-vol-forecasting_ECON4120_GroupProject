@@ -24,19 +24,23 @@ execute:
 This draft brings together three related, but non-identical, pieces of evidence:
 
 1. A Stage 1 rolling-origin comparison of seven univariate variance baselines
-   over 488 common origins.
+   freshly evaluated on the exact 445 Stage 3 origins.
 2. A Stage 2 training-only screen of seven Yahoo/FRED predictors, followed by
    a separate 596-origin holdout comparison of HistGradientBoosting against
    simple benchmarks.
-3. A Stage 3 comparison of 17 previously completed forecasts on 445 common
+3. A Stage 3 comparison of those baselines with 12 additional HAR, HARX,
+   penalized, and BIC-selected VAR forecasts, attempted on the same 445
    weekly origins.
 
-The strongest single Stage 1 baseline by point-estimate MAE and RMSE was
-GARCH(1,1). In the Stage 2 conditional association screen, only VIX remained
-significant after Holm correction. HistGradientBoosting did not outperform
-expanding variance on the separate Stage 2 holdout. In Stage 3, EWMA had the
-lowest MSE and HAR the lowest MAE, but no model significantly beat the
-historical-variance benchmark after Holm correction for MSE or QLIKE.
+In the aligned Stage 1/Stage 3 comparison, GARCH(1,1) had the lowest point-
+estimate MSE and RMSE, but failed to converge at 10 of the 445 forecast
+dates. All-model comparisons therefore use the 435 dates where every model
+has a forecast. In the Stage 2 conditional association screen, only VIX
+remained significant after Holm correction. HistGradientBoosting did not
+outperform expanding variance on the separate Stage 2 holdout. No model
+significantly beat the historical-variance benchmark after Holm correction
+for MSE or QLIKE on the aligned sample; the VAR had significantly larger
+MSE and QLIKE than the benchmark after correction.
 
 These are exploratory results, not a final model choice. Samples, forecast
 origin spacing, and in some cases input panels differ; comparisons across
@@ -46,74 +50,86 @@ those sections are descriptive rather than head-to-head rankings.
 
 | Evidence block | Data and evaluation | What it answers |
 |---|---|---|
-| Stage 1 baselines | Yahoo `GC=F`; 488 common forecasts from the 500 most recent requested origins; 2024-11-07 to 2026-11-02 | How do return-only volatility forecasts compare on the recent sample? |
+| Stage 1 baselines | Yahoo `GC=F`; seven baselines refit on the exact 445 Stage 3 weekly origins; 2018-01-05 to 2026-11-03 | How do return-only volatility forecasts compare on the same sample as Stage 3? |
 | Stage 2 predictor screen | Yahoo/FRED panel; chronological 80/20 split; 2,376 training rows after purging 4 overlapping labels; HAC lag 4 | Which predictors are conditionally associated with log forward realized variance in training data? |
 | Stage 2 holdout | Yahoo/FRED panel; 596 origins from 2024-06-24 to 2026-11-03 | Does the all-predictor gradient-boosting forecast beat simple benchmarks on this holdout? |
 | LSEG screen | Separate `GCc1` panel; 3,241 training and 812 holdout rows | Exploratory conditional associations in the available alternative panel |
-| Stage 3 common-origin comparison | Yahoo/FRED panel; 17 saved models, 445 weekly origins from 2018-01-05 to 2026-11-03 | How do available fast forecasts compare when evaluated on identical origins? |
+| Stage 3 common-origin comparison | Yahoo/FRED panel; seven freshly refit Stage 1 baselines, 11 reused advanced forecasts, and one BIC-selected VAR; 435 complete weekly origins from the 445 Stage 3 dates | How do baselines and advanced forecasts compare on identical origins? |
 
 The target is five-session-ahead realized variance, calculated as the sum of
 squared daily log returns over the next five observed price sessions. It is
 not spot-gold volatility: the working series is Yahoo Finance `GC=F`, a
-continuous COMEX gold futures series. Stage 1 used a more recent, shorter
-sample than Stage 3; Stage 2 used a fixed chronological holdout. Do not rank
-metrics from different blocks as if they were measured on one common sample.
+continuous COMEX gold futures series. Stage 1 and Stage 3 now share the same
+445 forecast origins; Stage 2 used a separate fixed chronological holdout.
+Do not rank metrics from the Stage 2 holdout against Stage 1/3 as if they
+were measured on one common sample.
 
 # Stage 1: baseline model performance
 
-The table reports point-estimate error metrics from the shared 488-origin
-sample. GARCH(1,1) fitting failed at 12 of the 500 requested origins; those
-origins are omitted by the common-sample comparison.
+All seven Stage 1 models were freshly attempted at the exact same 445 weekly
+forecast dates used by Stage 3. GARCH(1,1) converged on 435 dates and failed
+on 10; the final all-model comparison uses the 435-origin intersection so
+each reported model is scored on the same dates. The expanding-variance benchmark, rolling
+variance, fixed-decay EWMA (0.94), AR(1) on squared returns, MA(1) on squared
+returns, ARCH(1), and GARCH(1,1) use only returns through each origin.
+Convergence failures are retained as missing forecasts and shown through the
+per-model sample count rather than silently removed from the record.
 
-| Model | MAE ($\times 10^{-3}$) | RMSE ($\times 10^{-3}$) |
-|---|---:|---:|
-| GARCH(1,1) | 0.783 | 1.891 |
-| EWMA, estimated decay | 0.921 | 1.911 |
-| AR(1) on squared returns | 0.864 | 2.003 |
-| ARCH(1) | 0.868 | 2.008 |
-| MA(1) on squared returns | 0.868 | 2.009 |
-| Rolling variance | 0.977 | 2.013 |
-| Expanding historical variance | 0.874 | 2.018 |
+```{python}
+import pandas as pd
+from IPython.display import display
 
-GARCH(1,1) has the smallest errors in this sample. Its RMSE is about 6.3%
-below expanding historical variance and 1.0% below EWMA. These point
-estimates do not establish that the differences are statistically reliable
-or that the added model complexity is worthwhile.
+stage1_metrics = pd.read_csv(
+    "../data/processed/stage1_on_stage3_origins_metrics.csv"
+)
+stage1_display = stage1_metrics[
+    ["model", "n", "MAE", "RMSE", "QLIKE", "DM_MSE_p_holm", "DM_QLIKE_p_holm"]
+].copy()
+stage1_display.columns = [
+    "Model", "N", "MAE", "RMSE", "QLIKE", "Holm DM p (MSE)", "Holm DM p (QLIKE)"
+]
+display(
+    stage1_display.style.format(
+        {
+            "MAE": "{:.6g}",
+            "RMSE": "{:.6g}",
+            "QLIKE": "{:.4f}",
+            "Holm DM p (MSE)": "{:.4g}",
+            "Holm DM p (QLIKE)": "{:.4g}",
+        }
+    ).hide(axis="index")
+)
+```
+
+The Stage 1 baseline errors below are now directly comparable with the Stage 3
+models. A lower point loss is descriptive evidence; the paired tests and
+their multiple-testing correction should be considered before interpreting
+small differences.
 
 ```{python}
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-baseline = pd.DataFrame(
+baseline = stage1_metrics.sort_values("RMSE", ascending=True).copy()
+baseline["Model"] = baseline["model"].map(
     {
-        "Model": [
-            "GARCH(1,1)",
-            "EWMA (estimated)",
-            "AR(1), squared returns",
-            "ARCH(1)",
-            "MA(1), squared returns",
-            "Rolling variance",
-            "Expanding historical variance",
-        ],
-        "RMSE": [
-            0.0018907892832412368,
-            0.0019106250535419723,
-            0.0020031932331837886,
-            0.0020083252110511506,
-            0.0020086109748238636,
-            0.0020131858550987325,
-            0.00201843701138773,
-        ],
+        "historical_variance": "Expanding historical variance",
+        "rolling_variance": "Rolling variance",
+        "ewma_fixed": "EWMA (fixed decay 0.94)",
+        "ar1_squared_return": "AR(1), squared returns",
+        "ma1_squared_return": "MA(1), squared returns",
+        "arch1": "ARCH(1)",
+        "garch11": "GARCH(1,1)",
     }
-).sort_values("RMSE", ascending=True)
+)
 
 fig, ax = plt.subplots(figsize=(8.5, 4.6))
 colors = ["#d97941" if name == "GARCH(1,1)" else "#527f89" for name in baseline["Model"]]
 ax.barh(baseline["Model"], baseline["RMSE"] * 1e3, color=colors)
 ax.invert_yaxis()
 ax.set_xlabel(r"RMSE ($\times 10^{-3}$ realized-variance units)")
-ax.set_title("Stage 1: recent rolling-origin baseline errors")
+ax.set_title("Stage 1: baseline errors on the Stage 3 origins")
 ax.grid(axis="x", alpha=0.22)
 ax.set_axisbelow(True)
 for y, value in enumerate(baseline["RMSE"] * 1e3):
@@ -254,87 +270,254 @@ plt.show()
 
 # Stage 3: advanced model performance
 
-Stage 3 reuses previously completed forecast files; these results were not
-re-estimated for this report. All 17 displayed models share 445 weekly
-origins from 2018-01-05 to 2026-11-03. Reported MSE, RMSE, MAE, and QLIKE
-therefore compare on the same target observations. RMSE and MAE below are
-scaled by $10^3$ for readability.
-
-| Model | MSE ($\times 10^{-6}$) | RMSE ($\times 10^{-3}$) | MAE ($\times 10^{-3}$) | QLIKE |
-|---|---:|---:|---:|---:|
-| EWMA, estimated decay | 0.976 | 0.988 | 0.442 | 0.451 |
-| HAR | 0.981 | 0.991 | **0.416** | 0.465 |
-| Lasso, VIX only | **0.985** | **0.992** | 0.429 | 0.457 |
-| EWMA, fixed decay | 0.987 | 0.993 | 0.452 | 0.455 |
-| Ridge, VIX only | 0.990 | 0.995 | 0.430 | 0.457 |
-| HARX, VIX only | 0.990 | 0.995 | 0.431 | 0.456 |
-| Lasso, full predictors | 1.007 | 1.004 | 0.422 | 0.473 |
-| HARX, DXY + VIX | 1.015 | 1.008 | 0.436 | 0.459 |
-| Lasso, DXY + VIX | 1.016 | 1.008 | 0.433 | 0.463 |
-| Ridge, DXY + VIX | 1.035 | 1.017 | 0.436 | 0.462 |
-| Rolling variance | 1.072 | 1.035 | 0.476 | 0.492 |
-| Ridge, full predictors | 1.116 | 1.056 | 0.437 | 0.449 |
-| AR(1), squared returns | 1.116 | 1.056 | 0.441 | 0.613 |
-| MA(1), squared returns | 1.120 | 1.058 | 0.442 | 0.620 |
-| ARCH(1) | 1.122 | 1.059 | 0.441 | 0.622 |
-| Expanding historical variance | 1.127 | 1.062 | 0.444 | 0.636 |
-| HARX, full predictors | 1.277 | 1.130 | 0.457 | 0.449 |
-
-EWMA is the lowest-MSE model overall; HAR is the lowest-MAE model. VIX-only
-lasso has the lowest MSE among the nine predictor-set variants. Against
-historical variance, no candidate has a Holm-adjusted Diebold-Mariano p-value
-below 0.05 for either MSE or QLIKE. The point ranking should therefore not be
-treated as proof of a performance difference or a final model choice.
+The seven Stage 1 baselines above were refit at the exact Stage 3 origin dates;
+11 Stage 3 forecasts are reused from the completed evaluation, and a
+BIC-selected VAR is refit at each origin. This VAR uses log daily squared
+returns and log VIX, selects up to five lags by BIC using data through the
+forecast origin, and sums the five exponentiated forecasts of daily variance.
+It succeeded at all 445 requested origins. GARCH(1,1) failed at 10 dates, so
+the final table compares all 19 models on the 435 shared usable origins, a
+common subset of Stage 3's 445 weekly dates. The paired comparisons use the
+expanding historical-variance baseline and Holm-adjusted Diebold-Mariano
+p-values. VAR's MSE and QLIKE are both higher than the benchmark, with
+Holm-adjusted DM p-values of 0.000071 and 1.42e-7, respectively.
 
 ```{python}
-stage3 = pd.DataFrame(
+import pandas as pd
+from IPython.display import display
+
+stage3_summary = pd.read_csv(
+    "../data/processed/evaluation_summary_with_stage1_common_origins.csv"
+)
+stage3_display = stage3_summary[
+    [
+        "model",
+        "n",
+        "MSE",
+        "RMSE",
+        "MAE",
+        "QLIKE",
+        "DM_MSE_p_holm",
+        "DM_QLIKE_p_holm",
+    ]
+].copy()
+stage3_display.columns = [
+    "Model", "N", "MSE", "RMSE", "MAE", "QLIKE",
+    "Holm DM p (MSE)", "Holm DM p (QLIKE)",
+]
+display(
+    stage3_display.style.format(
+        {
+            "MSE": "{:.6g}",
+            "RMSE": "{:.6g}",
+            "MAE": "{:.6g}",
+            "QLIKE": "{:.4f}",
+            "Holm DM p (MSE)": "{:.4g}",
+            "Holm DM p (QLIKE)": "{:.4g}",
+        }
+    ).hide(axis="index")
+)
+```
+
+The RMSE figure includes the refit Stage 1 baselines alongside the advanced
+forecasts. Point rankings are not themselves a final model choice; use the
+paired tests and the evaluation limitations when interpreting small gaps.
+
+```{python}
+stage3 = stage3_summary.copy()
+stage3["Model"] = stage3["model"].map(
     {
-        "Model": [
-            "EWMA (estimated)", "HAR", "Lasso (VIX)", "EWMA (fixed)",
-            "Ridge (VIX)", "HARX (VIX)", "Lasso (full)", "HARX (DXY+VIX)",
-            "Lasso (DXY+VIX)", "Ridge (DXY+VIX)", "Rolling variance",
-            "Ridge (full)", "AR(1), squared returns", "MA(1), squared returns",
-            "ARCH(1)", "Expanding variance", "HARX (full)",
-        ],
-        "RMSE": [
-            0.0009879, 0.0009906, 0.00099235, 0.00099345, 0.00099488,
-            0.00099499, 0.00100370, 0.00100767, 0.00100821, 0.00101725,
-            0.00103537, 0.00105640, 0.00105656, 0.00105815, 0.00105904,
-            0.00106171, 0.00112982,
-        ],
-        "Group": [
-            "Baseline", "HAR", "Penalized", "Baseline", "Penalized",
-            "HARX", "Penalized", "HARX", "Penalized", "Penalized",
-            "Baseline", "Penalized", "Baseline", "Baseline", "Baseline",
-            "Baseline", "HARX",
-        ],
+        "ewma": "EWMA (estimated)",
+        "ewma_fixed": "EWMA (fixed)",
+        "ewma_variance": "EWMA (fixed)",
+        "har": "HAR",
+        "lasso_vix": "Lasso (VIX)",
+        "ridge_vix": "Ridge (VIX)",
+        "harx_vix": "HARX (VIX)",
+        "lasso_full": "Lasso (full)",
+        "harx_dxy_vix": "HARX (DXY+VIX)",
+        "lasso_dxy_vix": "Lasso (DXY+VIX)",
+        "ridge_dxy_vix": "Ridge (DXY+VIX)",
+        "rolling_variance": "Rolling variance",
+        "ridge_full": "Ridge (full)",
+        "ar1_squared_return": "AR(1), squared returns",
+        "ma1_squared_return": "MA(1), squared returns",
+        "arch1": "ARCH(1)",
+        "historical_variance": "Expanding variance",
+        "garch11": "GARCH(1,1)",
+        "harx_full": "HARX (full)",
+        "var": "VAR (BIC-selected)",
     }
-).sort_values("RMSE", ascending=True)
+)
+stage3["Group"] = stage3["model"].map(
+    lambda name: (
+        "Baseline"
+        if name in {
+            "historical_variance", "rolling_variance", "ewma_fixed",
+            "ar1_squared_return", "ma1_squared_return", "arch1", "garch11",
+        }
+        else "HAR" if name == "har"
+        else "HARX" if name.startswith("harx")
+        else "Penalized" if name.startswith(("lasso", "ridge"))
+        else "VAR" if name == "var"
+        else "EWMA"
+    )
+)
+stage3 = stage3.sort_values("RMSE", ascending=True)
 palette = {
     "Baseline": "#8a9b9f",
     "HAR": "#527f89",
     "HARX": "#3e7480",
     "Penalized": "#d97941",
+    "EWMA": "#8064a2",
+    "VAR": "#b05a5a",
 }
 
 fig, ax = plt.subplots(figsize=(8.5, 6.3))
 ax.barh(stage3["Model"], stage3["RMSE"] * 1e3, color=stage3["Group"].map(palette))
 ax.invert_yaxis()
 ax.set_xlabel(r"RMSE ($\times 10^{-3}$ realized-variance units)")
-ax.set_title("Stage 3: 17 models on 445 shared weekly origins")
+ax.set_title("Stage 3: 19 models on 435 shared usable origins")
 ax.grid(axis="x", alpha=0.2)
 ax.set_axisbelow(True)
 fig.tight_layout()
 plt.show()
 ```
 
+## Appendix: forecasts vs actuals for all models
+
+The following charts show forecast and actual five-session realized variance
+for every one of the 19 models at all 445 requested Stage 3 evaluation dates.
+GARCH(1,1) forecast gaps correspond to its 10 failed fits. The charts retain
+the full set of attempted origins; the main comparison table uses the
+435-origin complete-case intersection. Regenerate the VAR forecasts and
+comparison tables with `python scripts/evaluate_stage3_var.py`, then regenerate
+all charts with `python scripts/plot_stage3_all_model_forecasts.py`.
+
+### Expanding historical variance
+
+![Expanding historical variance forecasts and actuals](figures/stage3_all_model_forecasts/historical_variance.png){fig-alt="Line chart of actual and expanding historical variance forecasts over Stage 3 origin dates"}
+
+\newpage
+
+### Rolling variance
+
+![Rolling variance forecasts and actuals](figures/stage3_all_model_forecasts/rolling_variance.png){fig-alt="Line chart of actual and rolling variance forecasts over Stage 3 origin dates"}
+
+\newpage
+
+### EWMA, fixed decay 0.94
+
+![Fixed-decay EWMA forecasts and actuals](figures/stage3_all_model_forecasts/ewma_fixed.png){fig-alt="Line chart of actual and fixed-decay EWMA forecasts over Stage 3 origin dates"}
+
+\newpage
+
+### AR(1) on squared returns
+
+![AR(1) squared-return forecasts and actuals](figures/stage3_all_model_forecasts/ar1_squared_return.png){fig-alt="Line chart of actual and AR(1) squared-return forecasts over Stage 3 origin dates"}
+
+\newpage
+
+### MA(1) on squared returns
+
+![MA(1) squared-return forecasts and actuals](figures/stage3_all_model_forecasts/ma1_squared_return.png){fig-alt="Line chart of actual and MA(1) squared-return forecasts over Stage 3 origin dates"}
+
+\newpage
+
+### ARCH(1)
+
+![ARCH(1) forecasts and actuals](figures/stage3_all_model_forecasts/arch1.png){fig-alt="Line chart of actual and ARCH(1) forecasts over Stage 3 origin dates"}
+
+\newpage
+
+### GARCH(1,1)
+
+![GARCH(1,1) forecasts and actuals](figures/stage3_all_model_forecasts/garch11.png){fig-alt="Line chart of actual and GARCH(1,1) forecasts over Stage 3 origin dates, with gaps at failed fits"}
+
+\newpage
+
+### VAR, BIC-selected
+
+![VAR forecasts and actuals](figures/stage3_all_model_forecasts/var.png){fig-alt="Line chart of actual and BIC-selected VAR forecasts over Stage 3 origin dates"}
+
+\newpage
+
+### EWMA, estimated decay
+
+![Estimated-decay EWMA forecasts and actuals](figures/stage3_all_model_forecasts/ewma.png){fig-alt="Line chart of actual and estimated-decay EWMA forecasts over Stage 3 origin dates"}
+
+\newpage
+
+### HAR
+
+![HAR forecasts and actuals](figures/stage3_all_model_forecasts/har.png){fig-alt="Line chart of actual and HAR forecasts over Stage 3 origin dates"}
+
+\newpage
+
+### HARX, VIX
+
+![HARX VIX forecasts and actuals](figures/stage3_all_model_forecasts/harx_vix.png){fig-alt="Line chart of actual and HARX VIX forecasts over Stage 3 origin dates"}
+
+\newpage
+
+### HARX, DXY and VIX
+
+![HARX DXY and VIX forecasts and actuals](figures/stage3_all_model_forecasts/harx_dxy_vix.png){fig-alt="Line chart of actual and HARX DXY and VIX forecasts over Stage 3 origin dates"}
+
+\newpage
+
+### HARX, full predictor set
+
+![HARX full predictor-set forecasts and actuals](figures/stage3_all_model_forecasts/harx_full.png){fig-alt="Line chart of actual and full-predictor HARX forecasts over Stage 3 origin dates"}
+
+\newpage
+
+### Lasso, VIX
+
+![Lasso VIX forecasts and actuals](figures/stage3_all_model_forecasts/lasso_vix.png){fig-alt="Line chart of actual and VIX lasso forecasts over Stage 3 origin dates"}
+
+\newpage
+
+### Lasso, DXY and VIX
+
+![Lasso DXY and VIX forecasts and actuals](figures/stage3_all_model_forecasts/lasso_dxy_vix.png){fig-alt="Line chart of actual and DXY-plus-VIX lasso forecasts over Stage 3 origin dates"}
+
+\newpage
+
+### Lasso, full predictor set
+
+![Lasso full predictor-set forecasts and actuals](figures/stage3_all_model_forecasts/lasso_full.png){fig-alt="Line chart of actual and full-predictor lasso forecasts over Stage 3 origin dates"}
+
+\newpage
+
+### Ridge, VIX
+
+![Ridge VIX forecasts and actuals](figures/stage3_all_model_forecasts/ridge_vix.png){fig-alt="Line chart of actual and VIX ridge forecasts over Stage 3 origin dates"}
+
+\newpage
+
+### Ridge, DXY and VIX
+
+![Ridge DXY and VIX forecasts and actuals](figures/stage3_all_model_forecasts/ridge_dxy_vix.png){fig-alt="Line chart of actual and DXY-plus-VIX ridge forecasts over Stage 3 origin dates"}
+
+\newpage
+
+### Ridge, full predictor set
+
+![Ridge full predictor-set forecasts and actuals](figures/stage3_all_model_forecasts/ridge_full.png){fig-alt="Line chart of actual and full-predictor ridge forecasts over Stage 3 origin dates"}
+
 ## Scope and limitations
 
-- The Stage 3 run excluded repeated auto-ARIMA, VAR, GJR-GARCH, asymmetric
-  EGARCH, Student-t GARCH, and GARCH-X fits to meet the requested short
-  runtime. Their exclusion is not evidence that they perform poorly.
-- The Stage 1 GARCH(1,1) results use a separate, recent 488-origin sample and
-  are not included in the Stage 3 common-origin ranking.
+- The Stage 3 run excluded repeated auto-ARIMA, GJR-GARCH, asymmetric EGARCH,
+  Student-t GARCH, and GARCH-X fits to meet the requested short runtime.
+  Their exclusion is not evidence that they perform poorly. VAR was added in
+  a separate origin-wise run using the existing BIC-selected implementation.
+- GARCH(1,1) failed to converge at 10 of the 445 requested Stage 3 dates.
+  The combined model ranking uses the 435 dates with successful forecasts
+  from every model; the appendix retains all 445 attempted dates.
+- Appendix forecasts show GARCH(1,1) gaps where estimation failed; those
+  actual observations are not silently interpolated. VAR produced valid
+  forecasts at all 445 requested origins.
 - Five-session targets overlap. Paired Diebold-Mariano tests use a horizon
   adjustment and Holm correction, but inference still depends on this
   evaluation design.
@@ -349,12 +532,17 @@ plt.show()
 
 This report uses the local prepared files and documented analyses:
 
-- Stage 1: `data/processed/stage1_baseline_500_origin_metrics.csv` and
-  `cross_model_comparison_with_baselines.csv`.
+- Stage 1: `data/processed/stage1_on_stage3_origins_forecasts.csv`,
+  `data/processed/stage1_on_stage3_origins_metrics.csv`, and
+  `scripts/evaluate_stage1_on_stage3_origins.py`. The older recent-sample
+  metrics are retained separately in
+  `data/processed/stage1_baseline_500_origin_metrics.csv`.
 - Stage 2 Yahoo/FRED: `notebooks/05_advanced_models.ipynb`,
   `data/processed/stage2_multivariate.csv`, and its manifest.
 - Stage 2 LSEG screen: the exploratory findings recorded in
   `.ai/SESSION_LOG.md`; treat these as a separate, qualified evidence source.
-- Stage 3: `data/processed/evaluation_summary.csv`,
-  `data/processed/predictor_set_comparison.csv`, and the manifest beside the
-  saved forecast rows.
+- Stage 3: `data/processed/evaluation_summary_with_stage1_common_origins.csv`,
+  `data/processed/predictor_set_comparison.csv`,
+  `data/processed/stage3_var_forecasts.csv`,
+  `data/processed/stage3_var_manifest.json`, and the manifest beside the saved
+  forecast rows.
