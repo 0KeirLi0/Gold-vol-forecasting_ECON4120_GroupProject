@@ -139,6 +139,28 @@ def test_all_baselines_handle_zero_returns():
 
     assert all(value == 0 for value in forecasts.values())
 
+def test_garch_forecast_is_equivariant_to_return_scale():
+    returns = np.random.default_rng(42).normal(0, 0.01, size=120)
+    forecast = garch11_variance_forecast(returns, horizon=5)
+
+    assert garch11_variance_forecast(returns * 100, horizon=5) == pytest.approx(
+        forecast * 100**2, rel=1e-5
+    )
+
+
+def test_garch_rejects_successful_optimizer_with_invalid_constraints(monkeypatch):
+    from scipy.optimize import OptimizeResult
+    import gold_vol_pipeline.models as models
+
+    monkeypatch.setattr(
+        models, "minimize",
+        lambda *args, **kwargs: OptimizeResult(
+            success=True, fun=1.0, x=np.array([0.1, 0.8, 0.8]), message="success"
+        ),
+    )
+    with pytest.raises(RuntimeError, match="violated constraints"):
+        garch11_variance_forecast([0.01, -0.02, 0.03], horizon=5)
+
 
 @pytest.mark.parametrize(
     "forecast",

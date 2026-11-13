@@ -53,6 +53,30 @@ dates with valid forecasts for every model, while the appendix charts retain
 all attempts. Running the baseline script replaces the combined files, so run
 the VAR and HK scripts afterward to restore those models.
 
+## Refit scaled GARCH only
+
+To reproduce the 445-origin GARCH update while retaining the other completed
+forecasts, run the following against the existing panel and full 20-model
+comparison. This refits every origin, checks convergence and parameter
+constraints, requires all 20 models to have forecasts at every origin, and
+refreshes the saved comparisons and baseline GARCH figure.
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python scripts/refit_stage3_garch.py
+python scripts/plot_stage3_all_model_forecasts.py
+quarto render reports/model-performance-stage2-stage3.qmd --to pdf
+```
+
+The fit scales returns by their root mean square at each origin and rescales
+forecast variance to original units. The run used Python 3.13, NumPy 2.4.6,
+pandas 2.3.3, and SciPy 1.15.2. Intermediate bounds-clipping warnings were
+observed; a successful fit and constraint checks do not prove global optimality.
+As an additional sensitivity check, scaled initial parameters
+`(omega, alpha, beta) = (0.05, 0.05, 0.90)` and `(0.20, 0.05, 0.75)` yielded
+negative log-likelihoods within 1e-8 at origins 2018-01-05, 2018-01-22,
+2018-04-05, 2018-11-13, 2019-02-12, 2023-06-20, 2024-11-06, and 2026-11-03.
+This limited check is not proof of global optimality.
+
 The cached notebook itself still omits repeated auto-ARIMA, VAR, GJR-GARCH,
 asymmetric EGARCH, Student-t GARCH, and GARCH-X fits. The first two are added
 by the separate scripts above. The other code remains available

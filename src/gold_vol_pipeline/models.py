@@ -151,7 +151,7 @@ def _arch_garch_forecast(
     floor = max(sample_variance * 1e-8, np.finfo(float).tiny)
     parameters_count = 3 if garch else 2
     initial = (
-        [sample_variance * 0.1, 0.08, 0.82]
+        [sample_variance * 0.05, 0.05, 0.90]
         if garch
         else [sample_variance * 0.9, 0.08]
     )
@@ -194,12 +194,20 @@ def _arch_garch_forecast(
         constraints=constraints,
         options={"maxiter": 1000, "ftol": 1e-10},
     )
-    if not fit.success or not np.isfinite(fit.fun):
+    if not fit.success or not np.isfinite(fit.fun) or not np.isfinite(fit.x).all():
         model_name = "GARCH(1,1)" if garch else "ARCH(1)"
         raise RuntimeError(f"{model_name} parameter estimation failed: {fit.message}")
 
     omega, alpha = fit.x[:2]
     beta = fit.x[2] if garch else 0.0
+    if garch and (
+        omega < floor * (1 - 1e-6)
+        or omega > upper_omega * (1 + 1e-6)
+        or alpha < -1e-8
+        or beta < -1e-8
+        or alpha + beta > 0.999 + 1e-8
+    ):
+        raise RuntimeError("GARCH(1,1) parameter estimation violated constraints.")
     variance_path = conditional_variances(fit.x)
     next_variance = omega + alpha * squared[-1] + beta * variance_path[-1]
     persistence = alpha + beta
@@ -207,6 +215,8 @@ def _arch_garch_forecast(
     for _ in range(1, horizon):
         next_variance = omega + persistence * next_variance
         total += max(float(next_variance), floor)
+    if not np.isfinite(total) or total < 0:
+        raise RuntimeError("ARCH/GARCH model produced an invalid variance forecast.")
     return float(total)
 
 
@@ -220,8 +230,23 @@ def arch1_variance_forecast(
 def garch11_variance_forecast(
     returns: Sequence[float] | pd.Series, *, horizon: int = 1
 ) -> float:
-    """Fit a Gaussian GARCH(1,1) model and forecast summed future variance."""
-    return _arch_garch_forecast(returns, horizon=horizon, garch=True)
+    """Fit scaled Gaussian GARCH(1,1) and forecast variance in original units."""
+    values = _validated_returns(returns)
+    _validated_horizon(horizon)
+    if len(values) < 3:
+        raise ValueError("GARCH(1,1) forecasts require at least 3 returns.")
+    scale = float(np.sqrt(np.mean(np.square(values))))
+    if not np.isfinite(scale):
+        raise ValueError("GARCH(1,1) return scale must be finite.")
+    if scale == 0:
+        if np.any(values):
+            raise ValueError("GARCH(1,1) return scale underflowed.")
+        return 0.0
+    forecast = _arch_garch_forecast(values / scale, horizon=horizon, garch=True)
+    result = forecast * scale**2
+    if not np.isfinite(result) or result <= 0:
+        raise RuntimeError("GARCH(1,1) produced an invalid rescaled forecast.")
+    return result
 
 
 def _arch_package_forecast(

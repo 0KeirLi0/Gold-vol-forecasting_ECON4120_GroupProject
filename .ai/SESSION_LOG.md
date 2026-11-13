@@ -2,6 +2,30 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-13 — Refit GARCH on all aligned origins
+- Author: User-directed implementation by Copilot
+- Type: finding
+- Context: The user requested GARCH forecasts on all 445 Stage 3 dates rather than the previous 435-date complete-case comparison.
+- Outcome: The GARCH fit now scales historical returns by their root mean square, uses a consistent feasible initialization, checks optimizer success and parameter constraints, and converts forecast variance back to original units. All 445 fits passed; intermediate bounds-clipping warnings remain. On 445 common origins GARCH had lowest MSE (9.696e-7; RMSE 0.000985), HAR had lowest MAE (0.000416), and no model significantly beat historical variance after Holm correction. VAR had significantly larger MSE and QLIKE. Eight selected fits agreed in negative log-likelihood within 1e-8 across two starting values, not a proof of global optimality.
+- Artifacts: `src/gold_vol_pipeline/models.py`, `scripts/refit_stage3_garch.py`, aligned forecasts, summaries, figures, report, presentation, and `REPRODUCE.md`.
+- Next: Samuel to review the 445-origin loss and inference results; Enoch to review numerical warnings and source-date freshness.
+
+## 2026-11-13 — Documented GARCH scaling investigation
+- Author: User-directed documentation update by Copilot
+- Type: handoff
+- Context: The user requested updated reports after the exploratory GARCH scaling check.
+- Outcome: The performance report and project progress presentation distinguish the 10-origin diagnostic from the unchanged 435-origin comparison; reproduction instructions describe the diagnostic and its limitations. The report PDF and presentation HTML and PDF were regenerated; the presentation PDF uses the existing Quarto document format rather than a browser slide export.
+- Artifacts: `reports/model-performance-stage2-stage3.qmd` and PDF, `presentations/project-progress.qmd`, HTML and PDF, `REPRODUCE.md`.
+- Next: Validate any proposed scaling change across all 445 origins and refresh comparisons before drawing new conclusions.
+
+## 2026-11-13 — Investigated GARCH convergence failures
+- Author: Copilot investigation
+- Type: finding
+- Context: The Stage 1 GARCH(1,1) fit failed on 10 of 445 Stage 3 origins; six reported incompatible inequality constraints and four reached the iteration limit.
+- Outcome: In an exploratory runtime check, dividing each origin's historical returns by their root mean square, fitting the existing model, and converting its variance forecast back to original units produced finite forecasts at all 10 previously failed origins. The optimizer emitted bounds-clipping warnings. This suggests numerical scaling is a promising fix, not proof of optimal fits or an updated full-sample result.
+- Artifacts: `src/gold_vol_pipeline/models.py`, `data/processed/stage1_on_stage3_origins_forecasts.csv`.
+- Next: If adopted, validate constraints and fit quality, rerun all origins and aligned comparisons, and update the report and presentation; do not treat the exploratory forecasts as published results.
+
 ## 2026-11-13 — Added fixed-order HK auto-ARIMA to aligned comparison
 - Author: User-directed implementation by Copilot
 - Type: finding

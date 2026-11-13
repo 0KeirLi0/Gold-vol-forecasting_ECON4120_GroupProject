@@ -24,9 +24,10 @@
   "origin_count": 445,
   "successful_forecasts": 445,
   "failed_forecasts": 0,
-  "common_complete_model_origins": 435,
+  "common_complete_model_origins": 445,
   "orders": {
     "(3, 1, 1)": 445
   },
-  "run_timestamp_utc": "2026-11-13T08:55:42.629264+00:00"
+  "run_timestamp_utc": "2026-11-13T08:55:42.629264+00:00",
+  "common_comparison_updated_utc": "2026-11-13T15:44:47.748204+00:00"
 }

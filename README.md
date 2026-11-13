@@ -303,6 +303,8 @@ MA(1) models of squared returns, ARCH(1), and GARCH(1,1). Each forecast
 function accepts returns available through a forecast origin and a configurable
 horizon; it returns the expected variance summed over the next horizon
 observations, matching the pipeline's realized-variance target definition.
+GARCH(1,1) scales the returns by their root mean square during fitting and
+converts the forecast variance back to the original units.
 For example:
 
 ```python
@@ -416,15 +418,17 @@ baselines have since been freshly evaluated at the same 445 weekly origin
 dates. The fixed-order HK benchmark selects ARIMA(3,1,1) at the first origin
 using squared returns and refits it at each origin; it succeeded at all 445
 dates. The BIC-selected VAR uses log daily squared returns and log VIX, and
-also succeeded at all 445 origins. GARCH failed to converge at 10 dates, so
-the final 20-model comparison uses the 435 dates with valid forecasts for every model. GARCH(1,1)
-had the lowest point MSE (9.77e-7; RMSE 0.000988) and MAE (0.000411), but did
+also succeeded at all 445 origins. Scaled GARCH(1,1) succeeded at all 445,
+so the final 20-model comparison uses every requested origin. GARCH had the
+lowest point MSE (9.70e-7; RMSE 0.000985); HAR had the lowest MAE (0.000416).
+GARCH did
 not significantly beat historical variance after Holm correction for MSE or
 QLIKE. VAR had larger MSE and QLIKE than historical variance, with
-Holm-adjusted DM p-values of 0.0000747 and 1.50e-7. HK auto-ARIMA has
-RMSE 0.001048, and neither its MSE nor QLIKE significantly beats historical
+Holm-adjusted DM p-values of 0.0000720 and 1.19e-7. HK auto-ARIMA has
+RMSE 0.001037, and neither its MSE nor QLIKE significantly beats historical
 variance after Holm correction. The result remains
-exploratory, with convergence failure and overlapping targets noted.
+exploratory; optimizer bounds-clipping warnings and overlapping targets remain
+relevant limitations.
 The [Stage 2–3 report](reports/model-performance-stage2-stage3.qmd) includes
 the aligned comparison and forecast-vs-actual appendix charts for all 20
 models.
