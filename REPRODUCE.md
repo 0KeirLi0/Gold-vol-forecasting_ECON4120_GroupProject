@@ -29,25 +29,33 @@ figures under `plots/final_evaluation/`. The
 executed notebook is stored under `data/processed/`, leaving the source
 notebook unchanged.
 
-To refit the seven Stage 1 baselines at the exact same 445 weekly origin dates
-and add the BIC-selected VAR at those dates without refitting the other
-completed Stage 3 models, run:
+To refit the original seven Stage 1 baselines, the BIC-selected VAR and the
+HK auto-ARIMA at the exact same 445 weekly origin dates without refitting the
+other completed Stage 3 models, run these commands in order:
 
 ```bash
 python scripts/evaluate_stage1_on_stage3_origins.py
 python scripts/evaluate_stage3_var.py
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python scripts/evaluate_stage3_auto_arima.py --workers 4
 python scripts/plot_stage3_all_model_forecasts.py
 quarto render reports/model-performance-stage2-stage3.qmd --to pdf
 ```
 
-GARCH(1,1) failed to converge at 10 of the 445 dates in the current run. The
-VAR succeeded at all 445 dates. The combined 19-model comparison therefore
-uses the 435-origin intersection with valid forecasts for every model; each
-Stage 1 baseline and VAR is still attempted on all 445 dates and the appendix
-charts retain all attempts.
+The HK run selects one nonseasonal order on squared returns available at the
+first origin, using KPSS differencing and stepwise AICc with the existing
+selector's default search bounds. It then refits that fixed order using
+expanding data at each origin and sums five individually nonnegative daily
+forecasts. Its CSV records the fixed order and explicit fit errors; its manifest
+records the selection origin, AICc, KPSS p-values, input-panel hash and fit
+counts. The 445 fits can take considerably longer than the cached notebook;
+`--workers` controls parallel processes. The combined comparison uses only
+dates with valid forecasts for every model, while the appendix charts retain
+all attempts. Running the baseline script replaces the combined files, so run
+the VAR and HK scripts afterward to restore those models.
 
-Repeated auto-ARIMA, GJR-GARCH, asymmetric EGARCH, Student-t GARCH, and
-GARCH-X fits remain omitted from this short run. Their code remains available
+The cached notebook itself still omits repeated auto-ARIMA, VAR, GJR-GARCH,
+asymmetric EGARCH, Student-t GARCH, and GARCH-X fits. The first two are added
+by the separate scripts above. The other code remains available
 where implemented, but no new performance evidence for them is claimed here.
 This runtime-based scope is not a model-selection decision. To rebuild inputs
 from raw sources instead, use the pipeline commands in [`README.md`](README.md)

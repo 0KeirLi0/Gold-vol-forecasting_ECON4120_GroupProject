@@ -27,6 +27,23 @@ def _validated_series(series: Sequence[float] | pd.Series) -> np.ndarray:
     return values
 
 
+def fit_arima_order(
+    series: Sequence[float] | pd.Series, order: tuple[int, int, int]
+) -> ARIMAResultsWrapper:
+    """Fit one nonseasonal order with the HK selector's optimizer fallback."""
+    values = _validated_series(series)
+    _, d, _ = order
+    trend = "c" if d == 0 else "t" if d == 1 else "n"
+    fit = ARIMA(values, order=order, trend=trend).fit()
+    if not bool(getattr(fit, "mle_retvals", {}).get("converged", True)):
+        fit = ARIMA(values, order=order, trend=trend).fit(
+            method_kwargs={"method": "powell", "maxiter": 1000}
+        )
+    if not bool(getattr(fit, "mle_retvals", {}).get("converged", True)):
+        raise RuntimeError("LBFGS and Powell optimizers did not converge")
+    return fit
+
+
 @dataclass(frozen=True)
 class HyndmanKhandakarResult:
     """Selected nonseasonal ARIMA model and the candidates considered."""
@@ -110,49 +127,32 @@ def hyndman_khandakar(
         try:
             with warnings.catch_warnings(record=True) as caught:
                 warnings.simplefilter("always")
-                fit = ARIMA(
-                    values,
-                    order=(p, d, q),
-                    trend="c" if d == 0 else "t" if d == 1 else "n",
-                ).fit()
-                converged = bool(
-                    getattr(fit, "mle_retvals", {}).get("converged", True)
-                )
-                if not converged:
-                    fit = ARIMA(
-                        values,
-                        order=(p, d, q),
-                        trend="c" if d == 0 else "t" if d == 1 else "n",
-                    ).fit(method_kwargs={"method": "powell", "maxiter": 1000})
-            converged = bool(getattr(fit, "mle_retvals", {}).get("converged", True))
-            if not converged:
-                record["message"] = "LBFGS and Powell optimizers did not converge"
-            else:
-                parameter_count = len(fit.params)
-                observations = float(fit.nobs)
-                correction_denominator = observations - parameter_count - 1
-                aic = float(fit.aic)
-                aicc = (
-                    aic
-                    + 2 * parameter_count * (parameter_count + 1)
-                    / correction_denominator
-                    if correction_denominator > 0
-                    else np.inf
-                )
-                record.update(
-                    {
-                        "aic": aic,
-                        "aicc": float(aicc),
-                        "bic": float(fit.bic),
-                        "status": "ok",
-                    }
-                )
-                fitted_models[key] = fit
+                fit = fit_arima_order(values, (p, d, q))
+            parameter_count = len(fit.params)
+            observations = float(fit.nobs)
+            correction_denominator = observations - parameter_count - 1
+            aic = float(fit.aic)
+            aicc = (
+                aic
+                + 2 * parameter_count * (parameter_count + 1)
+                / correction_denominator
+                if correction_denominator > 0
+                else np.inf
+            )
+            record.update(
+                {
+                    "aic": aic,
+                    "aicc": float(aicc),
+                    "bic": float(fit.bic),
+                    "status": "ok",
+                }
+            )
+            fitted_models[key] = fit
             if caught:
                 record["message"] = "; ".join(
                     str(item.message) for item in caught
                 )
-        except (ValueError, np.linalg.LinAlgError, FloatingPointError) as error:
+        except (ValueError, RuntimeError, np.linalg.LinAlgError, FloatingPointError) as error:
             record["message"] = str(error)
 
         candidate_records[key] = record

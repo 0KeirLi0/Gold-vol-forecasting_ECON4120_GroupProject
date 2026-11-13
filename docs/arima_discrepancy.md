@@ -13,7 +13,11 @@ twice and assert identical orders, fitted parameters, AICc, and forecasts.
 This only checks reproducibility for the local snapshot; it does not resolve
 which historical result used the intended data.
 
-The final evaluation should reselect the Hyndman-Khandakar order using only
-returns available at each rolling forecast origin. It should therefore
-report the orders selected within that evaluation rather than hard-coding
-either full-sample order.
+The aligned Stage 3 evaluation uses a different, user-requested design:
+select the Hyndman-Khandakar order once using only returns available at its
+first forecast origin, then keep that order fixed while refitting coefficients
+at each rolling origin. On the recorded snapshot this selected ARIMA(3,1,1);
+the selection date, data hash and diagnostics are in
+`data/processed/stage3_auto_arima_manifest.json`. This does not resolve the
+earlier full-sample discrepancy. Re-selecting at every origin would be a
+different evaluation design.

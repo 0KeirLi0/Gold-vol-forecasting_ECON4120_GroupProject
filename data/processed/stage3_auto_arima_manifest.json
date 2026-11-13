@@ -1,0 +1,32 @@
+{
+  "evaluation": "HK order selected at first origin and refit at every Stage 3 origin",
+  "panel_sha256": "a2f957950e4df6d445271b720ac758a4eb777d998e4e37e0f1195229c515afcd",
+  "horizon": 5,
+  "search": {
+    "max_p": 5,
+    "max_q": 5,
+    "max_d": 2,
+    "max_order": 5,
+    "alpha": 0.05
+  },
+  "selection_origin": "2018-01-05",
+  "selection_n_returns": 756,
+  "selected_order": [
+    3,
+    1,
+    1
+  ],
+  "selection_aicc": -11003.237993085724,
+  "selection_kpss_p_values": [
+    0.01,
+    0.1
+  ],
+  "origin_count": 445,
+  "successful_forecasts": 445,
+  "failed_forecasts": 0,
+  "common_complete_model_origins": 435,
+  "orders": {
+    "(3, 1, 1)": 445
+  },
+  "run_timestamp_utc": "2026-11-13T08:55:42.629264+00:00"
+}

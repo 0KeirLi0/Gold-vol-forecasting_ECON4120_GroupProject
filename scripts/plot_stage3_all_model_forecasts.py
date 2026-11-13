@@ -19,6 +19,7 @@ DISPLAY_NAMES = {
     "ma1_squared_return": "MA(1), squared returns",
     "arch1": "ARCH(1)",
     "garch11": "GARCH(1,1)",
+    "auto_arima_hk": "Auto-ARIMA, Hyndman-Khandakar",
     "ewma": "EWMA, estimated decay",
     "har": "HAR",
     "harx_vix": "HARX, VIX",

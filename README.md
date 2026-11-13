@@ -369,8 +369,10 @@ gold-derived series: return-only candidate forecasts, sequential rolling-origin
 comparisons with MAE/RMSE, exploratory diagnostics, configurable in-sample
 candidate comparisons, and a nonseasonal Hyndman-Khandakar ARIMA selector.
 No final model-selection decision is recorded. The automatic ARIMA selector
-is included in an exploratory 20-origin rolling comparison; a broader,
-standardized evaluation remains pending. For Stage 2, Keir selected daily DXY,
+is included in an exploratory 20-origin rolling comparison. The aligned Stage 3
+evaluation separately selects one HK order using data at its first origin and
+refits that fixed order at each subsequent origin.
+For Stage 2, Keir selected daily DXY,
 nominal 10-year Treasury yield, S&P 500 returns, VIX, 10-year breakeven
 inflation, WTI spot, and optional gold-futures volume. The pipeline is
 implemented in `gold_vol_pipeline.predictors`; it derives close-to-close
@@ -402,24 +404,29 @@ full seven-predictor, VIX-only, and DXY-plus-VIX HARX/lasso/ridge variants.
 Models are compared on their common weekly origins; previously completed
 500-origin Stage 1 metrics are shown separately because they use a different
 sample. Repeated auto-ARIMA, VAR, and extended-GARCH fits are excluded from
-the cached notebook run; VAR is separately refit at the 445 saved forecast
-origins with `scripts/evaluate_stage3_var.py`. DXY-plus-VIX remains a
+the cached notebook run; VAR and HK auto-ARIMA are separately refit at the
+445 saved forecast origins using `scripts/evaluate_stage3_var.py` and
+`scripts/evaluate_stage3_auto_arima.py`, respectively. DXY-plus-VIX remains a
 sensitivity set motivated by the separate
 LSEG screen; significance on LSEG does not imply significance on Yahoo/FRED.
 The comparison is exploratory and no feature-selection or final model
 decision is asserted. See [`REPRODUCE.md`](REPRODUCE.md) for the short
-forecast-reuse workflow and source-access caveats. The seven Stage 1 baselines
-have since been freshly evaluated at the same 445 weekly origin dates. The
-BIC-selected VAR uses log daily squared returns and log VIX, and succeeded at
-all 445 origins. GARCH failed to converge at 10 dates, so the final 19-model
-comparison uses the 435 dates with valid forecasts for every model. GARCH(1,1)
+forecast-reuse workflow and source-access caveats. The seven original Stage 1
+baselines have since been freshly evaluated at the same 445 weekly origin
+dates. The fixed-order HK benchmark selects ARIMA(3,1,1) at the first origin
+using squared returns and refits it at each origin; it succeeded at all 445
+dates. The BIC-selected VAR uses log daily squared returns and log VIX, and
+also succeeded at all 445 origins. GARCH failed to converge at 10 dates, so
+the final 20-model comparison uses the 435 dates with valid forecasts for every model. GARCH(1,1)
 had the lowest point MSE (9.77e-7; RMSE 0.000988) and MAE (0.000411), but did
 not significantly beat historical variance after Holm correction for MSE or
 QLIKE. VAR had larger MSE and QLIKE than historical variance, with
-Holm-adjusted DM p-values of 0.000071 and 1.42e-7. The result remains
+Holm-adjusted DM p-values of 0.0000747 and 1.50e-7. HK auto-ARIMA has
+RMSE 0.001048, and neither its MSE nor QLIKE significantly beats historical
+variance after Holm correction. The result remains
 exploratory, with convergence failure and overlapping targets noted.
 The [Stage 2–3 report](reports/model-performance-stage2-stage3.qmd) includes
-the aligned comparison and forecast-vs-actual appendix charts for all 19
+the aligned comparison and forecast-vs-actual appendix charts for all 20
 models.
 
 For AI-agent collaboration guidance, see [`AGENTS.md`](AGENTS.md) and [`.github/copilot-instructions.md`](.github/copilot-instructions.md). Shared AI/team decisions and handoffs are recorded in [`.ai/SESSION_LOG.md`](.ai/SESSION_LOG.md), using the protocol in [`.ai/README.md`](.ai/README.md). The project uses a main-only Git workflow described in [`GIT_WORKFLOW.md`](GIT_WORKFLOW.md). For a compact project context and pointers, see [`llms.txt`](llms.txt).

@@ -30,7 +30,7 @@ This draft brings together three related, but non-identical, pieces of evidence:
    simple benchmarks.
 3. A Stage 3 comparison of those baselines with 12 additional HAR, HARX,
    penalized, and BIC-selected VAR forecasts, attempted on the same 445
-   weekly origins.
+   weekly origins, plus a fixed-order HK auto-ARIMA benchmark.
 
 In the aligned Stage 1/Stage 3 comparison, GARCH(1,1) had the lowest point-
 estimate MSE and RMSE, but failed to converge at 10 of the 445 forecast
@@ -41,6 +41,9 @@ outperform expanding variance on the separate Stage 2 holdout. No model
 significantly beat the historical-variance benchmark after Holm correction
 for MSE or QLIKE on the aligned sample; the VAR had significantly larger
 MSE and QLIKE than the benchmark after correction.
+The HK-selected ARIMA(3,1,1) uses one order throughout, estimated using
+only the first origin's history and refit at each origin; its RMSE is
+0.001048 and it did not significantly beat historical variance.
 
 These are exploratory results, not a final model choice. Samples, forecast
 origin spacing, and in some cases input panels differ; comparisons across
@@ -54,7 +57,7 @@ those sections are descriptive rather than head-to-head rankings.
 | Stage 2 predictor screen | Yahoo/FRED panel; chronological 80/20 split; 2,376 training rows after purging 4 overlapping labels; HAC lag 4 | Which predictors are conditionally associated with log forward realized variance in training data? |
 | Stage 2 holdout | Yahoo/FRED panel; 596 origins from 2024-06-24 to 2026-11-03 | Does the all-predictor gradient-boosting forecast beat simple benchmarks on this holdout? |
 | LSEG screen | Separate `GCc1` panel; 3,241 training and 812 holdout rows | Exploratory conditional associations in the available alternative panel |
-| Stage 3 common-origin comparison | Yahoo/FRED panel; seven freshly refit Stage 1 baselines, 11 reused advanced forecasts, and one BIC-selected VAR; 435 complete weekly origins from the 445 Stage 3 dates | How do baselines and advanced forecasts compare on identical origins? |
+| Stage 3 common-origin comparison | Yahoo/FRED panel; seven original Stage 1 baselines, fixed-order HK auto-ARIMA, 11 reused advanced forecasts, and one BIC-selected VAR; 435 complete weekly origins from the 445 Stage 3 dates | How do baselines and advanced forecasts compare on identical origins? |
 
 The target is five-session-ahead realized variance, calculated as the sum of
 squared daily log returns over the next five observed price sessions. It is
@@ -66,12 +69,16 @@ were measured on one common sample.
 
 # Stage 1: baseline model performance
 
-All seven Stage 1 models were freshly attempted at the exact same 445 weekly
+The seven original Stage 1 models and fixed-order HK auto-ARIMA were attempted at the exact same 445 weekly
 forecast dates used by Stage 3. GARCH(1,1) converged on 435 dates and failed
 on 10; the final all-model comparison uses the 435-origin intersection so
 each reported model is scored on the same dates. The expanding-variance benchmark, rolling
 variance, fixed-decay EWMA (0.94), AR(1) on squared returns, MA(1) on squared
 returns, ARCH(1), and GARCH(1,1) use only returns through each origin.
+The HK selector uses squared returns through the first origin, 2018-01-05,
+to select ARIMA(3,1,1) via KPSS and stepwise AICc; this order is then fixed
+while its coefficients are re-estimated on expanding data at each origin.
+The five nonnegative daily predictions are summed to match the target.
 Convergence failures are retained as missing forecasts and shown through the
 per-model sample count rather than silently removed from the record.
 
@@ -121,6 +128,7 @@ baseline["Model"] = baseline["model"].map(
         "ma1_squared_return": "MA(1), squared returns",
         "arch1": "ARCH(1)",
         "garch11": "GARCH(1,1)",
+        "auto_arima_hk": "Auto-ARIMA (HK)",
     }
 )
 
@@ -270,17 +278,22 @@ plt.show()
 
 # Stage 3: advanced model performance
 
-The seven Stage 1 baselines above were refit at the exact Stage 3 origin dates;
+The seven original Stage 1 baselines and fixed-order HK auto-ARIMA were refit
+at the exact Stage 3 origin dates;
 11 Stage 3 forecasts are reused from the completed evaluation, and a
 BIC-selected VAR is refit at each origin. This VAR uses log daily squared
 returns and log VIX, selects up to five lags by BIC using data through the
 forecast origin, and sums the five exponentiated forecasts of daily variance.
 It succeeded at all 445 requested origins. GARCH(1,1) failed at 10 dates, so
-the final table compares all 19 models on the 435 shared usable origins, a
+the final table compares all 20 models on the 435 shared usable origins, a
 common subset of Stage 3's 445 weekly dates. The paired comparisons use the
 expanding historical-variance baseline and Holm-adjusted Diebold-Mariano
 p-values. VAR's MSE and QLIKE are both higher than the benchmark, with
-Holm-adjusted DM p-values of 0.000071 and 1.42e-7, respectively.
+Holm-adjusted DM p-values of 0.0000747 and 1.50e-7, respectively.
+HK auto-ARIMA succeeded at all 445 origins; on the common sample its MSE is
+1.099e-6, RMSE 0.001048, MAE 0.000483, and QLIKE 1.895. Its
+Holm-adjusted MSE and QLIKE DM p-values are 1.000 and 0.943, respectively;
+neither provides evidence that it outperforms historical variance.
 
 ```{python}
 import pandas as pd
@@ -345,6 +358,7 @@ stage3["Model"] = stage3["model"].map(
         "arch1": "ARCH(1)",
         "historical_variance": "Expanding variance",
         "garch11": "GARCH(1,1)",
+        "auto_arima_hk": "Auto-ARIMA (HK)",
         "harx_full": "HARX (full)",
         "var": "VAR (BIC-selected)",
     }
@@ -355,6 +369,7 @@ stage3["Group"] = stage3["model"].map(
         if name in {
             "historical_variance", "rolling_variance", "ewma_fixed",
             "ar1_squared_return", "ma1_squared_return", "arch1", "garch11",
+            "auto_arima_hk",
         }
         else "HAR" if name == "har"
         else "HARX" if name.startswith("harx")
@@ -377,7 +392,7 @@ fig, ax = plt.subplots(figsize=(8.5, 6.3))
 ax.barh(stage3["Model"], stage3["RMSE"] * 1e3, color=stage3["Group"].map(palette))
 ax.invert_yaxis()
 ax.set_xlabel(r"RMSE ($\times 10^{-3}$ realized-variance units)")
-ax.set_title("Stage 3: 19 models on 435 shared usable origins")
+ax.set_title("Stage 3: 20 models on 435 shared usable origins")
 ax.grid(axis="x", alpha=0.2)
 ax.set_axisbelow(True)
 fig.tight_layout()
@@ -387,11 +402,12 @@ plt.show()
 ## Appendix: forecasts vs actuals for all models
 
 The following charts show forecast and actual five-session realized variance
-for every one of the 19 models at all 445 requested Stage 3 evaluation dates.
+for every one of the 20 models at all 445 requested Stage 3 evaluation dates.
 GARCH(1,1) forecast gaps correspond to its 10 failed fits. The charts retain
 the full set of attempted origins; the main comparison table uses the
 435-origin complete-case intersection. Regenerate the VAR forecasts and
-comparison tables with `python scripts/evaluate_stage3_var.py`, then regenerate
+comparison tables with `python scripts/evaluate_stage3_var.py`, then run
+`python scripts/evaluate_stage3_auto_arima.py --workers 4` and regenerate
 all charts with `python scripts/plot_stage3_all_model_forecasts.py`.
 
 ### Expanding historical variance
@@ -433,6 +449,12 @@ all charts with `python scripts/plot_stage3_all_model_forecasts.py`.
 ### GARCH(1,1)
 
 ![GARCH(1,1) forecasts and actuals](figures/stage3_all_model_forecasts/garch11.png){fig-alt="Line chart of actual and GARCH(1,1) forecasts over Stage 3 origin dates, with gaps at failed fits"}
+
+\newpage
+
+### Auto-ARIMA, Hyndman-Khandakar
+
+![HK auto-ARIMA forecasts and actuals](figures/stage3_all_model_forecasts/auto_arima_hk.png){fig-alt="Line chart of actual and HK auto-ARIMA forecasts over Stage 3 origin dates"}
 
 \newpage
 
@@ -508,16 +530,16 @@ all charts with `python scripts/plot_stage3_all_model_forecasts.py`.
 
 ## Scope and limitations
 
-- The Stage 3 run excluded repeated auto-ARIMA, GJR-GARCH, asymmetric EGARCH,
+- The cached Stage 3 notebook excluded auto-ARIMA, GJR-GARCH, asymmetric EGARCH,
   Student-t GARCH, and GARCH-X fits to meet the requested short runtime.
-  Their exclusion is not evidence that they perform poorly. VAR was added in
-  a separate origin-wise run using the existing BIC-selected implementation.
+  Their exclusion is not evidence that they perform poorly. VAR and fixed-order
+  HK auto-ARIMA were added in separate origin-wise runs.
 - GARCH(1,1) failed to converge at 10 of the 445 requested Stage 3 dates.
   The combined model ranking uses the 435 dates with successful forecasts
   from every model; the appendix retains all 445 attempted dates.
 - Appendix forecasts show GARCH(1,1) gaps where estimation failed; those
   actual observations are not silently interpolated. VAR produced valid
-  forecasts at all 445 requested origins.
+  forecasts at all 445 requested origins, as did HK auto-ARIMA.
 - Five-session targets overlap. Paired Diebold-Mariano tests use a horizon
   adjustment and Holm correction, but inference still depends on this
   evaluation design.
@@ -544,5 +566,6 @@ This report uses the local prepared files and documented analyses:
 - Stage 3: `data/processed/evaluation_summary_with_stage1_common_origins.csv`,
   `data/processed/predictor_set_comparison.csv`,
   `data/processed/stage3_var_forecasts.csv`,
-  `data/processed/stage3_var_manifest.json`, and the manifest beside the saved
+  `data/processed/stage3_var_manifest.json`, `data/processed/stage3_auto_arima_forecasts.csv`,
+  `data/processed/stage3_auto_arima_manifest.json`, and the manifest beside the saved
   forecast rows.

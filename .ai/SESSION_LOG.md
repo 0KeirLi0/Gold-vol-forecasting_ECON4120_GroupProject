@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-13 — Added fixed-order HK auto-ARIMA to aligned comparison
+- Author: User-directed implementation by Copilot
+- Type: finding
+- Context: Enoch requested the existing Hyndman-Khandakar algorithm as a return-only benchmark, with one parameter set across observations.
+- Outcome: Selected ARIMA(3,1,1) by KPSS and stepwise AICc on squared returns available at the first forecast origin, 2018-01-05; kept the order fixed and refit coefficients using expanding data at each origin to avoid look-ahead. All 445 fits produced forecasts. The 20-model complete-case comparison remains 435 dates because GARCH(1,1) failed on 10; HK MSE was 1.099e-6, RMSE 0.001048, MAE 0.000483, and QLIKE 1.895. Holm-adjusted DM p-values against historical variance were 1.000 (MSE) and 0.943 (QLIKE). This is exploratory, not a model decision; the fixed-order interpretation does not freeze fitted coefficients.
+- Artifacts: `scripts/evaluate_stage3_auto_arima.py`, `data/processed/stage3_auto_arima_forecasts.csv` and manifest, aligned comparison tables, `reports/model-performance-stage2-stage3.qmd`, `presentations/project-progress.qmd`, `REPRODUCE.md`.
+- Next: Samuel to review the aligned loss, inference, and fixed-order sensitivity evidence; Enoch to confirm source-date freshness.
+
 ## 2026-11-13 — Added VAR to aligned Stage 3 comparison
 - Author: User-directed implementation by Copilot
 - Type: finding
