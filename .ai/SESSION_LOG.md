@@ -2,6 +2,30 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-13 — Drafted Stage 2 and Stage 3 performance report
+- Author: User-directed implementation by Copilot
+- Type: finding
+- Context: The team requested a report of baseline performance, predictor significance, and advanced-model performance with explanatory tables and charts.
+- Outcome: Created a Quarto report that keeps Stage 1, Stage 2 Yahoo/FRED, separate LSEG, and Stage 3 common-origin evidence distinct. The report includes the Stage 2 training-only HAC/Holm screen, holdout HistGradientBoosting comparison, Stage 1 baseline errors, and the 17-model Stage 3 comparison. Results remain exploratory; no final model choice is asserted.
+- Artifacts: `reports/model-performance-stage2-stage3.qmd`, `reports/model-performance-stage2-stage3.pdf`, `README.md`
+- Next: Samuel to review the reported evidence, caveats, and next-step implications.
+
+## 2026-11-13 — Rendered updated project progress presentation
+- Author: User-directed execution by Copilot
+- Type: finding
+- Context: The Stage 3 fast common-origin evaluation was documented in the project progress source.
+- Outcome: Rendered `presentations/project-progress.qmd` to RevealJS HTML and PDF; checked that the generated outputs contain the Stage 3 findings.
+- Artifacts: `presentations/project-progress.qmd`, `presentations/project-progress.html`, `presentations/project-progress.pdf`
+- Next: Samuel to review the Stage 3 loss, DM, and MZ evidence and recommend a next step without assuming a selection criterion.
+
+## 2026-11-13 — Reduced and reran the Stage 3 evaluation package
+- Author: User-directed implementation by Copilot
+- Type: finding
+- Context: The original unified notebook configured repeated ARIMA, VAR, GARCH-extension, and rolling-CV fits; prior completed weekly forecasts were already available for fast baselines, HAR/HARX, and all nine predictor-set variants.
+- Outcome: Reworked `notebooks/06_final_evaluation.ipynb` to reuse completed forecasts and compare 17 models on their 445 shared origins (2018-01-05 to 2026-11-03), without refitting. EWMA had the lowest MSE (9.76e-7), HAR the lowest MAE (0.000416), and VIX-only lasso the lowest MSE among predictor variants (9.85e-7). No candidate beat the historical-variance benchmark after Holm correction for MSE or QLIKE. Auto-ARIMA, VAR, GJR-GARCH, asymmetric EGARCH, Student-t GARCH, and GARCH-X were excluded from the short run for runtime reasons; this is not a model-selection judgment. The prior 500-origin GARCH(1,1) metrics are presented separately because their origins differ.
+- Artifacts: `data/processed/evaluation_forecasts.csv` and manifest, `data/processed/evaluation_summary.csv`, `data/processed/predictor_set_comparison.csv`, `data/processed/06_final_evaluation.executed.ipynb`, `plots/final_evaluation/`, `README.md`, `REPRODUCE.md`, `presentations/project-progress.qmd`
+- Next: Enoch to confirm panel source-date freshness; Samuel to review the loss, DM, and MZ evidence and recommend a next step without assuming a selection criterion.
+
 ## 2026-11-11 — Re-ran Stage 1 baselines and generated plots
 - Author: Copilot at user's request
 - Type: finding

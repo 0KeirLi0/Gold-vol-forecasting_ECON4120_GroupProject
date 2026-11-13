@@ -1,41 +1,40 @@
-# Reproducing the unified evaluation
+# Reproducing the short Stage 3 evaluation
 
-Run these commands from the repository root. The default instrument is Yahoo
-Finance `GC=F`, a continuous COMEX gold futures series (not spot gold). The
-end date is exclusive; use a fixed end date to reproduce a particular data
-snapshot.
+Run the evaluation from the repository root. It reuses the already completed
+forecast files in `data/processed/evaluation_forecasts_by_model/` and
+`data/processed/predictor_set_variant_forecasts.csv`; it does not download data
+or refit forecasts. The Stage 2 panel is still read to verify the target and
+horizon.
 
-## Environment and ordered run
+## Environment and run
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
 python -m pip install -e ".[dev,interactive]"
-python -m gold_vol_pipeline --start 2015-01-01 --end 2026-11-04
-python -m gold_vol_pipeline.predictors --start 2015-01-01 --end 2026-11-04
-jupyter nbconvert --to notebook --execute notebooks/06_final_evaluation.ipynb --output 06_final_evaluation.executed.ipynb --output-dir data/processed
+python -m nbconvert --to notebook --execute notebooks/06_final_evaluation.ipynb --output 06_final_evaluation.executed.ipynb --output-dir data/processed
 ```
 
-The evaluation notebook writes `data/processed/evaluation_forecasts.csv`, a
-JSON run manifest beside it, and 200-dpi PNG figures under
-`plots/final_evaluation/`. It uses the full available date span, a 750-origin
-minimum training window, and weekly forecast origins (`step=5`). Repeated
-Hyndman-Khandakar, GARCH, lasso, and ridge fits make the run computationally
-intensive; plan for several hours on a typical laptop. Actual runtime depends
-on hardware and the input snapshot. The final output notebook is stored under
-`data/processed/` so it does not overwrite the source notebook.
+The evaluation is designed to complete in approximately 10 minutes or less on
+a typical laptop; runtime depends on the environment. It uses saved return-only
+baselines, HAR/HARX forecasts, and the nine predictor-set variants. The
+notebook checks the common origin dates and actual targets before comparing
+models. The earlier GARCH(1,1) and 500-origin results in
+`cross_model_comparison_with_baselines.csv` are displayed as context only,
+because their sample is not the same as the 445 weekly origins used by the
+Stage 3 comparison.
 
-The same run compares the seven-predictor specification with reduced
-VIX-only and DXY-plus-VIX specifications for HARX, lasso, and ridge, using the
-same forecast origins. It writes the focused loss and Diebold-Mariano
-comparison table to `data/processed/predictor_set_comparison.csv`. DXY-plus-VIX
-is a sensitivity set informed by the separate LSEG screen; it should not be
-interpreted as a Yahoo/FRED significance finding.
+The notebook writes `data/processed/evaluation_forecasts.csv`, its run
+manifest, `data/processed/evaluation_summary.csv`, and
+`data/processed/predictor_set_comparison.csv`. It also refreshes 200-dpi
+figures under `plots/final_evaluation/`. The
+executed notebook is stored under `data/processed/`, leaving the source
+notebook unchanged.
 
-The first command prepares the gold futures series. The second downloads and
-aligns the Stage 2 predictor panel and writes
-`data/processed/stage2_multivariate.csv`. The final command runs all cells in
-the evaluation notebook in order.
+Repeated auto-ARIMA, VAR, GJR-GARCH, asymmetric EGARCH, Student-t GARCH, and
+GARCH-X fits are omitted from this short run. Their code remains available
+where implemented, but no new performance evidence for them is claimed here.
+This runtime-based scope is not a model-selection decision. To rebuild inputs
+from raw sources instead, use the pipeline commands in [`README.md`](README.md)
+and verify the fixed end date, data vintage, and market-data usage terms.
 
 ## Obtaining source data
 

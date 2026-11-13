@@ -1,0 +1,360 @@
+---
+title: "Gold Volatility Forecasting"
+subtitle: "Draft | Baseline performance, predictor evidence, and advanced models"
+author: "Applied Forecasting Methods Group"
+date: 2026-11-13
+format:
+  pdf:
+    pdf-engine: lualatex
+    documentclass: scrartcl
+    fontsize: 10pt
+    geometry:
+      - margin=0.8in
+    toc: true
+    number-sections: true
+    colorlinks: true
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+# Executive summary
+
+This draft brings together three related, but non-identical, pieces of evidence:
+
+1. A Stage 1 rolling-origin comparison of seven univariate variance baselines
+   over 488 common origins.
+2. A Stage 2 training-only screen of seven Yahoo/FRED predictors, followed by
+   a separate 596-origin holdout comparison of HistGradientBoosting against
+   simple benchmarks.
+3. A Stage 3 comparison of 17 previously completed forecasts on 445 common
+   weekly origins.
+
+The strongest single Stage 1 baseline by point-estimate MAE and RMSE was
+GARCH(1,1). In the Stage 2 conditional association screen, only VIX remained
+significant after Holm correction. HistGradientBoosting did not outperform
+expanding variance on the separate Stage 2 holdout. In Stage 3, EWMA had the
+lowest MSE and HAR the lowest MAE, but no model significantly beat the
+historical-variance benchmark after Holm correction for MSE or QLIKE.
+
+These are exploratory results, not a final model choice. Samples, forecast
+origin spacing, and in some cases input panels differ; comparisons across
+those sections are descriptive rather than head-to-head rankings.
+
+# Evaluation map and comparability
+
+| Evidence block | Data and evaluation | What it answers |
+|---|---|---|
+| Stage 1 baselines | Yahoo `GC=F`; 488 common forecasts from the 500 most recent requested origins; 2024-11-07 to 2026-11-02 | How do return-only volatility forecasts compare on the recent sample? |
+| Stage 2 predictor screen | Yahoo/FRED panel; chronological 80/20 split; 2,376 training rows after purging 4 overlapping labels; HAC lag 4 | Which predictors are conditionally associated with log forward realized variance in training data? |
+| Stage 2 holdout | Yahoo/FRED panel; 596 origins from 2024-06-24 to 2026-11-03 | Does the all-predictor gradient-boosting forecast beat simple benchmarks on this holdout? |
+| LSEG screen | Separate `GCc1` panel; 3,241 training and 812 holdout rows | Exploratory conditional associations in the available alternative panel |
+| Stage 3 common-origin comparison | Yahoo/FRED panel; 17 saved models, 445 weekly origins from 2018-01-05 to 2026-11-03 | How do available fast forecasts compare when evaluated on identical origins? |
+
+The target is five-session-ahead realized variance, calculated as the sum of
+squared daily log returns over the next five observed price sessions. It is
+not spot-gold volatility: the working series is Yahoo Finance `GC=F`, a
+continuous COMEX gold futures series. Stage 1 used a more recent, shorter
+sample than Stage 3; Stage 2 used a fixed chronological holdout. Do not rank
+metrics from different blocks as if they were measured on one common sample.
+
+# Stage 1: baseline model performance
+
+The table reports point-estimate error metrics from the shared 488-origin
+sample. GARCH(1,1) fitting failed at 12 of the 500 requested origins; those
+origins are omitted by the common-sample comparison.
+
+| Model | MAE ($\times 10^{-3}$) | RMSE ($\times 10^{-3}$) |
+|---|---:|---:|
+| GARCH(1,1) | 0.783 | 1.891 |
+| EWMA, estimated decay | 0.921 | 1.911 |
+| AR(1) on squared returns | 0.864 | 2.003 |
+| ARCH(1) | 0.868 | 2.008 |
+| MA(1) on squared returns | 0.868 | 2.009 |
+| Rolling variance | 0.977 | 2.013 |
+| Expanding historical variance | 0.874 | 2.018 |
+
+GARCH(1,1) has the smallest errors in this sample. Its RMSE is about 6.3%
+below expanding historical variance and 1.0% below EWMA. These point
+estimates do not establish that the differences are statistically reliable
+or that the added model complexity is worthwhile.
+
+```{python}
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+baseline = pd.DataFrame(
+    {
+        "Model": [
+            "GARCH(1,1)",
+            "EWMA (estimated)",
+            "AR(1), squared returns",
+            "ARCH(1)",
+            "MA(1), squared returns",
+            "Rolling variance",
+            "Expanding historical variance",
+        ],
+        "RMSE": [
+            0.0018907892832412368,
+            0.0019106250535419723,
+            0.0020031932331837886,
+            0.0020083252110511506,
+            0.0020086109748238636,
+            0.0020131858550987325,
+            0.00201843701138773,
+        ],
+    }
+).sort_values("RMSE", ascending=True)
+
+fig, ax = plt.subplots(figsize=(8.5, 4.6))
+colors = ["#d97941" if name == "GARCH(1,1)" else "#527f89" for name in baseline["Model"]]
+ax.barh(baseline["Model"], baseline["RMSE"] * 1e3, color=colors)
+ax.invert_yaxis()
+ax.set_xlabel(r"RMSE ($\times 10^{-3}$ realized-variance units)")
+ax.set_title("Stage 1: recent rolling-origin baseline errors")
+ax.grid(axis="x", alpha=0.22)
+ax.set_axisbelow(True)
+for y, value in enumerate(baseline["RMSE"] * 1e3):
+    ax.text(value + 0.012, y, f"{value:.3f}", va="center", fontsize=8)
+fig.tight_layout()
+plt.show()
+```
+
+# Stage 2: predictor significance
+
+The Yahoo/FRED screen regresses `log1p` five-session realized variance on all
+seven standardized predictors in the training period. HAC standard errors use
+four lags to reflect the overlapping five-session labels; Holm correction is
+applied across the seven coefficient tests. Predictors are standardized using
+training-period moments only.
+
+| Predictor | Coefficient per training SD ($\times 10^{-4}$) | HAC t | HAC p | Holm p | Significant after Holm? |
+|---|---:|---:|---:|---:|---|
+| DXY close | -0.050 | -0.180 | 0.8573 | 1.0000 | No |
+| S&P 500 log return | -0.132 | -0.704 | 0.4813 | 1.0000 | No |
+| VIX close | 2.681 | 4.096 | 0.0000435 | 0.000305 | **Yes** |
+| 10-year Treasury yield | 0.277 | 0.717 | 0.4733 | 1.0000 | No |
+| 10-year breakeven inflation | -1.180 | -2.001 | 0.0455 | 0.2731 | No |
+| WTI spot | -0.017 | -0.036 | 0.9714 | 1.0000 | No |
+| Gold volume | 0.265 | 0.934 | 0.3504 | 1.0000 | No |
+
+VIX is positively associated with the transformed target conditional on the
+other included predictors in this training sample. Breakeven inflation is
+nominally significant before correction but not after Holm adjustment. This is
+an association screen, not proof that other predictors have no out-of-sample
+value or a basis for automatically dropping them.
+
+```{python}
+sig = pd.DataFrame(
+    {
+        "Predictor": [
+            "DXY close",
+            "S&P 500 log return",
+            "VIX close",
+            "10-year Treasury yield",
+            "10-year breakeven inflation",
+            "WTI spot",
+            "Gold volume",
+        ],
+        "Coefficient": [
+            -4.9577617e-06,
+            -1.3231538e-05,
+            2.6812461e-04,
+            2.7669820e-05,
+            -1.1801888e-04,
+            -1.7341942e-06,
+            2.6461138e-05,
+        ],
+        "Holm p": [1.0, 1.0, 0.00030453524, 1.0, 0.27311905, 1.0, 1.0],
+    }
+).sort_values("Coefficient")
+
+fig, ax = plt.subplots(figsize=(8.5, 4.5))
+colors = ["#d97941" if p < 0.05 else "#8a9b9f" for p in sig["Holm p"]]
+ax.barh(sig["Predictor"], sig["Coefficient"] * 1e4, color=colors)
+ax.axvline(0, color="#26383c", linewidth=0.8)
+ax.set_xlabel(r"Coefficient per training SD ($\times 10^{-4}$)")
+ax.set_title("Stage 2: training-only conditional coefficients")
+ax.text(
+    0.99,
+    0.02,
+    "Orange: Holm-adjusted p < 0.05",
+    transform=ax.transAxes,
+    ha="right",
+    va="bottom",
+    fontsize=8,
+)
+ax.grid(axis="x", alpha=0.2)
+ax.set_axisbelow(True)
+fig.tight_layout()
+plt.show()
+```
+
+## Separate LSEG predictor screen
+
+The LSEG `GCc1` analysis is a different panel and must not be merged into the
+Yahoo/FRED significance table. Its exploratory training-only screen recorded
+DXY as negatively associated and VIX as positively associated, both
+individually significant after Holm correction. The five gold implied-
+volatility tenors were significant jointly, but highly collinear (maximum
+absolute pairwise correlation 0.991); individual tenor importance was
+unresolved. These data have incomplete candidate coverage and an unverified
+one-weekday availability proxy and quote units.
+
+| LSEG predictor/group | Coefficient or test | HAC p | Holm-adjusted p | Interpretation |
+|---|---:|---:|---:|---|
+| DXY | -0.000122 per training SD | 0.000094 | 0.00103 | Individually significant |
+| VIX | +0.000137 per training SD | 0.00124 | 0.0124 | Individually significant |
+| Five gold IV tenors, joint test | F = 17.42 | — | $9.26 \times 10^{-17}$ | Significant as a block; individual effects unresolved |
+| Risk reversal + butterfly, joint test | — | — | 0.386 | Not significant as a block |
+
+# Stage 2: advanced holdout model
+
+HistGradientBoosting used all seven Yahoo/FRED predictors and was evaluated on
+the 596-origin holdout. The expanding-variance benchmark had lower MAE and
+RMSE; all three reported holdout R-squared values were negative, indicating
+worse squared-error performance than the holdout-mean reference under the
+usual R-squared definition.
+
+| Model | MAE | RMSE | Holdout $R^2$ |
+|---|---:|---:|---:|
+| Expanding-variance benchmark | 0.000762 | 0.001833 | -0.120 |
+| Training-mean benchmark | 0.000787 | 0.001855 | -0.148 |
+| HistGradientBoosting, all predictors | 0.000813 | 0.001883 | -0.183 |
+
+```{python}
+stage2_holdout = pd.DataFrame(
+    {
+        "Model": [
+            "Expanding variance",
+            "Training mean",
+            "HistGradientBoosting",
+        ],
+        "RMSE": [0.00183267, 0.00185520, 0.00188303],
+    }
+)
+fig, ax = plt.subplots(figsize=(7.8, 3.2))
+bars = ax.bar(
+    stage2_holdout["Model"],
+    stage2_holdout["RMSE"] * 1e3,
+    color=["#527f89", "#8a9b9f", "#d97941"],
+)
+ax.set_ylabel(r"RMSE ($\times 10^{-3}$)")
+ax.set_title("Stage 2: separate 596-origin holdout")
+ax.tick_params(axis="x", rotation=12)
+ax.grid(axis="y", alpha=0.2)
+ax.set_axisbelow(True)
+for bar, value in zip(bars, stage2_holdout["RMSE"] * 1e3, strict=True):
+    ax.text(bar.get_x() + bar.get_width() / 2, value + 0.008, f"{value:.3f}", ha="center", fontsize=8)
+fig.tight_layout()
+plt.show()
+```
+
+# Stage 3: advanced model performance
+
+Stage 3 reuses previously completed forecast files; these results were not
+re-estimated for this report. All 17 displayed models share 445 weekly
+origins from 2018-01-05 to 2026-11-03. Reported MSE, RMSE, MAE, and QLIKE
+therefore compare on the same target observations. RMSE and MAE below are
+scaled by $10^3$ for readability.
+
+| Model | MSE ($\times 10^{-6}$) | RMSE ($\times 10^{-3}$) | MAE ($\times 10^{-3}$) | QLIKE |
+|---|---:|---:|---:|---:|
+| EWMA, estimated decay | 0.976 | 0.988 | 0.442 | 0.451 |
+| HAR | 0.981 | 0.991 | **0.416** | 0.465 |
+| Lasso, VIX only | **0.985** | **0.992** | 0.429 | 0.457 |
+| EWMA, fixed decay | 0.987 | 0.993 | 0.452 | 0.455 |
+| Ridge, VIX only | 0.990 | 0.995 | 0.430 | 0.457 |
+| HARX, VIX only | 0.990 | 0.995 | 0.431 | 0.456 |
+| Lasso, full predictors | 1.007 | 1.004 | 0.422 | 0.473 |
+| HARX, DXY + VIX | 1.015 | 1.008 | 0.436 | 0.459 |
+| Lasso, DXY + VIX | 1.016 | 1.008 | 0.433 | 0.463 |
+| Ridge, DXY + VIX | 1.035 | 1.017 | 0.436 | 0.462 |
+| Rolling variance | 1.072 | 1.035 | 0.476 | 0.492 |
+| Ridge, full predictors | 1.116 | 1.056 | 0.437 | 0.449 |
+| AR(1), squared returns | 1.116 | 1.056 | 0.441 | 0.613 |
+| MA(1), squared returns | 1.120 | 1.058 | 0.442 | 0.620 |
+| ARCH(1) | 1.122 | 1.059 | 0.441 | 0.622 |
+| Expanding historical variance | 1.127 | 1.062 | 0.444 | 0.636 |
+| HARX, full predictors | 1.277 | 1.130 | 0.457 | 0.449 |
+
+EWMA is the lowest-MSE model overall; HAR is the lowest-MAE model. VIX-only
+lasso has the lowest MSE among the nine predictor-set variants. Against
+historical variance, no candidate has a Holm-adjusted Diebold-Mariano p-value
+below 0.05 for either MSE or QLIKE. The point ranking should therefore not be
+treated as proof of a performance difference or a final model choice.
+
+```{python}
+stage3 = pd.DataFrame(
+    {
+        "Model": [
+            "EWMA (estimated)", "HAR", "Lasso (VIX)", "EWMA (fixed)",
+            "Ridge (VIX)", "HARX (VIX)", "Lasso (full)", "HARX (DXY+VIX)",
+            "Lasso (DXY+VIX)", "Ridge (DXY+VIX)", "Rolling variance",
+            "Ridge (full)", "AR(1), squared returns", "MA(1), squared returns",
+            "ARCH(1)", "Expanding variance", "HARX (full)",
+        ],
+        "RMSE": [
+            0.0009879, 0.0009906, 0.00099235, 0.00099345, 0.00099488,
+            0.00099499, 0.00100370, 0.00100767, 0.00100821, 0.00101725,
+            0.00103537, 0.00105640, 0.00105656, 0.00105815, 0.00105904,
+            0.00106171, 0.00112982,
+        ],
+        "Group": [
+            "Baseline", "HAR", "Penalized", "Baseline", "Penalized",
+            "HARX", "Penalized", "HARX", "Penalized", "Penalized",
+            "Baseline", "Penalized", "Baseline", "Baseline", "Baseline",
+            "Baseline", "HARX",
+        ],
+    }
+).sort_values("RMSE", ascending=True)
+palette = {
+    "Baseline": "#8a9b9f",
+    "HAR": "#527f89",
+    "HARX": "#3e7480",
+    "Penalized": "#d97941",
+}
+
+fig, ax = plt.subplots(figsize=(8.5, 6.3))
+ax.barh(stage3["Model"], stage3["RMSE"] * 1e3, color=stage3["Group"].map(palette))
+ax.invert_yaxis()
+ax.set_xlabel(r"RMSE ($\times 10^{-3}$ realized-variance units)")
+ax.set_title("Stage 3: 17 models on 445 shared weekly origins")
+ax.grid(axis="x", alpha=0.2)
+ax.set_axisbelow(True)
+fig.tight_layout()
+plt.show()
+```
+
+## Scope and limitations
+
+- The Stage 3 run excluded repeated auto-ARIMA, VAR, GJR-GARCH, asymmetric
+  EGARCH, Student-t GARCH, and GARCH-X fits to meet the requested short
+  runtime. Their exclusion is not evidence that they perform poorly.
+- The Stage 1 GARCH(1,1) results use a separate, recent 488-origin sample and
+  are not included in the Stage 3 common-origin ranking.
+- Five-session targets overlap. Paired Diebold-Mariano tests use a horizon
+  adjustment and Holm correction, but inference still depends on this
+  evaluation design.
+- FRED availability is approximated by a one-weekday lag and is based on
+  current-vintage downloads, not historical real-time vintages. LSEG fields
+  and their availability assumptions need verification.
+- The predictor screen tests conditional association; it does not, by itself,
+  establish incremental out-of-sample forecasting value.
+- No final model-selection criterion or team recommendation is asserted.
+
+# Evidence sources
+
+This report uses the local prepared files and documented analyses:
+
+- Stage 1: `data/processed/stage1_baseline_500_origin_metrics.csv` and
+  `cross_model_comparison_with_baselines.csv`.
+- Stage 2 Yahoo/FRED: `notebooks/05_advanced_models.ipynb`,
+  `data/processed/stage2_multivariate.csv`, and its manifest.
+- Stage 2 LSEG screen: the exploratory findings recorded in
+  `.ai/SESSION_LOG.md`; treat these as a separate, qualified evidence source.
+- Stage 3: `data/processed/evaluation_summary.csv`,
+  `data/processed/predictor_set_comparison.csv`, and the manifest beside the
+  saved forecast rows.
