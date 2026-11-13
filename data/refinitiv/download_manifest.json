@@ -1,0 +1,239 @@
+{
+  "provider": "LSEG Workspace",
+  "start": "2010-01-01",
+  "end": "2026-11-10",
+  "end_date_note": "The requested end date may have no observation on non-trading days.",
+  "availability_note": "Files contain source observation dates, not reconstructed historical publication timestamps. Do not assume same-day predictor availability.",
+  "series": {
+    "GCc1": {
+      "category": "gold_examples_and_stage2_volume",
+      "fields": [
+        "TRDPRC_1",
+        "OPEN_PRC",
+        "HIGH_1",
+        "LOW_1",
+        "ACVOL_1",
+        "OPINT_1"
+      ],
+      "status": "saved",
+      "rows": 4241,
+      "columns": [
+        "TRDPRC_1",
+        "OPEN_PRC",
+        "HIGH_1",
+        "LOW_1",
+        "OPINT_1"
+      ],
+      "file": "GCc1.csv"
+    },
+    "GCc2": {
+      "category": "gold_examples",
+      "fields": [
+        "TRDPRC_1",
+        "OPEN_PRC",
+        "HIGH_1",
+        "LOW_1",
+        "ACVOL_1",
+        "OPINT_1"
+      ],
+      "status": "saved",
+      "rows": 4246,
+      "columns": [
+        "TRDPRC_1",
+        "OPEN_PRC",
+        "HIGH_1",
+        "LOW_1",
+        "OPINT_1"
+      ],
+      "file": "GCc2.csv"
+    },
+    "GCc3": {
+      "category": "gold_examples",
+      "fields": [
+        "TRDPRC_1",
+        "OPEN_PRC",
+        "HIGH_1",
+        "LOW_1",
+        "ACVOL_1",
+        "OPINT_1"
+      ],
+      "status": "saved",
+      "rows": 4152,
+      "columns": [
+        "TRDPRC_1",
+        "OPEN_PRC",
+        "HIGH_1",
+        "LOW_1",
+        "OPINT_1"
+      ],
+      "file": "GCc3.csv"
+    },
+    "XAUFIX=": {
+      "category": "gold_examples",
+      "fields": [
+        "TRDPRC_1"
+      ],
+      "status": "error",
+      "message": "LDError: No data to return, please check errors: ERROR: No successful response.\n(TS.Interday.UserNotPermission.70112, User does not have permission for this universe)"
+    },
+    "XAU=": {
+      "category": "gold_examples",
+      "fields": [
+        "TRDPRC_1"
+      ],
+      "status": "error",
+      "message": "LDError: No data to return, please check errors: ERROR: No successful response.\n(TSCC.QS.UserRequestError.90006, The universe does not support the following fields: [TRDPRC_1])"
+    },
+    "XAU1MO=R": {
+      "category": "gold_examples",
+      "fields": [
+        "MID_PRICE"
+      ],
+      "status": "saved",
+      "rows": 4397,
+      "columns": [
+        "MID_PRICE"
+      ],
+      "file": "XAU1MO_R.csv"
+    },
+    "XAU2MO=R": {
+      "category": "gold_examples",
+      "fields": [
+        "MID_PRICE"
+      ],
+      "status": "saved",
+      "rows": 4397,
+      "columns": [
+        "MID_PRICE"
+      ],
+      "file": "XAU2MO_R.csv"
+    },
+    "XAU3MO=R": {
+      "category": "gold_examples",
+      "fields": [
+        "MID_PRICE"
+      ],
+      "status": "saved",
+      "rows": 4397,
+      "columns": [
+        "MID_PRICE"
+      ],
+      "file": "XAU3MO_R.csv"
+    },
+    "XAU6MO=R": {
+      "category": "gold_examples",
+      "fields": [
+        "MID_PRICE"
+      ],
+      "status": "saved",
+      "rows": 4397,
+      "columns": [
+        "MID_PRICE"
+      ],
+      "file": "XAU6MO_R.csv"
+    },
+    "XAU1YO=R": {
+      "category": "gold_examples",
+      "fields": [
+        "MID_PRICE"
+      ],
+      "status": "saved",
+      "rows": 4397,
+      "columns": [
+        "MID_PRICE"
+      ],
+      "file": "XAU1YO_R.csv"
+    },
+    "XAU1MRR=": {
+      "category": "gold_examples",
+      "fields": [
+        "MID_PRICE"
+      ],
+      "status": "saved",
+      "rows": 4238,
+      "columns": [
+        "MID_PRICE"
+      ],
+      "file": "XAU1MRR.csv"
+    },
+    "XAU1MBF=": {
+      "category": "gold_examples",
+      "fields": [
+        "MID_PRICE"
+      ],
+      "status": "saved",
+      "rows": 4238,
+      "columns": [
+        "MID_PRICE"
+      ],
+      "file": "XAU1MBF.csv"
+    },
+    ".DXY": {
+      "category": "stage2_candidates",
+      "fields": [
+        "TRDPRC_1"
+      ],
+      "status": "saved",
+      "rows": 4381,
+      "columns": [
+        "TRDPRC_1"
+      ],
+      "file": "DXY.csv"
+    },
+    ".SPX": {
+      "category": "stage2_candidates",
+      "fields": [
+        "TRDPRC_1"
+      ],
+      "status": "saved",
+      "rows": 4240,
+      "columns": [
+        "TRDPRC_1"
+      ],
+      "file": "SPX.csv"
+    },
+    ".VIX": {
+      "category": "stage2_candidates",
+      "fields": [
+        "TRDPRC_1"
+      ],
+      "status": "saved",
+      "rows": 4273,
+      "columns": [
+        "TRDPRC_1"
+      ],
+      "file": "VIX.csv"
+    },
+    "US10YT=RR": {
+      "category": "stage2_candidates",
+      "fields": [
+        "BID",
+        "ASK"
+      ],
+      "status": "saved",
+      "rows": 4218,
+      "columns": [
+        "BID",
+        "ASK"
+      ],
+      "file": "US10YT_RR.csv"
+    },
+    "USBEI10Y=RR": {
+      "category": "stage2_candidates",
+      "fields": [
+        "BID",
+        "ASK"
+      ],
+      "status": "error",
+      "message": "LDError: No data to return, please check errors: ERROR: No successful response.\n(TSCC.QS.UserRequestError.90006, The universe does not support the following fields: [BID, ASK])"
+    },
+    "USCRWT=ECI": {
+      "category": "stage2_candidates",
+      "fields": [
+        "TRDPRC_1"
+      ],
+      "status": "error",
+      "message": "LDError: No data to return, please check errors: ERROR: No successful response.\n(TSCC.Economics.UserRequestError.96104, The universe does not support the following fields: [TRDPRC_1])"
+    }
+  }
+}

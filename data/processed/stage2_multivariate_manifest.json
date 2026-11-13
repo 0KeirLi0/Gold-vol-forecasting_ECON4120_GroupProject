@@ -1,0 +1,37 @@
+{
+  "retrieved_at_utc": "2026-11-11T03:02:18.428123+00:00",
+  "download_range": {
+    "start": "2015-01-01",
+    "end_exclusive": "2026-11-11"
+  },
+  "gold_input": null,
+  "predictor_input": null,
+  "gold_date_range": {
+    "start": "2015-01-02",
+    "end": "2026-11-10"
+  },
+  "predictor_availability_range": {
+    "start": "2015-01-02",
+    "end": "2026-11-11"
+  },
+  "gold_source": "Yahoo Finance",
+  "gold_instrument": "COMEX Gold Futures (continuous series, GC=F)",
+  "predictor_sources": {
+    "dxy_close": "Yahoo Finance DX-Y.NYB (ICE U.S. Dollar Index)",
+    "sp500_close": "Yahoo Finance ^GSPC (S&P 500 price index)",
+    "vix_close": "Yahoo Finance ^VIX (CBOE Volatility Index)",
+    "sp500_log_return": "Close-to-close log difference calculated from Yahoo Finance ^GSPC",
+    "treasury_10y_yield": "FRED public CSV download DGS10 (10-year Treasury constant-maturity yield)",
+    "breakeven_inflation_10y": "FRED public CSV download T10YIE (10-year breakeven inflation rate)",
+    "wti_spot": "FRED public CSV download DCOILWTICO (WTI Cushing spot price)"
+  },
+  "fred_availability_lag": "one weekday after observation date",
+  "alignment": "latest predictor availability date on or before each gold forecast origin; source observation dates are retained in the CSV",
+  "horizon": 5,
+  "target": "realized_variance",
+  "files": {
+    "gold_raw": "data/raw/stage2_gold.csv",
+    "predictors_raw": "data/raw/stage2_predictors.csv",
+    "prepared": "data/processed/stage2_multivariate.csv"
+  }
+}
