@@ -1,0 +1,7 @@
+{
+  "baseline_path": "data/processed/stage2_yz_forecasts.csv",
+  "baseline_sha256": "f6110ed027e061d71644708b2ac1f5c05c7c8066b5685fb4ec5a4ad0dd2ad75b",
+  "selected_path": "data/processed/stage2_yz_selected/stage2_yz_forecasts.csv",
+  "selected_sha256": "b09e0dea5ef6706242bd65be4fd7c26fd86d58227d953d773e16393c1d32fb9a",
+  "comparison": "paired successful forecast dates per model; selected minus baseline"
+}

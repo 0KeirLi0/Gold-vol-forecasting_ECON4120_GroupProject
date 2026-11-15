@@ -1,50 +1,5 @@
-"""Gold futures data preparation for volatility forecasting."""
-from .pipeline import (
-    DEFAULT_HORIZON,
-    DEFAULT_TARGET,
-    download_futures_prices,
-    load_gold_prices_csv,
-    prepare_dataset,
-)
-from .models import (
-    arch1_variance_forecast,
-    ar1_squared_return_forecast,
-    baseline_forecasts,
-    egarch_asym_forecast,
-    ewma_estimated_forecast,
-    ewma_variance_forecast,
-    expanding_variance_forecast,
-    garch_t_forecast,
-    garchx_forecast,
-    garch11_variance_forecast,
-    generate_prediction_chart,
-    gjr_garch_forecast,
-    main,
-    ma1_squared_return_forecast,
-    prediction_history,
-    rolling_variance_forecast,
-)
-from .regression_models import (
-    PenalizedForecast,
-    fit_har_coefficients,
-    har_features,
-    har_forecast,
-    harx_forecast,
-    penalized_forecast,
-    var_forecast,
-)
-from .quantile_garch import QuantileGarchFit, fit_quantile_garch
-from .model_evaluation import (
-    ModelEvaluation,
-    adf_unit_root_test,
-    compare_candidate_models,
-    ljung_box_residual_tests,
-    plot_acf_pacf,
-    plot_residual_panel,
-    plot_series_transformations,
-    save_residuals,
-    transform_price_series,
-)
+"""Gold volatility predictor screening and Yang-Zhang forecasting."""
+
 from .volatility_forecasting import (
     MODEL_NAMES,
     evaluate_daily_volatility,
@@ -52,51 +7,15 @@ from .volatility_forecasting import (
     save_daily_volatility_evaluation,
 )
 from .yang_zhang import add_chronological_split, prepare_yang_zhang_dataset
+from .yang_zhang_significance import build_training_screen, test_predictor_significance
 
 __all__ = [
-    "DEFAULT_HORIZON",
-    "DEFAULT_TARGET",
     "MODEL_NAMES",
-    "ModelEvaluation",
-    "adf_unit_root_test",
-    "compare_candidate_models",
-    "download_futures_prices",
     "add_chronological_split",
+    "build_training_screen",
     "evaluate_daily_volatility",
     "forecast_daily_volatility",
-    "load_gold_prices_csv",
-    "ljung_box_residual_tests",
-    "arch1_variance_forecast",
-    "ar1_squared_return_forecast",
-    "baseline_forecasts",
-    "egarch_asym_forecast",
-    "ewma_estimated_forecast",
-    "ewma_variance_forecast",
-    "expanding_variance_forecast",
-    "garch_t_forecast",
-    "garchx_forecast",
-    "garch11_variance_forecast",
-    "gjr_garch_forecast",
-    "PenalizedForecast",
-    "QuantileGarchFit",
-    "fit_quantile_garch",
-    "fit_har_coefficients",
-    "har_features",
-    "har_forecast",
-    "harx_forecast",
-    "penalized_forecast",
-    "var_forecast",
-    "generate_prediction_chart",
-    "main",
-    "ma1_squared_return_forecast",
-    "prepare_dataset",
     "prepare_yang_zhang_dataset",
-    "prediction_history",
-    "plot_acf_pacf",
-    "plot_residual_panel",
-    "plot_series_transformations",
-    "rolling_variance_forecast",
-    "save_residuals",
     "save_daily_volatility_evaluation",
-    "transform_price_series",
+    "test_predictor_significance",
 ]

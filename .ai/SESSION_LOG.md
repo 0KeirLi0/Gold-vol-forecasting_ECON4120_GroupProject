@@ -2,6 +2,46 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-16 — Evaluated the three selected predictors jointly
+- Author: User-directed implementation by Copilot
+- Type: finding
+- Context: The user requested replacing VIX in the six external-input forecast models with DXY, gold IV 1M and gold IV 1Y together, comparing against their no-external-predictor baselines.
+- Outcome: All six models completed 761 matched test dates with zero recorded failures. Both MAE and RMSE improved for Ridge, Lasso and VAR, worsened for HARX, and changed in opposite directions for gradient boosting and GARCH-X. This comparison does not isolate individual effects or test forecast-loss significance. Optimizer warnings occurred, quote timing remains a weekday proxy, and the selection was made after earlier holdout results were observed. GARCH-X uses nonnegative predictor coefficients in the variance recursion and reports the fitted conditional mean.
+- Artifacts: `src/gold_vol_pipeline/lseg.py`, `src/gold_vol_pipeline/volatility_forecasting.py`, `scripts/evaluate_yang_zhang_volatility.py`, `scripts/compare_selected_predictors.py`, `data/processed/stage2_yz_selected/`, `reports/yang-zhang-volatility.qmd`.
+- Next: Team to review joint forecast performance, source quote units, timing and selection caveats before a model decision.
+
+## 2026-11-16 — Tightened the VIF cutoff
+- Author: User-directed implementation by Copilot
+- Type: decision
+- Context: The user changed the VIF cutoff from 10 to 5.
+- Outcome: The same three IV tenors are removed and the eight remaining predictors and significance results are unchanged; the maximum final VIF including the control is 4.31.
+- Artifacts: `src/gold_vol_pipeline/yang_zhang_significance.py`, `scripts/screen_yang_zhang_predictors.py`, `data/processed/stage1_predictor_significance/`, `reports/yang-zhang-volatility.qmd`.
+- Next: Team to review the resulting exploratory screen and its limitations.
+
+## 2026-11-16 — Applied VIF screening before predictor inference
+- Author: User-directed implementation by Copilot
+- Type: finding
+- Context: The user selected a VIF threshold of 10 and requested the current-volatility control remain included in every VIF calculation and regression.
+- Outcome: On the same 3,039 training pairs, iterative highest-VIF elimination removed gold IV 6M, 3M, then 2M. Eight predictors remain; maximum final VIF including the control is 4.31. HAC(4)/Holm inference on those eight yields adjusted significance for gold IV 1M, gold IV 1Y and DXY, but not VIX. Results are exploratory conditional associations after same-sample selection, not a causal or out-of-sample model decision. The Stage 2 VIX forecasts were not rerun and their earlier-selection holdout caveat remains.
+- Artifacts: `src/gold_vol_pipeline/yang_zhang_significance.py`, `scripts/screen_yang_zhang_predictors.py`, `data/processed/stage1_predictor_significance/`, `reports/yang-zhang-volatility.qmd`, `README.md`, `REPRODUCE.md`.
+- Next: Team to review collinearity, predictor availability and selection before any forecast-model changes.
+
+## 2026-11-16 — Reorganized the active analysis into two stages
+- Author: User-directed implementation by Copilot
+- Type: decision
+- Context: The user requested removal of the earlier Stage 1–3 analyses and confirmed retaining shared code and inputs, with predictor significance as Stage 1 and Yang-Zhang volatility forecasting as Stage 2.
+- Outcome: Removed superseded analysis notebooks, code, tests, and reproduction instructions while preserving shared LSEG and ARIMA components, raw input exports, and both saved Yang-Zhang forecast runs. Renamed active outputs and figure paths from `stage4_yz` to `stage2_yz`; renamed screen outputs to `stage1_predictor_significance`. No models were rerun or selection decisions made. The earlier VIX-selection/holdout-overlap caveat still applies.
+- Artifacts: `README.md`, `REPRODUCE.md`, `src/gold_vol_pipeline/`, `scripts/`, `data/processed/`, `reports/yang-zhang-volatility.qmd`.
+- Next: Team to review the two-stage workflow and any downstream references to the retired paths.
+
+## 2026-11-16 — Screened predictors for Yang-Zhang volatility
+- Author: User-directed implementation by Copilot
+- Type: finding
+- Context: The user requested replacing both earlier predictor-significance screens with an 11-predictor LSEG screen of next-valid Yang-Zhang volatility, controlling for current volatility, using HAC(4) and Holm correction.
+- Outcome: On 3,039 complete training pairs, with responses ending 2023-06-01 before the 2023-06-02 holdout, none of 11 predictors is individually significant at the 5% Holm-adjusted level. DXY adjusted p=0.0595; VIX raw p=0.2936 and adjusted p=1.000. Option IV tenors are highly collinear (max absolute correlation 0.9904); the weekday availability proxy and finite HAC lag limit interpretation. The earlier notebook screens were removed; forecast models and existing results were not reselected or rerun.
+- Artifacts: `src/gold_vol_pipeline/yang_zhang_significance.py`, `scripts/screen_yang_zhang_predictors.py`, `data/processed/yang_zhang_predictor_significance/`, `notebooks/05_advanced_models.ipynb`, `README.md`, `REPRODUCE.md`, `reports/yang-zhang-volatility.qmd`.
+- Next: Samuel and Enoch to review predictor selection and holdout reuse before changing forecasting models; Keir to review LSEG availability and quote conventions.
+
 ## 2026-11-15 — Completed VIX-augmented Yang-Zhang holdout
 - Author: User-directed implementation by Copilot
 - Type: finding

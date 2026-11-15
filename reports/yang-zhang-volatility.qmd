@@ -21,16 +21,18 @@ execute:
 
 # Executive summary
 
-This report compares 20 sequential one-step forecasts of unannualized daily
-gold-futures volatility. The target is the square root of the two-observation
+This report compares six sequential one-step forecasts of unannualized daily
+gold-futures volatility with and without three jointly added predictors.
+The target is the square root of the two-observation
 Yang–Zhang variance estimate calculated from LSEG Workspace `GCc1.csv` OHLC
 bars. The chronological split contains 3,040 training targets and 761 test
-targets, spanning 2023-06-02 through 2026-11-10. All candidates produced
+targets, spanning 2023-06-02 through 2026-11-10. All six models produced
 forecasts for all 761 test dates; the saved run records zero fit failures.
 
-HistGradientBoosting with VIX has the smallest holdout MAE (0.0024264) and RMSE
-(0.0047809). This is a descriptive ranking, not a model-selection decision:
-target windows overlap, statistical significance tests were not run, and
+HistGradientBoosting with the three predictors has the smallest holdout MAE
+(0.0024235) and RMSE (0.0047356) among the six. This is a descriptive
+ranking, not a model-selection decision:
+target windows overlap, forecast-comparison significance tests were not run, and
 optimizer/convergence warnings occurred in some model fits.
 
 # Data, target, and split
@@ -105,24 +107,76 @@ The actual $y_{t+1}$ is not in its own forecast history. Because incomplete
 OHLC windows have no target, successive test observations may be separated by
 more than one market session.
 
-The external VIX predictor $V_t$ uses the LSEG `VIX.csv` close. Each source
-observation is treated as available on the following weekday; the most recent
-available value at each gold forecast origin is carried forward, and source
-and availability dates are retained in the prepared file. This proxy does not
-reconstruct actual publication timestamps. VIX was previously significant
-in a training-only LSEG screen of a *different five-session realized-variance
-target*; that finding does not establish significance for this target. The
-earlier screen's training sample extended through 2023-06-09, overlapping the
-start of this holdout on 2023-06-02. Consequently, this VIX feature choice is
-not independent of all observations in the present holdout.
+The three external predictors are DXY close, gold 1M implied volatility and
+gold 1Y implied volatility. Each source observation is treated as available
+on the following weekday; the latest available value at each gold forecast
+origin is carried forward, and source and availability dates are retained
+in the prepared file. This proxy does not reconstruct actual publication
+timestamps. Verify the units and option quote conventions with LSEG.
 
-![Daily target with the chronological test interval shaded.](figures/stage4_yz_vix/target_split.png)
+![Daily target with the chronological test interval shaded.](figures/stage2_yz_selected/target_split.png)
 
-# Forecast models and formulas
+# Stage 1: Training-only predictor significance
 
-The candidate formulas below describe the implementations used in this
-comparison. Parameters are re-estimated at each forecast origin except for
-the auto-ARIMA order, which is selected once on the initial training sample.
+The screen starts with 11 available LSEG predictors and the current
+volatility control. For each variable, its variance inflation factor is
+$\operatorname{VIF}_j=1/(1-R_j^2)$, where $R_j^2$ comes from regressing
+that variable on the other active variables with an intercept. Using the
+same complete training pairs throughout, the highest-VIF candidate is
+removed and VIFs are recomputed until all active variables, including the
+control, have VIF at most 5. The control is retained throughout; ties
+follow the original candidate order.
+
+| Removal order | Predictor | VIF at removal |
+|---:|---|---:|
+| 1 | Gold IV 6M | 310.57 |
+| 2 | Gold IV 3M | 166.47 |
+| 3 | Gold IV 2M | 72.23 |
+
+The eight retained predictors are jointly tested in an OLS regression of
+next valid Yang–Zhang volatility on current volatility and the predictors:
+
+$$
+y_{t+1}=a+\rho y_t+\sum_{j\in S}\beta_j x_{j,t}+\epsilon_{t+1},
+\qquad |S|=8.
+$$
+
+Regressors are standardized on the 3,039 complete training pairs. The last
+response is 2023-06-01; the held-out target period begins 2023-06-02. Each
+predictor is aligned to the latest observation available by the origin under
+the next-weekday proxy. Missing target labels mean a step may skip market
+sessions. Individual $H_0:\beta_j=0$ tests use HAC(4) standard errors and
+Holm correction across the eight retained predictor coefficients; the
+volatility control is not included in the correction. Final VIFs include
+the control and have a maximum of 4.31.
+
+| Predictor | Final VIF | Coefficient per training SD | Raw p | Holm p |
+|---|---:|---:|---:|---:|
+| DXY close | 1.822 | -0.000227 | 0.003897 | 0.023384 |
+| S&P 500 log return | 1.077 | -0.000050 | 0.629347 | 0.629347 |
+| VIX close | 2.424 | 0.000167 | 0.276789 | 0.586758 |
+| 10-year Treasury yield | 1.148 | 0.000083 | 0.188027 | 0.586758 |
+| Gold IV 1M | 4.276 | 0.001193 | 4.92e-16 | 3.94e-15 |
+| Gold IV 1Y | 4.310 | -0.000540 | 0.000197 | 0.001379 |
+| Gold 1M risk reversal | 1.353 | 0.000106 | 0.146689 | 0.586758 |
+| Gold 1M butterfly | 1.452 | 0.000152 | 0.033301 | 0.166503 |
+| Current volatility control | 1.504 | — | — | — |
+
+Gold IV 1M, gold IV 1Y and DXY are significant at 5% after Holm correction;
+VIX is not. These are exploratory conditional associations following
+data-dependent selection on the same training sample, not causal evidence
+or proof of out-of-sample predictive value. VIF screening does not remove all
+collinearity, and HAC(4) does not guarantee all dependence is captured.
+The predictor screen was performed after earlier holdout results were
+observed. Selection and this evaluation are therefore not a fully untouched
+holdout experiment.
+
+# Stage 2: Forecast models and formulas
+
+The candidate formulas below include the six current models and other
+baseline models from the earlier no-external-predictor comparison. The
+current six models are re-estimated at each forecast origin; the earlier
+auto-ARIMA order was selected once on its initial training sample.
 For log-target models define
 
 $$
@@ -259,14 +313,15 @@ e_t=\frac{y_t-a-\phi y_{t-1}}{s},\qquad
 h_t=\omega+\alpha e_{t-1}^2+\beta h_{t-1}+g_t.
 $$
 
-### GARCH-X with OHLC range and VIX
+### GARCH-X with OHLC range and the three predictors
 
 Let $R_t=\log(H_t/L_t)$ and $\widetilde R_t=R_t/\overline R$ within the
-current fit sample. Let $\widetilde V_t=V_t/\overline V$ denote the available
-VIX divided by its fit-sample mean. The extra variance term is
+current fit sample. Let $\widetilde x_{j,t}=x_{j,t}/\overline{x}_j$ denote
+each selected predictor divided by its fit-sample mean. The extra variance
+term is
 
 $$
-g_t=\delta\widetilde R_{t-1}+\xi\widetilde V_{t-1}.
+g_t=\delta\widetilde R_{t-1}+\sum_{j=1}^{3}\xi_j\widetilde x_{j,t-1}.
 $$
 
 ### Threshold (quantile) GARCH
@@ -287,7 +342,7 @@ $$
 \mathcal L=\frac12\sum_t\left(\log h_t+\frac{e_t^2}{h_t}\right).
 $$
 
-Parameters satisfy $\omega>0$, $\alpha,\beta,\delta,\xi,\eta\geq0$; for GARCH-X
+Parameters satisfy $\omega>0$, $\alpha,\beta,\delta,\xi_j,\eta\geq0$; for GARCH-X
 $\alpha+\beta\leq0.999$, and for threshold-GARCH
 $\alpha+\beta+\eta\leq0.999$ (subject to numerical tolerance).
 
@@ -321,21 +376,23 @@ necessarily five or 22 consecutive market sessions.
 
 HAR regresses $z_{t+1}$ on an intercept and $\mathbf h_t$.
 
-### HARX with OHLC and VIX
+### HARX with OHLC and the three predictors
 
-HARX appends the four origin-known OHLC-derived predictors and VIX
+HARX appends the four origin-known OHLC-derived predictors and the
+three selected predictors $D_t,I_{1m,t},I_{1y,t}$:
 
 $$
 \mathbf x_t=
 \left[
-r^{cc}_t,\ r_{o,t},\ r_{c,t},\ \log(H_t/L_t),\ V_t
+r^{cc}_t,\ r_{o,t},\ r_{c,t},\ \log(H_t/L_t),\
+D_t,\ I_{1m,t},\ I_{1y,t}
 \right]^\mathsf T,
 \qquad
 z_{t+1}=b_0+\mathbf b_h^\mathsf T\mathbf h_t
 +\mathbf b_x^\mathsf T\mathbf x_t+\epsilon_{t+1}.
 $$
 
-### Ridge with OHLC and VIX
+### Ridge with OHLC and the three predictors
 
 Ridge uses the HARX features and log-volatility response. Its coefficients
 minimize
@@ -345,7 +402,7 @@ $$
 +\alpha\|\mathbf b\|_2^2,\quad \alpha=1,
 $$
 
-### Lasso with OHLC and VIX
+### Lasso with OHLC and the three predictors
 
 Lasso uses the same features and minimizes
 
@@ -355,9 +412,9 @@ $$
 $$
 
 Features are not standardized, so the regularization penalty is sensitive to
-their units, including VIX index points.
+their units, including the DXY and implied-volatility quote units.
 
-### Histogram gradient boosting with OHLC and VIX
+### Histogram gradient boosting with OHLC and the three predictors
 
 The histogram gradient-boosting regressor uses the same HARX features and
 target and forms an additive tree prediction:
@@ -372,15 +429,15 @@ maximum leaf nodes per tree is 15, and random seed is 42.
 
 ## VAR
 
-### VAR(1) with VIX
+### VAR(1) with the three predictors
 
 The model named `var_ohlc` in the output is implemented as a VAR(1) in log
-volatility, close-to-close log return, and available VIX; it does not include
-the other OHLC features:
+volatility, close-to-close log return, and the three selected predictors; it
+does not include the other OHLC features:
 
 $$
 \mathbf w_t=
-\begin{bmatrix}z_t\\r^{cc}_t\\V_t\end{bmatrix},\qquad
+\begin{bmatrix}z_t\\r^{cc}_t\\D_t\\I_{1m,t}\\I_{1y,t}\end{bmatrix},\qquad
 \mathbf w_t=\mathbf c+A_1\mathbf w_{t-1}+\boldsymbol\varepsilon_t.
 $$
 
@@ -398,56 +455,28 @@ $$
 \sqrt{\frac1m\sum_{i=1}^{m}(\widehat y_i-y_i)^2}.
 $$
 
-All models share the same 761 successful test dates, so the common-date
-metrics in the saved summary equal each model's own holdout metrics.
+All six models share 761 successful test dates, matching the original
+no-external-predictor baseline. The table shows descriptive errors before
+and after adding DXY, gold IV 1M and gold IV 1Y together; smaller is better.
+The baseline already includes the original OHLC-derived inputs.
 
-| Model | MAE | RMSE | MAE rank | RMSE rank |
+| Model | Baseline MAE | Joint MAE | Baseline RMSE | Joint RMSE |
 |---|---:|---:|---:|---:|
-| `hist_gradient_boosting_ohlc` | 0.0024264 | 0.0047809 | 1 | 1 |
-| `harx_ohlc` | 0.0027097 | 0.0050604 | 2 | 8 |
-| `garchx_ohlc_range` | 0.0028977 | 0.0050217 | 3 | 3 |
-| `gjr_garch` | 0.0029115 | 0.0050209 | 4 | 2 |
-| `garch11` | 0.0029116 | 0.0050245 | 5 | 5 |
-| `egarch` | 0.0029122 | 0.0050218 | 6 | 4 |
-| `quantile_garch` | 0.0029167 | 0.0050275 | 7 | 6 |
-| `garch_t` | 0.0029209 | 0.0050596 | 8 | 7 |
-| `arch1` | 0.0029301 | 0.0050706 | 9 | 9 |
-| `ridge_ohlc` | 0.0029302 | 0.0052989 | 10 | 10 |
-| `auto_arima_hk` | 0.0029679 | 0.0053106 | 11 | 11 |
-| `har` | 0.0029950 | 0.0053970 | 12 | 12 |
-| `lasso_ohlc` | 0.0030582 | 0.0055610 | 13 | 17 |
-| `arma11` | 0.0030588 | 0.0054781 | 14 | 14 |
-| `ar1` | 0.0030645 | 0.0054824 | 15 | 15 |
-| `var_ohlc` | 0.0030776 | 0.0055208 | 16 | 16 |
-| `yang_zhang_persistence` | 0.0031897 | 0.0054473 | 17 | 13 |
-| `ma1` | 0.0033048 | 0.0060261 | 18 | 19 |
-| `ewma` | 0.0034447 | 0.0058841 | 19 | 18 |
-| `expanding_mean` | 0.0039063 | 0.0067799 | 20 | 20 |
+| HARX | 0.0027112 | 0.0027579 | 0.0050913 | 0.0056250 |
+| Ridge | 0.0029126 | 0.0028301 | 0.0052572 | 0.0049478 |
+| Lasso | 0.0030210 | 0.0029199 | 0.0054931 | 0.0050886 |
+| Histogram gradient boosting | 0.0024176 | 0.0024235 | 0.0047672 | 0.0047356 |
+| Range GARCH-X | 0.0029138 | 0.0029136 | 0.0050293 | 0.0050372 |
+| VAR | 0.0030520 | 0.0028863 | 0.0054574 | 0.0050055 |
 
-The historical output identifiers ending in `_ohlc` are retained for
-compatibility; in this VIX-augmented run, the models named in the VIX
-comparison below also include VIX.
+Ridge, Lasso and VAR improve on both metrics; HARX worsens on both.
+Gradient boosting and GARCH-X have mixed changes. These are joint,
+descriptive changes, not separate predictor effects or tests of statistical
+significance. The GARCH-X point forecast is its conditional mean; its
+predictor terms enter the variance recursion and affect the fitted mean
+indirectly.
 
-## Effect of adding VIX
-
-The original no-VIX and VIX-augmented runs used the same target, split and
-761 common test dates. The table shows descriptive errors before and after
-adding VIX to the existing model inputs; smaller is better.
-
-| Model | MAE without VIX | MAE with VIX | RMSE without VIX | RMSE with VIX |
-|---|---:|---:|---:|---:|
-| HARX | 0.0027112 | 0.0027097 | 0.0050913 | 0.0050604 |
-| Ridge | 0.0029126 | 0.0029302 | 0.0052572 | 0.0052989 |
-| Lasso | 0.0030210 | 0.0030582 | 0.0054931 | 0.0055610 |
-| Histogram gradient boosting | 0.0024176 | 0.0024264 | 0.0047672 | 0.0047809 |
-| Range GARCH-X | 0.0029138 | 0.0028977 | 0.0050293 | 0.0050217 |
-| VAR | 0.0030520 | 0.0030776 | 0.0054574 | 0.0055208 |
-
-HARX and GARCH-X have lower errors on both measures with VIX, while the
-other four have higher errors on both. These comparisons do not test whether
-the differences are statistically significant.
-
-![Actual and best-five model forecasts. Shading indicates the chronological test period.](figures/stage4_yz_vix/top5_forecasts.png)
+![Actual and best-five model forecasts. Shading indicates the chronological test period.](figures/stage2_yz_selected/top5_forecasts.png)
 
 # Forecast graphs
 
@@ -456,19 +485,30 @@ forecasts. The orange shaded area is the test period; forecasts are shown
 only there. All panels use the same time axis to show the training history
 and holdout together.
 
-![Forecasts for models ranked 1–4 by MAE.](figures/stage4_yz_vix/forecasts_01.png)
+![Forecasts for models ranked 1–4 by MAE.](figures/stage2_yz_selected/forecasts_01.png)
 
-![Forecasts for models ranked 5–8 by MAE.](figures/stage4_yz_vix/forecasts_02.png)
+![Forecasts for models ranked 5–6 by MAE.](figures/stage2_yz_selected/forecasts_02.png)
 
-![Forecasts for models ranked 9–12 by MAE.](figures/stage4_yz_vix/forecasts_03.png)
+## Original 20-model baseline
 
-![Forecasts for models ranked 13–16 by MAE.](figures/stage4_yz_vix/forecasts_04.png)
+The earlier no-external-predictor run contains 20 model candidates on the
+same 761 test dates; it remains a separate baseline, not a 20-model rerun
+with the three new predictors. The following panels preserve the forecasts
+for all 20 original models.
 
-![Forecasts for models ranked 17–20 by MAE.](figures/stage4_yz_vix/forecasts_05.png)
+![Baseline models ranked 1–4 by MAE.](figures/stage2_yz/forecasts_01.png)
+
+![Baseline models ranked 5–8 by MAE.](figures/stage2_yz/forecasts_02.png)
+
+![Baseline models ranked 9–12 by MAE.](figures/stage2_yz/forecasts_03.png)
+
+![Baseline models ranked 13–16 by MAE.](figures/stage2_yz/forecasts_04.png)
+
+![Baseline models ranked 17–20 by MAE.](figures/stage2_yz/forecasts_05.png)
 
 # Interpretation and limitations
 
-- HistGradientBoosting with VIX ranks first on both metrics in this run; this does not
+- HistGradientBoosting ranks first among the six on both metrics in this run; this does not
   establish that it is statistically superior or the team's preferred model.
 - The two-observation estimator is the user-selected minimum valid window.
   Its adjacent targets overlap, increasing serial dependence in the target
@@ -478,15 +518,14 @@ and holdout together.
   `GC=F` realized-variance results.
 - Incomplete OHLC rows are not filled; some consecutive valid targets skip
   market sessions.
-- The fit log contained optimizer/convergence warnings even though all 20
+- The fit log contained optimizer/convergence warnings even though all six
   candidates have finite forecasts at all test dates. Successful forecasts
   do not prove global optimizer convergence or model adequacy.
 - No forecast-comparison significance tests or uncertainty intervals were
   computed. Confirm LSEG data-use permissions before redistributing source
   observations.
-- VIX was selected partly using a prior screen whose training interval
-  overlaps the start of this holdout; this compromises a strictly untouched
-  holdout interpretation.
+- These predictors were chosen after earlier holdout results were observed;
+  this compromises a strictly untouched holdout interpretation.
 
 # Reproduction and artifacts
 
@@ -495,20 +534,28 @@ report:
 
 ```bash
 python scripts/plot_yang_zhang_report.py \
-  --processed-dir data/processed/stage4_yz_vix \
-  --output-dir reports/figures/stage4_yz_vix
+  --processed-dir data/processed/stage2_yz_selected \
+  --output-dir reports/figures/stage2_yz_selected
 quarto render reports/yang-zhang-volatility.qmd
 ```
 
 The forecast experiment is reproduced separately with:
 
 ```bash
-PYTHONPATH=src python scripts/evaluate_yang_zhang_volatility.py \
-  --vix-input data/refinitiv/VIX.csv --output-dir data/processed/stage4_yz_vix
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=src \
+  python scripts/evaluate_yang_zhang_volatility.py --predictor-dir data/refinitiv \
+  --external-models-only --output-dir data/processed/stage2_yz_selected
+PYTHONPATH=src python scripts/compare_selected_predictors.py
+```
+
+The predictor screen is reproduced with:
+
+```bash
+PYTHONPATH=src python scripts/screen_yang_zhang_predictors.py
 ```
 
 The report uses the prepared target, forecasts, summary, and manifest in
-`data/processed/stage4_yz_vix/`. The manifest records both input SHA-256
+`data/processed/stage2_yz_selected/`. The manifest records input SHA-256
 hashes, the estimator window, split, model list, and fit-failure counts.
 The numerical results in this report are a snapshot of this run; after any
 new experiment, update the results text and table from its saved summary

@@ -1,0 +1,77 @@
+{
+  "target": "daily_volatility",
+  "include_vix": false,
+  "external_predictors": [
+    "dxy_close",
+    "gold_iv_1m",
+    "gold_iv_1y"
+  ],
+  "estimator": "Yang-Zhang",
+  "target_windows_overlap": true,
+  "train_fraction": 0.8,
+  "test_fraction": 0.19999999999999996,
+  "split_method": "chronological by valid target observations",
+  "test_forecast_method": "sequential one-step; refit on initial training data and prior observed test targets at each origin",
+  "model_names": [
+    "harx_ohlc",
+    "ridge_ohlc",
+    "lasso_ohlc",
+    "hist_gradient_boosting_ohlc",
+    "garchx_ohlc_range",
+    "var_ohlc"
+  ],
+  "fixed_auto_arima_order": null,
+  "workers": 4,
+  "training_observations": 3040,
+  "test_observations": 761,
+  "common_test_observations": 761,
+  "test_start": "2023-06-02",
+  "test_end": "2026-11-10",
+  "ranking_metrics": [
+    "MAE",
+    "RMSE"
+  ],
+  "statistical_significance_tests": false,
+  "failures": {
+    "harx_ohlc": 0,
+    "ridge_ohlc": 0,
+    "lasso_ohlc": 0,
+    "hist_gradient_boosting_ohlc": 0,
+    "garchx_ohlc_range": 0,
+    "var_ohlc": 0
+  },
+  "predictor_availability": "latest value available by origin; source date plus one weekday",
+  "predictor_models": [
+    "harx_ohlc",
+    "ridge_ohlc",
+    "lasso_ohlc",
+    "hist_gradient_boosting_ohlc",
+    "garchx_ohlc_range",
+    "var_ohlc"
+  ],
+  "predictor_inputs": {
+    "dxy_close": {
+      "path": "data/refinitiv/DXY.csv",
+      "sha256": "04ea5d83706d7a41271bd35414bf97a7291ed4f0f297ba2bec8c0733ee73df8f"
+    },
+    "gold_iv_1m": {
+      "path": "data/refinitiv/XAU1MO_R.csv",
+      "sha256": "94c422c332a449cba95f437b4a52304856d620abe2c3c86a7d5296e8c8884097"
+    },
+    "gold_iv_1y": {
+      "path": "data/refinitiv/XAU1YO_R.csv",
+      "sha256": "84e231771af67d9f777a64b0ce29dbb01f158459f93dd4722b39201e09ee904a"
+    }
+  },
+  "source": "LSEG Workspace",
+  "instrument": "COMEX Gold Futures Generic 1 (GCc1)",
+  "input_file": "data/refinitiv/GCc1.csv",
+  "estimation_window_observations": 2,
+  "target_window_observations": 2,
+  "annualized": false,
+  "incomplete_ohlc_rows": 177,
+  "complete_ohlc_rows": 4064,
+  "prepared_target_path": "data/processed/stage2_yz_selected/GCc1_yang_zhang_volatility.csv",
+  "input_path": "data/refinitiv/GCc1.csv",
+  "input_sha256": "1a3bc07dd9778fe03b71cf1c6e3a9d500f0ff5b3627d81185c7d76d1b235ee88"
+}

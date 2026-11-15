@@ -1,18 +1,44 @@
 import numpy as np
 import pandas as pd
 import pytest
+import json
 
 import gold_vol_pipeline.volatility_forecasting as volatility_forecasting
-from gold_vol_pipeline.lseg import align_lseg_vix
+from gold_vol_pipeline.lseg import align_lseg_vix, align_selected_forecast_predictors
 from gold_vol_pipeline.volatility_forecasting import (
     _lagged_design,
+    _variance_recursion,
+    EXTERNAL_MODEL_NAMES,
+    SELECTED_PREDICTORS,
     evaluate_daily_volatility,
     forecast_daily_volatility,
+    save_daily_volatility_evaluation,
 )
 from gold_vol_pipeline.yang_zhang import (
     add_chronological_split,
     prepare_yang_zhang_dataset,
 )
+
+
+def test_saved_evaluation_uses_stage2_names_and_records_input_hash(tmp_path):
+    source = tmp_path / "input.csv"
+    source.write_text("source data", encoding="utf-8")
+    output = tmp_path / "output"
+    save_daily_volatility_evaluation(
+        pd.DataFrame({"forecast": [0.1]}),
+        pd.DataFrame({"MAE": [0.01]}),
+        {"target": "daily_volatility"},
+        output,
+        input_path=source,
+    )
+    assert {path.name for path in output.iterdir()} == {
+        "stage2_yz_forecasts.csv",
+        "stage2_yz_summary.csv",
+        "stage2_yz_manifest.json",
+    }
+    manifest = json.loads((output / "stage2_yz_manifest.json").read_text())
+    assert manifest["input_path"] == str(source)
+    assert len(manifest["input_sha256"]) == 64
 
 
 def _ohlc_data(size: int = 120) -> pd.DataFrame:
@@ -138,6 +164,92 @@ def test_vix_availability_is_next_weekday_and_asof(tmp_path):
         pd.to_datetime(["2024-01-05", "2024-01-05", "2024-01-09"])
     )
     assert (result["vix_available_date"] <= result["date"]).all()
+
+
+def test_selected_predictor_alignment_uses_next_weekday(tmp_path):
+    for filename, field in (
+        ("DXY.csv", "TRDPRC_1"),
+        ("XAU1MO_R.csv", "MID_PRICE"),
+        ("XAU1YO_R.csv", "MID_PRICE"),
+    ):
+        pd.DataFrame({"Date": ["2024-01-05", "2024-01-09"], field: [10., 20.]}).to_csv(
+            tmp_path / filename, index=False
+        )
+    targets = pd.DataFrame({
+        "date": pd.to_datetime(["2024-01-08", "2024-01-09", "2024-01-10"]),
+        "daily_volatility": [0.1, 0.2, 0.3],
+    })
+    aligned = align_selected_forecast_predictors(targets, tmp_path)
+    for column in SELECTED_PREDICTORS:
+        assert aligned[column].tolist() == [10., 10., 20.]
+        assert (aligned[f"{column}_available_date"] <= aligned["date"]).all()
+    assert "vix_close" not in aligned
+
+
+@pytest.mark.parametrize(("model", "helper"), [
+    ("harx_ohlc", "_linear_forecast"),
+    ("ridge_ohlc", "_linear_forecast"),
+    ("lasso_ohlc", "_linear_forecast"),
+    ("hist_gradient_boosting_ohlc", "_linear_forecast"),
+    ("garchx_ohlc_range", "_conditional_variance_forecast"),
+    ("var_ohlc", "_var_forecast"),
+])
+def test_selected_predictors_forwarded_to_all_six_models(monkeypatch, model, helper):
+    history = prepare_yang_zhang_dataset(_ohlc_data()).dropna(subset=["daily_volatility"])
+    for column in SELECTED_PREDICTORS:
+        history[column] = 10.
+    seen = []
+    def fake_forecast(data, **kwargs):
+        seen.append(kwargs)
+        return 0.01
+    monkeypatch.setattr(volatility_forecasting, helper, fake_forecast)
+    forecast_daily_volatility(
+        model, history, auto_arima_order=(1, 0, 0),
+        external_predictors=SELECTED_PREDICTORS,
+    )
+    assert seen[0]["external_predictors"] == SELECTED_PREDICTORS
+    assert not seen[0]["include_vix"]
+    assert model in EXTERNAL_MODEL_NAMES
+
+
+def test_selected_features_are_from_origin_not_next_target():
+    history = prepare_yang_zhang_dataset(_ohlc_data()).dropna(subset=["daily_volatility"]).reset_index(drop=True)
+    for i, column in enumerate(SELECTED_PREDICTORS):
+        history[column] = np.arange(len(history)) + i + 1
+    features, _, latest = _lagged_design(
+        history, include_ohlc=True, external_predictors=SELECTED_PREDICTORS,
+    )
+    np.testing.assert_array_equal(features[0, -3:], history.loc[21, list(SELECTED_PREDICTORS)].to_numpy(dtype=float))
+    np.testing.assert_array_equal(latest[0, -3:], history.loc[len(history)-1, list(SELECTED_PREDICTORS)].to_numpy(dtype=float))
+
+
+def test_variance_recursion_matches_sequential_calculation():
+    rng = np.random.default_rng(42)
+    forcing = rng.uniform(0.01, 2, 4000)
+    for beta in (0., 0.7, 0.999):
+        expected = np.empty(len(forcing) + 1)
+        expected[0] = 0.4
+        for i, value in enumerate(forcing, 1):
+            expected[i] = value + beta * expected[i - 1]
+        np.testing.assert_allclose(_variance_recursion(forcing, beta, 0.4), expected, rtol=1e-14)
+
+
+def test_selected_predictor_on_target_date_does_not_enter_its_forecast():
+    prepared = prepare_yang_zhang_dataset(_ohlc_data())
+    for i, column in enumerate(SELECTED_PREDICTORS):
+        prepared[column] = np.linspace(10 + i, 30 + i, len(prepared))
+    changed = prepared.copy()
+    valid_index = changed.index[changed["daily_volatility"].notna()]
+    first_test_index = valid_index[int(np.floor(len(valid_index) * 0.8))]
+    changed.loc[first_test_index, list(SELECTED_PREDICTORS)] = 1000.
+    before, _, _ = evaluate_daily_volatility(
+        prepared, model_names=("ridge_ohlc",), external_predictors=SELECTED_PREDICTORS, progress=False
+    )
+    after, _, _ = evaluate_daily_volatility(
+        changed, model_names=("ridge_ohlc",), external_predictors=SELECTED_PREDICTORS, progress=False
+    )
+    assert before.iloc[0]["forecast"] == pytest.approx(after.iloc[0]["forecast"])
+    assert before.iloc[1]["forecast"] != pytest.approx(after.iloc[1]["forecast"])
 
 
 def test_vix_features_are_origin_aligned_and_do_not_change_univariate_models():

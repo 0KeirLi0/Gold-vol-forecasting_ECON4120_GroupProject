@@ -6,8 +6,14 @@ import argparse
 import hashlib
 from pathlib import Path
 
-from gold_vol_pipeline.lseg import align_lseg_vix
+from gold_vol_pipeline.lseg import (
+    SELECTED_FORECAST_SOURCES,
+    align_lseg_vix,
+    align_selected_forecast_predictors,
+)
 from gold_vol_pipeline.volatility_forecasting import (
+    EXTERNAL_MODEL_NAMES,
+    SELECTED_PREDICTORS,
     evaluate_daily_volatility,
     save_daily_volatility_evaluation,
 )
@@ -53,12 +59,26 @@ def main() -> int:
         type=Path,
         help="LSEG VIX CSV to add using the next-weekday availability proxy.",
     )
+    parser.add_argument(
+        "--predictor-dir", type=Path,
+        help="LSEG directory containing the selected DXY and gold IV exports.",
+    )
+    parser.add_argument(
+        "--external-models-only", action="store_true",
+        help="Evaluate only the six models that accept the selected predictors.",
+    )
     args = parser.parse_args()
 
+    if args.vix_input is not None and args.predictor_dir is not None:
+        parser.error("--vix-input and --predictor-dir are separate experiments.")
+    if args.external_models_only and args.predictor_dir is None:
+        parser.error("--external-models-only requires --predictor-dir.")
     prepared = prepare_yang_zhang_dataset(args.input, window=args.window)
     prepared = add_chronological_split(prepared, train_fraction=0.8)
     if args.vix_input is not None:
         prepared = align_lseg_vix(prepared, args.vix_input)
+    if args.predictor_dir is not None:
+        prepared = align_selected_forecast_predictors(prepared, args.predictor_dir)
     args.output_dir.mkdir(parents=True, exist_ok=True)
     prepared_path = args.output_dir / "GCc1_yang_zhang_volatility.csv"
     prepared.to_csv(prepared_path, index=False)
@@ -75,10 +95,27 @@ def main() -> int:
     )
     print(f"Saved daily-volatility data to {prepared_path}.", flush=True)
 
+    evaluation_options = (
+        {"model_names": EXTERNAL_MODEL_NAMES} if args.external_models_only else {}
+    )
     results, summary, manifest = evaluate_daily_volatility(
         prepared, train_fraction=0.8, workers=args.workers, progress=True,
         include_vix=args.vix_input is not None,
+        external_predictors=SELECTED_PREDICTORS if args.predictor_dir else (),
+        **evaluation_options,
     )
+    if args.predictor_dir is not None:
+        manifest.update({
+            "predictor_availability": "latest value available by origin; source date plus one weekday",
+            "predictor_models": list(EXTERNAL_MODEL_NAMES),
+            "predictor_inputs": {
+                feature: {
+                    "path": str(args.predictor_dir / filename),
+                    "sha256": hashlib.sha256((args.predictor_dir / filename).read_bytes()).hexdigest(),
+                }
+                for feature, (filename, _, _) in SELECTED_FORECAST_SOURCES.items()
+            },
+        })
     if args.vix_input is not None:
         manifest.update(
             {

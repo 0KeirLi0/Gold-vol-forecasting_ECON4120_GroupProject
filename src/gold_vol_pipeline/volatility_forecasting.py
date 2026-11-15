@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 from arch import arch_model
 from scipy.optimize import minimize
+from scipy.signal import lfilter
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.linear_model import Lasso, Ridge
 from statsmodels.tsa.api import VAR
@@ -48,6 +49,11 @@ EXOGENOUS_COLUMNS = (
     "overnight_log_return",
     "open_close_log_return",
     "high_low_log_range",
+)
+SELECTED_PREDICTORS = ("dxy_close", "gold_iv_1m", "gold_iv_1y")
+EXTERNAL_MODEL_NAMES = (
+    "harx_ohlc", "ridge_ohlc", "lasso_ohlc", "hist_gradient_boosting_ohlc",
+    "garchx_ohlc_range", "var_ohlc",
 )
 
 
@@ -101,13 +107,13 @@ def _arch_forecast(
     return float(fit.forecast(horizon=1).mean.iloc[-1, 0]) / 100
 
 
-def _lagged_design(history: pd.DataFrame, *, include_ohlc: bool, include_vix: bool = False) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _lagged_design(history: pd.DataFrame, *, include_ohlc: bool, include_vix: bool = False, external_predictors: tuple[str, ...] = ()) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     log_vol = _log_target(history)
     if len(log_vol) <= HAR_LAGS + 3:
         raise ValueError(
             f"HAR models require more than {HAR_LAGS + 3} observations."
         )
-    columns = list(EXOGENOUS_COLUMNS) + (["vix_close"] if include_vix else [])
+    columns = list(EXOGENOUS_COLUMNS) + (["vix_close"] if include_vix else []) + list(external_predictors)
     exogenous = (
         history.loc[:, columns].to_numpy(dtype=float) if include_ohlc else None
     )
@@ -144,10 +150,12 @@ def _lagged_design(history: pd.DataFrame, *, include_ohlc: bool, include_vix: bo
 
 
 def _linear_forecast(
-    history: pd.DataFrame, *, kind: str, include_ohlc: bool, include_vix: bool = False
+    history: pd.DataFrame, *, kind: str, include_ohlc: bool, include_vix: bool = False,
+    external_predictors: tuple[str, ...] = (),
 ) -> float:
     features, targets, forecast_features = _lagged_design(
-        history, include_ohlc=include_ohlc, include_vix=include_vix
+        history, include_ohlc=include_ohlc, include_vix=include_vix,
+        external_predictors=external_predictors,
     )
     if kind == "har":
         design = np.column_stack((np.ones(len(features)), features))
@@ -170,7 +178,7 @@ def _linear_forecast(
     return float(np.exp(prediction))
 
 
-def _var_forecast(history: pd.DataFrame, *, include_vix: bool = False) -> float:
+def _var_forecast(history: pd.DataFrame, *, include_vix: bool = False, external_predictors: tuple[str, ...] = ()) -> float:
     values = _log_target(history)
     close_returns = pd.to_numeric(history["close_return"], errors="raise").to_numpy(
         dtype=float
@@ -180,6 +188,8 @@ def _var_forecast(history: pd.DataFrame, *, include_vix: bool = False) -> float:
         components.append(
             pd.to_numeric(history["vix_close"], errors="raise").to_numpy(dtype=float)
         )
+    for column in external_predictors:
+        components.append(pd.to_numeric(history[column], errors="raise").to_numpy(dtype=float))
     observations = np.column_stack(components)
     if not np.isfinite(observations).all() or len(observations) < 10:
         raise ValueError("VAR requires 10 finite aligned volatility and return rows.")
@@ -188,8 +198,14 @@ def _var_forecast(history: pd.DataFrame, *, include_vix: bool = False) -> float:
     return float(np.exp(prediction))
 
 
+def _variance_recursion(forcing: np.ndarray, beta: float, initial: float) -> np.ndarray:
+    filtered, _ = lfilter([1.0], [1.0, -beta], forcing, zi=[beta * initial])
+    return np.concatenate(([initial], filtered))
+
+
 def _conditional_variance_forecast(
-    history: pd.DataFrame, *, tail_threshold: float | None, include_vix: bool = False
+    history: pd.DataFrame, *, tail_threshold: float | None, include_vix: bool = False,
+    external_predictors: tuple[str, ...] = (),
 ) -> float:
     """Fit an AR(1) volatility mean with GARCH or threshold-GARCH errors."""
     values = _target(history)
@@ -202,12 +218,13 @@ def _conditional_variance_forecast(
         raise ValueError("GARCH-X requires finite non-negative OHLC range values.")
     range_scale = float(np.mean(exogenous))
     range_scaled = exogenous / max(range_scale, 1e-12)
-    vix_scaled = None
-    if include_vix:
-        vix = pd.to_numeric(history["vix_close"], errors="raise").to_numpy(dtype=float)
-        if not np.isfinite(vix).all() or (vix <= 0).any():
-            raise ValueError("GARCH-X requires finite positive VIX values.")
-        vix_scaled = vix / float(np.mean(vix))
+    extra_columns = (("vix_close",) if include_vix else ()) + external_predictors
+    extra_scaled = []
+    for column in extra_columns:
+        feature = pd.to_numeric(history[column], errors="raise").to_numpy(dtype=float)
+        if not np.isfinite(feature).all() or (feature <= 0).any():
+            raise ValueError(f"GARCH-X requires finite positive {column} values.")
+        extra_scaled.append(feature / float(np.mean(feature)))
     residual_scale = float(np.std(np.diff(values), ddof=1))
     if not np.isfinite(residual_scale) or residual_scale <= 0:
         raise ValueError("Conditional-variance model requires varying log volatility.")
@@ -225,20 +242,16 @@ def _conditional_variance_forecast(
         residuals[1:] = (
             values[1:] - intercept - ar * values[:-1]
         ) / residual_scale
-        variance = np.empty(len(values), dtype=float)
-        variance[0] = initial_variance / residual_scale**2
-        for index in range(1, len(values)):
-            shock = residuals[index - 1] ** 2
-            addition = (
-                extra * range_scaled[index - 1]
-                if tail_threshold is None
-                else extra * shock * (abs(residuals[index - 1]) > threshold)
-            )
-            if vix_scaled is not None:
-                addition += parameters[6] * vix_scaled[index - 1]
-            variance[index] = (
-                omega + alpha * shock + beta * variance[index - 1] + addition
-            )
+        shocks = residuals[:-1] ** 2
+        addition = (
+            extra * range_scaled[:-1]
+            if tail_threshold is None
+            else extra * shocks * (np.abs(residuals[:-1]) > threshold)
+        )
+        for position, feature in enumerate(extra_scaled):
+            addition += parameters[6 + position] * feature[:-1]
+        initial = initial_variance / residual_scale**2
+        variance = _variance_recursion(omega + alpha * shocks + addition, beta, initial)
         return residuals, variance
 
     def objective(parameters: np.ndarray) -> float:
@@ -255,8 +268,8 @@ def _conditional_variance_forecast(
         [float(np.mean(values)), 0.1, variance_start, 0.05, 0.85, extra_start],
         [float(np.mean(values)), 0.5, variance_start * 2, 0.1, 0.7, extra_start],
     )
-    if vix_scaled is not None:
-        starts = tuple(start + [0.01] for start in starts)
+    if extra_scaled:
+        starts = tuple(start + [0.01] * len(extra_scaled) for start in starts)
     extra_upper = 100.0
     constraints = [
         {
@@ -280,7 +293,7 @@ def _conditional_variance_forecast(
                 (0.0, 0.999),
                 (0.0, 0.999),
                 (0.0, extra_upper),
-            ] + ([(0.0, extra_upper)] if vix_scaled is not None else []),
+            ] + [(0.0, extra_upper)] * len(extra_scaled),
             constraints=constraints,
             options={"maxiter": 500, "ftol": 1e-9},
         )
@@ -295,7 +308,7 @@ def _conditional_variance_forecast(
         and fit.x[2] > 0
         and fit.x[3] >= 0
         and fit.x[4] >= 0
-        and (vix_scaled is None or fit.x[6] >= 0)
+        and np.all(fit.x[6:] >= 0)
         and fit.x[3] + fit.x[4] + (
             fit.x[5] if tail_threshold is not None else 0.0
         ) <= 0.999 + 1e-8
@@ -314,6 +327,7 @@ def forecast_daily_volatility(
     *,
     auto_arima_order: tuple[int, int, int],
     include_vix: bool = False,
+    external_predictors: tuple[str, ...] = (),
 ) -> float:
     """Return one positive forecast of daily volatility from history through origin."""
     values = _target(history)
@@ -347,23 +361,23 @@ def forecast_daily_volatility(
             history, vol="GARCH", p=1, q=1, distribution="t"
         )
     elif model == "garchx_ohlc_range":
-        prediction = _conditional_variance_forecast(history, tail_threshold=None, include_vix=include_vix)
+        prediction = _conditional_variance_forecast(history, tail_threshold=None, include_vix=include_vix, external_predictors=external_predictors)
     elif model == "quantile_garch":
         prediction = _conditional_variance_forecast(history, tail_threshold=0.95)
     elif model == "har":
         prediction = _linear_forecast(history, kind="har", include_ohlc=False)
     elif model == "harx_ohlc":
-        prediction = _linear_forecast(history, kind="har", include_ohlc=True, include_vix=include_vix)
+        prediction = _linear_forecast(history, kind="har", include_ohlc=True, include_vix=include_vix, external_predictors=external_predictors)
     elif model == "ridge_ohlc":
-        prediction = _linear_forecast(history, kind="ridge", include_ohlc=True, include_vix=include_vix)
+        prediction = _linear_forecast(history, kind="ridge", include_ohlc=True, include_vix=include_vix, external_predictors=external_predictors)
     elif model == "lasso_ohlc":
-        prediction = _linear_forecast(history, kind="lasso", include_ohlc=True, include_vix=include_vix)
+        prediction = _linear_forecast(history, kind="lasso", include_ohlc=True, include_vix=include_vix, external_predictors=external_predictors)
     elif model == "hist_gradient_boosting_ohlc":
         prediction = _linear_forecast(
-            history, kind="hist_gradient_boosting", include_ohlc=True, include_vix=include_vix
+            history, kind="hist_gradient_boosting", include_ohlc=True, include_vix=include_vix, external_predictors=external_predictors
         )
     elif model == "var_ohlc":
-        prediction = _var_forecast(history, include_vix=include_vix)
+        prediction = _var_forecast(history, include_vix=include_vix, external_predictors=external_predictors)
     else:
         raise ValueError(f"Unknown daily-volatility model: {model}")
 
@@ -390,14 +404,16 @@ def _forecast_origin(
         tuple[int, int, int],
         tuple[str, ...],
         bool,
+        tuple[str, ...],
     ],
 ) -> list[dict[str, object]]:
-    history, origin, target_date, actual, order, model_names, include_vix = task
+    history, origin, target_date, actual, order, model_names, include_vix, external_predictors = task
     rows: list[dict[str, object]] = []
     for model in model_names:
         try:
             forecast = forecast_daily_volatility(
-                model, history, auto_arima_order=order, include_vix=include_vix
+                model, history, auto_arima_order=order, include_vix=include_vix,
+                external_predictors=external_predictors,
             )
             error = ""
         except (
@@ -431,6 +447,7 @@ def evaluate_daily_volatility(
     workers: int = 1,
     progress: bool = True,
     include_vix: bool = False,
+    external_predictors: tuple[str, ...] = (),
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, object]]:
     """Evaluate models on a chronological split with sequential one-step updates.
 
@@ -447,6 +464,10 @@ def evaluate_daily_volatility(
     unknown = sorted(set(model_names) - set(MODEL_NAMES))
     if unknown:
         raise ValueError(f"Unknown daily-volatility models: {unknown}")
+    if len(set(external_predictors)) != len(external_predictors) or not set(external_predictors) <= set(SELECTED_PREDICTORS):
+        raise ValueError("Unsupported or duplicate external predictors.")
+    if include_vix and external_predictors:
+        raise ValueError("VIX and selected predictors are separate experiments.")
     required = {
         "date",
         "daily_volatility",
@@ -457,6 +478,7 @@ def evaluate_daily_volatility(
     }
     if include_vix:
         required.add("vix_close")
+    required.update(external_predictors)
     missing = sorted(required - set(data.columns))
     if missing:
         raise ValueError(f"data is missing required columns: {missing}")
@@ -479,6 +501,10 @@ def evaluate_daily_volatility(
         vix = pd.to_numeric(frame["vix_close"], errors="raise").to_numpy(dtype=float)
         if not np.isfinite(vix).all() or (vix <= 0).any():
             raise ValueError("VIX must contain finite positive values on all target dates.")
+    for column in external_predictors:
+        values = pd.to_numeric(frame[column], errors="raise").to_numpy(dtype=float)
+        if not np.isfinite(values).all() or (values <= 0).any():
+            raise ValueError(f"{column} must contain finite positive values on all target dates.")
     split_position = int(np.floor(len(frame) * train_fraction))
     if split_position < 30 or split_position >= len(frame):
         raise ValueError("The chronological split leaves too few training or test rows.")
@@ -509,6 +535,7 @@ def evaluate_daily_volatility(
                 order,
                 tuple(model_names),
                 include_vix,
+                external_predictors,
             )
 
     if workers == 1:
@@ -586,6 +613,7 @@ def evaluate_daily_volatility(
     manifest: dict[str, object] = {
         "target": "daily_volatility",
         "include_vix": include_vix,
+        "external_predictors": list(external_predictors),
         "estimator": "Yang-Zhang",
         "target_windows_overlap": True,
         "train_fraction": train_fraction,
@@ -626,13 +654,13 @@ def save_daily_volatility_evaluation(
     """Save forecasts, metrics, and reproducibility manifest to processed data."""
     directory = Path(output_dir)
     directory.mkdir(parents=True, exist_ok=True)
-    results.to_csv(directory / "stage4_yz_forecasts.csv", index=False)
-    summary.to_csv(directory / "stage4_yz_summary.csv", index=False)
+    results.to_csv(directory / "stage2_yz_forecasts.csv", index=False)
+    summary.to_csv(directory / "stage2_yz_summary.csv", index=False)
     output_manifest = dict(manifest)
     output_manifest["input_path"] = str(Path(input_path))
     output_manifest["input_sha256"] = hashlib.sha256(
         Path(input_path).read_bytes()
     ).hexdigest()
-    (directory / "stage4_yz_manifest.json").write_text(
+    (directory / "stage2_yz_manifest.json").write_text(
         json.dumps(output_manifest, indent=2) + "\n", encoding="utf-8"
     )

@@ -15,8 +15,8 @@ def create_report_figures(
 ) -> list[Path]:
     """Plot the target split, all model forecasts, and the five MAE leaders."""
     target_path = processed_dir / "GCc1_yang_zhang_volatility.csv"
-    forecasts_path = processed_dir / "stage4_yz_forecasts.csv"
-    summary_path = processed_dir / "stage4_yz_summary.csv"
+    forecasts_path = processed_dir / "stage2_yz_forecasts.csv"
+    summary_path = processed_dir / "stage2_yz_summary.csv"
     for path in (target_path, forecasts_path, summary_path):
         if not path.is_file():
             raise FileNotFoundError(f"Required evaluation artifact not found: {path}")
@@ -52,11 +52,14 @@ def create_report_figures(
     paths: list[Path] = []
     plot_specs = [
         ("Test-period forecast comparison", model_names[:5], "top5_forecasts.png"),
-        ("Forecasts: models 1–4 by MAE rank", model_names[0:4], "forecasts_01.png"),
-        ("Forecasts: models 5–8 by MAE rank", model_names[4:8], "forecasts_02.png"),
-        ("Forecasts: models 9–12 by MAE rank", model_names[8:12], "forecasts_03.png"),
-        ("Forecasts: models 13–16 by MAE rank", model_names[12:16], "forecasts_04.png"),
-        ("Forecasts: models 17–20 by MAE rank", model_names[16:20], "forecasts_05.png"),
+        *[
+            (
+                f"Forecasts: models {start + 1}–{min(start + 4, len(model_names))} by MAE rank",
+                model_names[start:start + 4],
+                f"forecasts_{start // 4 + 1:02d}.png",
+            )
+            for start in range(0, len(model_names), 4)
+        ],
     ]
 
     figure, axis = plt.subplots(figsize=(12, 4.8), constrained_layout=True)
@@ -110,7 +113,7 @@ def create_report_figures(
             figure, axes = plt.subplots(
                 2, 2, figsize=(12, 8), sharex=True, constrained_layout=True
             )
-            for axis, model in zip(axes.flat, names, strict=True):
+            for axis, model in zip(axes.flat, names):
                 _plot_forecasts(
                     axis,
                     target,
@@ -126,6 +129,8 @@ def create_report_figures(
                     f"RMSE={model_summary['common_RMSE']:.5f}",
                     fontsize=9,
                 )
+            for axis in axes.flat[len(names):]:
+                axis.set_visible(False)
             axes[0, 0].legend(loc="upper left", frameon=False, fontsize=8)
             figure.suptitle(title, fontsize=13)
             figure_path = output_dir / filename
@@ -211,7 +216,7 @@ def main() -> int:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("reports/figures/stage4_yz"),
+        default=Path("reports/figures/stage2_yz"),
         help="Directory for generated report figures.",
     )
     args = parser.parse_args()
