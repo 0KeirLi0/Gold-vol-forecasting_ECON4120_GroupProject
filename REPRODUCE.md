@@ -1,37 +1,33 @@
-# Reproducing the short Stage 3 evaluation
+# Reproducing the integrated Stage 3 evaluation
 
-Run the evaluation from the repository root. It reuses the already completed
-forecast files in `data/processed/evaluation_forecasts_by_model/` and
-`data/processed/predictor_set_variant_forecasts.csv`; it does not download data
-or refit forecasts. The Stage 2 panel is still read to verify the target and
-horizon.
+Run the evaluation from the repository root. It refits seven candidates on all
+requested origins and reuses the other 18 models from the existing aligned
+forecast file. It does not download data. Preserve the Stage 2 panel and the
+aligned forecast input; both hashes are recorded in the output manifest.
 
 ## Environment and run
 
 ```bash
 python -m pip install -e ".[dev,interactive]"
-python -m nbconvert --to notebook --execute notebooks/06_final_evaluation.ipynb --output 06_final_evaluation.executed.ipynb --output-dir data/processed
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python -m nbconvert --to notebook --execute notebooks/06_final_evaluation.ipynb --ExecutePreprocessor.timeout=1800 --output 06_integrated.executed.ipynb --output-dir data/processed
 ```
 
-The evaluation is designed to complete in approximately 10 minutes or less on
-a typical laptop; runtime depends on the environment. It uses saved return-only
-baselines, HAR/HARX forecasts, and the nine predictor-set variants. The
-notebook checks the common origin dates and actual targets before comparing
-models. The earlier GARCH(1,1) and 500-origin results in
-`cross_model_comparison_with_baselines.csv` are displayed as context only,
-because their sample is not the same as the 445 weekly origins used by the
-Stage 3 comparison.
+The notebook refits fixed-order HK auto-ARIMA, BIC-selected VAR, GJR-GARCH,
+asymmetric EGARCH, Student-t GARCH, VIX-GARCH-X, and quantile GARCH. It checks
+dates and actuals and saves all attempted forecasts, a balanced common-origin
+sample, a loss summary and a manifest as `stage3_integrated_*.csv/json` under
+`data/processed/`. Fit failures remain explicit. It also updates the
+predictor-set comparison and figures under `plots/final_evaluation/`.
+The run can take several minutes; runtime depends on hardware. The GARCH-X
+model holds the origin's VIX constant in the forecast horizon. The HK order
+is selected at the first origin and retained thereafter. See the report for
+the equations and limitations.
 
-The notebook writes `data/processed/evaluation_forecasts.csv`, its run
-manifest, `data/processed/evaluation_summary.csv`, and
-`data/processed/predictor_set_comparison.csv`. It also refreshes 200-dpi
-figures under `plots/final_evaluation/`. The
-executed notebook is stored under `data/processed/`, leaving the source
-notebook unchanged.
+## Earlier 20-model comparison
 
-To refit the original seven Stage 1 baselines, the BIC-selected VAR and the
-HK auto-ARIMA at the exact same 445 weekly origin dates without refitting the
-other completed Stage 3 models, run these commands in order:
+The following legacy commands reproduce the earlier 20-model comparison,
+not the integrated results; run them only when intentionally rebuilding the
+historical cached input and note that they overwrite existing comparison files:
 
 ```bash
 python scripts/evaluate_stage1_on_stage3_origins.py
@@ -77,13 +73,29 @@ negative log-likelihoods within 1e-8 at origins 2018-01-05, 2018-01-22,
 2018-04-05, 2018-11-13, 2019-02-12, 2023-06-20, 2024-11-06, and 2026-11-03.
 This limited check is not proof of global optimality.
 
-The cached notebook itself still omits repeated auto-ARIMA, VAR, GJR-GARCH,
-asymmetric EGARCH, Student-t GARCH, and GARCH-X fits. The first two are added
-by the separate scripts above. The other code remains available
-where implemented, but no new performance evidence for them is claimed here.
-This runtime-based scope is not a model-selection decision. To rebuild inputs
-from raw sources instead, use the pipeline commands in [`README.md`](README.md)
-and verify the fixed end date, data vintage, and market-data usage terms.
+To rebuild inputs from raw sources instead, use the pipeline commands in
+[`README.md`](README.md) and verify the fixed end date, data vintage, and
+market-data usage terms. Rebuilding the historical forecast files changes the
+cached input to the integrated run.
+
+## Exploratory quantile GARCH calibration
+
+Run the following to reproduce the single-origin calibration, without changing
+the 445-origin comparison or downloading data:
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python scripts/calibrate_quantile_garch.py --origin 2026-11-03 --quantile 0.95 --horizon 5 --simulations 20000 --seed 42
+```
+
+The JSON output includes the input hash, origin, fitted coefficients, threshold,
+observation counts, and forecast. Use `--input` to select another compatible
+panel. The threshold is recomputed using only returns through the specified
+origin and held fixed during simulation. The optimizer fits scaled returns
+from two starting points; bounds-clipping warnings can occur. The output is a
+single fitted case, not an out-of-sample comparison or significance test.
+The reported case used a panel with SHA-256
+`a2f957950e4df6d445271b720ac758a4eb777d998e4e37e0f1195229c515afcd`
+and Python 3.13, NumPy 2.4.6, pandas 2.3.3, and SciPy 1.15.2.
 
 ## Obtaining source data
 

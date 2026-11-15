@@ -33,6 +33,7 @@ from .regression_models import (
     penalized_forecast,
     var_forecast,
 )
+from .quantile_garch import QuantileGarchFit, fit_quantile_garch
 from .model_evaluation import (
     ModelEvaluation,
     adf_unit_root_test,
@@ -66,6 +67,8 @@ __all__ = [
     "garch11_variance_forecast",
     "gjr_garch_forecast",
     "PenalizedForecast",
+    "QuantileGarchFit",
+    "fit_quantile_garch",
     "fit_har_coefficients",
     "har_features",
     "har_forecast",

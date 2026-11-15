@@ -2,6 +2,22 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-15 — Integrated Stage 3 model comparison and recommendation
+- Author: User-directed implementation by Copilot
+- Type: finding
+- Context: The user requested the previously excluded models in Stage 3 and a final model recommendation. GARCH-X is implemented as a direct zero-mean lagged-VIX variance equation with VIX held fixed over the forecast horizon, not the previously proposed two-step design.
+- Outcome: On 443 shared successful origins, GARCH-X has lowest MSE (9.492e-7; RMSE 0.000974); asymmetric EGARCH has lowest MAE and QLIKE. GARCH-X is provisionally recommended under an MSE-first criterion, pending team review. It does not significantly beat historical variance after Holm correction. Two of 445 quantile-GARCH fits failed; other newly refitted candidates succeeded. Optimizer warnings and common-success selection limit the result.
+- Artifacts: `notebooks/06_final_evaluation.ipynb`, `src/gold_vol_pipeline/stage3_evaluation.py`, `src/gold_vol_pipeline/models.py`, `data/processed/stage3_integrated_*`, `reports/model-performance-stage2-stage3.qmd`, `README.md`, `REPRODUCE.md`, `presentations/project-progress.qmd`.
+- Next: Samuel to review the MSE criterion, EGARCH trade-off, inference, and later-holdout robustness; Enoch to review GARCH-X's constant-future-VIX assumption.
+
+## 2026-11-15 — Exploratory quantile GARCH case
+- Author: User-directed implementation by Copilot
+- Type: finding
+- Context: The user requested an explicit GARCH equation, calibration, and a quantile term for extreme lagged observations. With clarification unavailable, the implemented exploratory interpretation uses the 95th percentile of historical absolute daily `GC=F` returns and a nonnegative extra squared-shock coefficient.
+- Outcome: At the 2026-11-03 origin, 2,976 returns yielded threshold 0.0215304 and constrained tail coefficient zero; the five-session simulated forecast was 0.00082648. This is one fitted case, not evidence of significance or a comparison with existing models. Optimizer clipping warnings remain; threshold estimation and coefficient-boundary inference need care.
+- Artifacts: `src/gold_vol_pipeline/quantile_garch.py`, `scripts/calibrate_quantile_garch.py`, `tests/test_quantile_garch.py`, `reports/model-performance-stage2-stage3.qmd`, `REPRODUCE.md`, `presentations/project-progress.qmd`.
+- Next: Enoch to confirm the intended quantile specification; Samuel to consider an appropriate common-origin evaluation and inference before interpreting model performance.
+
 ## 2026-11-13 — Refit GARCH on all aligned origins
 - Author: User-directed implementation by Copilot
 - Type: finding

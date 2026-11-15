@@ -193,7 +193,7 @@ def test_arch_extensions_return_valid_multi_step_forecasts(forecast):
     assert value >= 0
 
 
-def test_estimated_ewma_and_garchx_skip_are_explicit():
+def test_estimated_ewma_and_garchx_forecasts_are_finite():
     returns = pd.Series(
         np.random.default_rng(13).normal(0, 0.01, size=100),
         index=pd.bdate_range("2020-01-01", periods=100),
@@ -203,8 +203,10 @@ def test_estimated_ewma_and_garchx_skip_are_explicit():
     )
 
     assert ewma_estimated_forecast(returns, horizon=5) >= 0
-    with pytest.raises(NotImplementedError, match="GARCH-X is skipped"):
-        garchx_forecast(returns, predictors, horizon=5)
+    forecast = garchx_forecast(returns, predictors, horizon=5)
+    assert np.isfinite(forecast) and forecast > 0
+    with pytest.raises(ValueError, match="matching indexes"):
+        garchx_forecast(returns, predictors.reset_index(drop=True), horizon=5)
 
 
 @pytest.mark.parametrize(

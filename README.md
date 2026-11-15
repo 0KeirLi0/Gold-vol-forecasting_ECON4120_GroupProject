@@ -370,9 +370,10 @@ The first modeling stage uses traditional univariate time-series methods on one
 gold-derived series: return-only candidate forecasts, sequential rolling-origin
 comparisons with MAE/RMSE, exploratory diagnostics, configurable in-sample
 candidate comparisons, and a nonseasonal Hyndman-Khandakar ARIMA selector.
-No final model-selection decision is recorded. The automatic ARIMA selector
-is included in an exploratory 20-origin rolling comparison. The aligned Stage 3
-evaluation separately selects one HK order using data at its first origin and
+The current provisional recommendation is GARCH-X with lagged VIX, pending team
+review as described below. The automatic ARIMA selector
+is included in an exploratory 20-origin rolling comparison. The integrated Stage 3
+evaluation selects one HK order using data at its first origin and
 refits that fixed order at each subsequent origin.
 For Stage 2, Keir selected daily DXY,
 nominal 10-year Treasury yield, S&P 500 returns, VIX, 10-year breakeven
@@ -397,41 +398,21 @@ one-weekday availability proxy require verification. These association results
 do not establish out-of-sample predictive value or a final variable-selection
 decision. Central-bank demand remains deferred.
 
-Stage 3 adds origin-wise HAR/HARX and penalized forecasts and the BIC-selected
-VAR, with further volatility extensions available in the modeling package. The GARCH-X
-extension is explicitly skipped because a leakage-safe two-step design is not
-implemented. The short evaluation in `notebooks/06_final_evaluation.ipynb`
-reuses the completed forecasts for return-only baselines, HAR/HARX, and the
-full seven-predictor, VIX-only, and DXY-plus-VIX HARX/lasso/ridge variants.
-Models are compared on their common weekly origins; previously completed
-500-origin Stage 1 metrics are shown separately because they use a different
-sample. Repeated auto-ARIMA, VAR, and extended-GARCH fits are excluded from
-the cached notebook run; VAR and HK auto-ARIMA are separately refit at the
-445 saved forecast origins using `scripts/evaluate_stage3_var.py` and
-`scripts/evaluate_stage3_auto_arima.py`, respectively. DXY-plus-VIX remains a
-sensitivity set motivated by the separate
-LSEG screen; significance on LSEG does not imply significance on Yahoo/FRED.
-The comparison is exploratory and no feature-selection or final model
-decision is asserted. See [`REPRODUCE.md`](REPRODUCE.md) for the short
-forecast-reuse workflow and source-access caveats. The seven original Stage 1
-baselines have since been freshly evaluated at the same 445 weekly origin
-dates. The fixed-order HK benchmark selects ARIMA(3,1,1) at the first origin
-using squared returns and refits it at each origin; it succeeded at all 445
-dates. The BIC-selected VAR uses log daily squared returns and log VIX, and
-also succeeded at all 445 origins. Scaled GARCH(1,1) succeeded at all 445,
-so the final 20-model comparison uses every requested origin. GARCH had the
-lowest point MSE (9.70e-7; RMSE 0.000985); HAR had the lowest MAE (0.000416).
-GARCH did
-not significantly beat historical variance after Holm correction for MSE or
-QLIKE. VAR had larger MSE and QLIKE than historical variance, with
-Holm-adjusted DM p-values of 0.0000720 and 1.19e-7. HK auto-ARIMA has
-RMSE 0.001037, and neither its MSE nor QLIKE significantly beats historical
-variance after Holm correction. The result remains
-exploratory; optimizer bounds-clipping warnings and overlapping targets remain
-relevant limitations.
-The [Stage 2–3 report](reports/model-performance-stage2-stage3.qmd) includes
-the aligned comparison and forecast-vs-actual appendix charts for all 20
-models.
+The integrated Stage 3 evaluation in `notebooks/06_final_evaluation.ipynb`
+refits auto-ARIMA, VAR, GJR-GARCH, asymmetric EGARCH, Student-t GARCH,
+VIX-GARCH-X, and quantile GARCH on the 445 weekly origins, alongside 18 cached
+baseline and predictor-model forecasts. Two quantile-GARCH fits failed; the
+25-model common-origin comparison uses 443 observations per model. The
+provisional recommendation is **GARCH-X with lagged VIX**, using MSE as the
+primary criterion: MSE is 9.492e-7 (RMSE 0.000974), lowest in that sample.
+Asymmetric EGARCH has the lowest MAE and QLIKE; no candidate significantly
+beats historical variance after Holm adjustment. GARCH-X holds VIX fixed at
+its origin value during the forecast horizon. This is an exploratory
+recommendation, not a confirmed team decision; optimizer warnings, failed
+fits, source timing and overlapping targets limit the evidence. See the
+[Stage 2–3 report](reports/model-performance-stage2-stage3.qmd) for the
+equations, full comparison and limitations, and [`REPRODUCE.md`](REPRODUCE.md)
+for the integrated workflow.
 
 For AI-agent collaboration guidance, see [`AGENTS.md`](AGENTS.md) and [`.github/copilot-instructions.md`](.github/copilot-instructions.md). Shared AI/team decisions and handoffs are recorded in [`.ai/SESSION_LOG.md`](.ai/SESSION_LOG.md), using the protocol in [`.ai/README.md`](.ai/README.md). The project uses a main-only Git workflow described in [`GIT_WORKFLOW.md`](GIT_WORKFLOW.md). For a compact project context and pointers, see [`llms.txt`](llms.txt).
 

@@ -10,6 +10,7 @@ from arch import arch_model
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize, minimize_scalar
+from scipy.signal import lfilter
 
 
 def _validated_returns(returns: Sequence[float] | pd.Series) -> np.ndarray:
@@ -338,21 +339,72 @@ def garchx_forecast(
     *,
     horizon: int = 1,
 ) -> float:
-    """Reserve GARCH-X until a no-look-ahead two-step design is implemented.
-
-    The proposed regression would require historical-origin GARCH forecasts
-    paired with lagged VIX and purged multi-step targets. A single fitted
-    conditional-variance path would leak future fitted parameters into those
-    historical regressors, so this extension is intentionally not estimated.
-    """
-    _validated_returns(returns)
-    _validated_horizon(horizon)
+    """Fit zero-mean GARCH-X with lagged VIX, holding VIX fixed in forecasts."""
+    values = _validated_returns(returns)
+    horizon = _validated_horizon(horizon)
     if not isinstance(predictors, pd.DataFrame) or "vix_close" not in predictors:
         raise ValueError("predictors must include a 'vix_close' column.")
-    raise NotImplementedError(
-        "GARCH-X is skipped: a leakage-safe two-step historical-origin "
-        "regression design is not implemented."
+    if isinstance(returns, pd.Series) and not returns.index.equals(predictors.index):
+        raise ValueError("GARCH-X returns and predictors must have matching indexes.")
+    vix = np.asarray(predictors["vix_close"], dtype=float)
+    if len(values) < 100 or len(vix) != len(values):
+        raise ValueError("GARCH-X requires at least 100 aligned returns and VIX values.")
+    if not np.isfinite(vix).all() or np.any(vix <= 0):
+        raise ValueError("GARCH-X requires finite positive VIX values.")
+    scale = float(np.sqrt(np.mean(np.square(values))))
+    if not np.isfinite(scale) or scale <= 0:
+        raise ValueError("GARCH-X requires a finite nonzero return scale.")
+    squared = np.square(values / scale)
+    vix_scaled = vix / float(vix.mean())
+
+    def path(parameters: np.ndarray) -> np.ndarray:
+        omega, alpha, beta, delta = parameters
+        inputs = omega + alpha * squared[:-1] + delta * vix_scaled[:-1]
+        later, _ = lfilter([1.0], [1.0, -beta], inputs, zi=[beta])
+        return np.concatenate(([1.0], later))
+
+    def objective(parameters: np.ndarray) -> float:
+        variance = path(parameters)[1:]
+        if not np.isfinite(variance).all() or np.any(variance <= 0):
+            return np.finfo(float).max
+        return float(0.5 * np.sum(np.log(variance) + squared[1:] / variance))
+
+    constraint = {"type": "ineq", "fun": lambda x: 0.999 - x[1] - x[2]}
+    fits = [
+        minimize(
+            objective, start, method="SLSQP",
+            bounds=[(1e-8, 100), (0, 0.999), (0, 0.999), (0, 100)],
+            constraints=[constraint], options={"maxiter": 1000, "ftol": 1e-10},
+        )
+        for start in ([0.04, 0.05, 0.85, 0.05], [0.1, 0.05, 0.8, 0.05])
+    ]
+    valid = [
+        fit for fit in fits if fit.success and np.isfinite(fit.fun)
+        and np.isfinite(fit.x).all() and fit.x[0] >= 1e-8 * (1 - 1e-6)
+        and fit.x[0] <= 100 * (1 + 1e-6)
+        and np.all(fit.x[1:] >= -1e-8)
+        and fit.x[1] + fit.x[2] <= 0.999 + 1e-8
+        and fit.x[3] <= 100 * (1 + 1e-6)
+    ]
+    if not valid:
+        raise RuntimeError(
+            "GARCH-X parameter estimation failed or violated constraints: "
+            + "; ".join(str(fit.message) for fit in fits)
+        )
+    fit = min(valid, key=lambda result: result.fun)
+    omega, alpha, beta, delta = fit.x
+    next_variance = (
+        omega + alpha * squared[-1] + beta * path(fit.x)[-1]
+        + delta * vix_scaled[-1]
     )
+    total = float(next_variance)
+    for _ in range(1, horizon):
+        next_variance = omega + (alpha + beta) * next_variance + delta * vix_scaled[-1]
+        total += float(next_variance)
+    forecast = total * scale**2
+    if not np.isfinite(forecast) or forecast <= 0:
+        raise RuntimeError("GARCH-X produced an invalid variance forecast.")
+    return forecast
 
 
 def ewma_estimated_forecast(

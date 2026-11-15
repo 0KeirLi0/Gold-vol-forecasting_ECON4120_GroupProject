@@ -32,7 +32,7 @@ This draft brings together three related, but non-identical, pieces of evidence:
    penalized, and BIC-selected VAR forecasts, attempted on the same 445
    weekly origins, plus a fixed-order HK auto-ARIMA benchmark.
 
-In the aligned Stage 1/Stage 3 comparison, the scaled GARCH(1,1) fit
+In the earlier 20-model aligned Stage 1/Stage 3 comparison, the scaled GARCH(1,1) fit
 succeeded at all 445 forecast dates and had the lowest point-estimate MSE
 and RMSE. HAR had the lowest MAE. All 20 models are compared on the same
 445 origins.
@@ -46,7 +46,10 @@ The HK-selected ARIMA(3,1,1) uses one order throughout, estimated using
 only the first origin's history and refit at each origin; its RMSE is
 0.001037 and it did not significantly beat historical variance.
 
-These are exploratory results, not a final model choice. Samples, forecast
+The subsequent integrated 25-model comparison supports a provisional final
+recommendation of GARCH-X with lagged VIX when MSE is the primary criterion;
+see the Stage 3 section for its assumptions, competing loss results, and
+statistical limitations. Samples, forecast
 origin spacing, and in some cases input panels differ; comparisons across
 those sections are descriptive rather than head-to-head rankings.
 
@@ -59,6 +62,7 @@ those sections are descriptive rather than head-to-head rankings.
 | Stage 2 holdout | Yahoo/FRED panel; 596 origins from 2024-06-24 to 2026-11-03 | Does the all-predictor gradient-boosting forecast beat simple benchmarks on this holdout? |
 | LSEG screen | Separate `GCc1` panel; 3,241 training and 812 holdout rows | Exploratory conditional associations in the available alternative panel |
 | Stage 3 common-origin comparison | Yahoo/FRED panel; seven Stage 1 baselines, fixed-order HK auto-ARIMA, 11 reused advanced forecasts, and one BIC-selected VAR; all 445 weekly origins | How do baselines and advanced forecasts compare on identical origins? |
+| Stage 3 integrated comparison | 25 candidates, including the requested volatility extensions; 443 common successful origins | Which working model is preferred under MSE, and how sensitive is that choice to other losses? |
 
 The target is five-session-ahead realized variance, calculated as the sum of
 squared daily log returns over the next five observed price sessions. It is
@@ -92,6 +96,42 @@ fits passed these checks. The optimizer emitted bounds-clipping warnings during
 intermediate steps. As a sensitivity check, eight selected origins fitted from
 a second starting point had negative log-likelihoods matching within 1e-8;
 this does not establish a global optimum for every origin.
+
+## Exploratory quantile GARCH
+
+As a separate, user-directed candidate, let $r_t$ be the daily log return of
+Yahoo `GC=F`, $h_t$ its conditional variance, and $q$ the empirical 95th
+percentile of $|r|$ in the history available at the forecast origin:
+
+$$
+r_t = \sqrt{h_t}z_t,\quad z_t \sim N(0,1),\qquad
+h_t = \omega + \alpha r_{t-1}^{2} + \beta h_{t-1}
+      + \gamma r_{t-1}^{2}\mathbf{1}(|r_{t-1}|>q).
+$$
+
+This is a symmetric extreme-*magnitude* specification: the response to a
+large positive or negative return is $\alpha+\gamma$ rather than $\alpha$.
+It is one interpretation of the proposed quantile term, not quantile
+regression. We constrain $\omega>0$, $\alpha,\beta,\gamma\ge0$, and
+$\alpha+\beta+\gamma\le0.999$; the last is a conservative sufficient
+persistence bound. The threshold is estimated once from the entire available
+training history at each forecast origin, not point-in-time within that
+history. The first forecast uses the observed final shock; later steps use
+Gaussian simulation with the threshold fixed, and their variances are summed.
+
+For the 2026-11-03 origin, the 2,976 available returns gave $q=0.0215304$
+(149 observations above it), $\omega=1.1004\times10^{-6}$,
+$\alpha=0.04125$, $\beta=0.94913$, and $\gamma\approx0$ at the constraint boundary.
+The five-session simulated forecast was 0.00082648 (20,000 paths, seed 42).
+This fitted case does **not** show an extra tail effect; a coefficient's
+statistical significance cannot be guaranteed or inferred from its size.
+No standard error or significance test is reported: the boundary constraint
+and estimated threshold require appropriate inference. The fit emitted
+intermediate optimizer bounds-clipping warnings, and two starting points do
+not prove a global optimum. The later integrated comparison attempts
+refits at all 445 requested origins. See
+[`REPRODUCE.md`](../REPRODUCE.md) for the rerun procedure; the script prints
+the input hash.
 
 ```{python}
 import pandas as pd
@@ -287,7 +327,69 @@ fig.tight_layout()
 plt.show()
 ```
 
-# Stage 3: advanced model performance
+# Stage 3: integrated comparison and recommendation
+
+The Stage 3 notebook now refits fixed-order HK auto-ARIMA, BIC-selected VAR,
+GJR-GARCH, asymmetric EGARCH, Student-t GARCH, GARCH-X and quantile GARCH at
+each of the 445 weekly origins, alongside 18 cached candidate forecasts.
+Quantile GARCH failed at the first two origins; all other newly refitted models
+produced positive forecasts at all 445. The common comparison therefore uses
+443 origins for each of 25 models. Fit failures and their messages remain in
+the attempts file; restricting to successful common origins may bias results.
+
+The GARCH-X candidate is a zero-mean Gaussian variance model:
+
+$$
+h_t=\omega+\alpha r_{t-1}^2+\beta h_{t-1}
+    +\delta\frac{\mathrm{VIX}_{t-1}}{\overline{\mathrm{VIX}}_{\leq o}},
+\qquad r_t=\sqrt{h_t}z_t,\quad z_t\sim N(0,1).
+$$
+
+At origin $o$, the positive VIX series is normalized by its mean through $o$;
+parameters and scaling are fitted only through $o$. Coefficients are
+nonnegative and $\alpha+\beta\le0.999$. Future VIX is **held at its
+origin value** for all forecast steps rather than assumed known. This is a
+direct variance-equation GARCH-X, not the previously proposed two-step
+regression. GJR, EGARCH, and Student-t GARCH use a constant return mean;
+the EGARCH forecast uses 1,000 Gaussian paths and quantile GARCH uses 20,000
+paths, both with seed 42. HK selects its order at the first origin and
+refits coefficients thereafter.
+
+```{python}
+integrated = pd.read_csv("../data/processed/stage3_integrated_summary.csv")
+display(integrated[[
+    "model", "n", "MSE", "RMSE", "MAE", "QLIKE",
+    "DM_MSE_p_holm", "DM_QLIKE_p_holm", "MZ_wald_p",
+]].style.format({
+    "MSE": "{:.6g}", "RMSE": "{:.6g}", "MAE": "{:.6g}",
+    "QLIKE": "{:.4f}", "DM_MSE_p_holm": "{:.4g}",
+    "DM_QLIKE_p_holm": "{:.4g}", "MZ_wald_p": "{:.4g}",
+}).hide(axis="index"))
+```
+
+## Final recommendation for this iteration
+
+**Recommend GARCH-X with lagged VIX** as the working five-session
+realized-variance model, with expanding historical variance retained as a
+benchmark. This recommendation prioritizes MSE, consistent with the earlier
+comparison, while acknowledging that the criterion is a choice rather than a
+team-approved requirement. On the 443 common origins GARCH-X has the lowest
+MSE, $9.492\times10^{-7}$ (RMSE 0.000974), and MAE 0.000420.
+Its MSE is 16.1% below historical variance. Asymmetric EGARCH instead has
+the lowest MAE (0.000413) and QLIKE (0.4432 versus GARCH-X's 0.4552), so
+the recommendation would differ under those criteria.
+
+GARCH-X does not significantly beat historical variance after Holm correction
+(DM $p=0.905$ for MSE and $p=0.866$ for QLIKE); an unadjusted pairwise MSE
+test against GARCH(1,1) has $p=0.487$. Its Mincer-Zarnowitz joint test gives
+$p=0.148$, which is not proof of calibration. These are exploratory,
+post-comparison results, not evidence that the recommendation is definitively
+superior. The constant-future-VIX assumption, overlapping targets, source
+timing, optimizer warnings, simulation error and two missing quantile-GARCH
+fits remain material limitations. Samuel should review this recommendation
+and test robustness on a later holdout before treating it as a team decision.
+
+## Earlier 20-model comparison
 
 The seven original Stage 1 baselines and fixed-order HK auto-ARIMA were refit
 at the exact Stage 3 origin dates;
@@ -538,10 +640,8 @@ all charts with `python scripts/plot_stage3_all_model_forecasts.py`.
 
 ## Scope and limitations
 
-- The cached Stage 3 notebook excluded auto-ARIMA, GJR-GARCH, asymmetric EGARCH,
-  Student-t GARCH, and GARCH-X fits to meet the requested short runtime.
-  Their exclusion is not evidence that they perform poorly. VAR and fixed-order
-  HK auto-ARIMA were added in separate origin-wise runs.
+- The integrated Stage 3 comparison refits the extended candidates together;
+  18 other model forecasts are cached and two quantile-GARCH origins failed.
 - The GARCH optimizer issued bounds-clipping warnings during intermediate
   steps. Final fits passed convergence and parameter-constraint checks, but
   these checks do not prove global optimality.
@@ -553,7 +653,8 @@ all charts with `python scripts/plot_stage3_all_model_forecasts.py`.
   and their availability assumptions need verification.
 - The predictor screen tests conditional association; it does not, by itself,
   establish incremental out-of-sample forecasting value.
-- No final model-selection criterion or team recommendation is asserted.
+- The MSE-based recommendation is provisional pending team review; MAE and
+  QLIKE favor asymmetric EGARCH and the adjusted tests do not establish superiority.
 
 # Evidence sources
 
@@ -569,7 +670,10 @@ This report uses the local prepared files and documented analyses:
   `data/processed/stage2_multivariate.csv`, and its manifest.
 - Stage 2 LSEG screen: the exploratory findings recorded in
   `.ai/SESSION_LOG.md`; treat these as a separate, qualified evidence source.
-- Stage 3: `data/processed/evaluation_summary_with_stage1_common_origins.csv`,
+- Stage 3 integrated: `notebooks/06_final_evaluation.ipynb`,
+  `data/processed/stage3_integrated_summary.csv`,
+  `data/processed/stage3_integrated_attempts.csv` and its manifest.
+  Earlier 20-model evidence: `data/processed/evaluation_summary_with_stage1_common_origins.csv`,
   `data/processed/predictor_set_comparison.csv`,
   `data/processed/stage3_var_forecasts.csv`,
   `data/processed/stage3_var_manifest.json`, `data/processed/stage3_auto_arima_forecasts.csv`,

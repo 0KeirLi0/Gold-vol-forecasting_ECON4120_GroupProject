@@ -1,0 +1,58 @@
+{
+  "panel_sha256": "a2f957950e4df6d445271b720ac758a4eb777d998e4e37e0f1195229c515afcd",
+  "cached_forecasts_sha256": "d3cc22bc2dfb29c6bfc0e2274738b221172cf2c116e5feea5ec2ef3c2a570f4a",
+  "origin_count": 445,
+  "common_origin_count": 443,
+  "origin_start": "2018-01-05",
+  "origin_end": "2026-11-03",
+  "refitted_models": [
+    "auto_arima_hk",
+    "var",
+    "gjr_garch",
+    "egarch_asym",
+    "garch_t",
+    "garchx_vix",
+    "quantile_garch"
+  ],
+  "cached_models": [
+    "ar1_squared_return",
+    "arch1",
+    "ewma",
+    "ewma_fixed",
+    "garch11",
+    "har",
+    "harx_dxy_vix",
+    "harx_full",
+    "harx_vix",
+    "historical_variance",
+    "lasso_dxy_vix",
+    "lasso_full",
+    "lasso_vix",
+    "ma1_squared_return",
+    "ridge_dxy_vix",
+    "ridge_full",
+    "ridge_vix",
+    "rolling_variance"
+  ],
+  "fixed_arima_order": [
+    3,
+    1,
+    1
+  ],
+  "arima_selection_origin": "2018-01-05",
+  "failure_counts": {
+    "auto_arima_hk": 0,
+    "egarch_asym": 0,
+    "garch_t": 0,
+    "garchx_vix": 0,
+    "gjr_garch": 0,
+    "quantile_garch": 2,
+    "var": 0
+  },
+  "horizon": 5,
+  "egarch_simulations": 1000,
+  "quantile": 0.95,
+  "quantile_simulations": 20000,
+  "simulation_seed": 42,
+  "garchx_future_vix": "held at the last observed value"
+}
