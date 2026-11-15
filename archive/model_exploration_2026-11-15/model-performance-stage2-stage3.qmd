@@ -130,7 +130,7 @@ and estimated threshold require appropriate inference. The fit emitted
 intermediate optimizer bounds-clipping warnings, and two starting points do
 not prove a global optimum. The later integrated comparison attempts
 refits at all 445 requested origins. See
-[`REPRODUCE.md`](../REPRODUCE.md) for the rerun procedure; the script prints
+[`REPRODUCE.md`](../../REPRODUCE.md) for the rerun procedure; the script prints
 the input hash.
 
 ```{python}
@@ -138,7 +138,7 @@ import pandas as pd
 from IPython.display import display
 
 stage1_metrics = pd.read_csv(
-    "../data/processed/stage1_on_stage3_origins_metrics.csv"
+    "../../data/processed/stage1_on_stage3_origins_metrics.csv"
 )
 stage1_display = stage1_metrics[
     ["model", "n", "MAE", "RMSE", "QLIKE", "DM_MSE_p_holm", "DM_QLIKE_p_holm"]
@@ -356,7 +356,7 @@ paths, both with seed 42. HK selects its order at the first origin and
 refits coefficients thereafter.
 
 ```{python}
-integrated = pd.read_csv("../data/processed/stage3_integrated_summary.csv")
+integrated = pd.read_csv("../../data/processed/stage3_integrated_summary.csv")
 display(integrated[[
     "model", "n", "MSE", "RMSE", "MAE", "QLIKE",
     "DM_MSE_p_holm", "DM_QLIKE_p_holm", "MZ_wald_p",
@@ -412,7 +412,7 @@ import pandas as pd
 from IPython.display import display
 
 stage3_summary = pd.read_csv(
-    "../data/processed/evaluation_summary_with_stage1_common_origins.csv"
+    "../../data/processed/evaluation_summary_with_stage1_common_origins.csv"
 )
 stage3_display = stage3_summary[
     [

@@ -1,3 +1,19 @@
+# Group 2 report and presentation
+
+The active report focuses on GARCH-X with lagged VIX and seven basic
+benchmarks. It uses the saved integrated Stage 3 comparison; the historical
+full-model report is preserved under `archive/model_exploration_2026-11-15/`.
+Regenerate the focused forecast figure and render both formats from the same
+Quarto source:
+
+```bash
+python scripts/plot_group2_core_models.py
+quarto render report_group2/Group2_Report.qmd --to pdf
+(cd report_group2 && quarto render Group2_Report.qmd --to beamer --output Group2_Slides.pdf)
+```
+
+The figure uses saved common-origin forecasts and does not refit models.
+
 # Reproducing the integrated Stage 3 evaluation
 
 Run the evaluation from the repository root. It refits seven candidates on all
@@ -34,7 +50,7 @@ python scripts/evaluate_stage1_on_stage3_origins.py
 python scripts/evaluate_stage3_var.py
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python scripts/evaluate_stage3_auto_arima.py --workers 4
 python scripts/plot_stage3_all_model_forecasts.py
-quarto render reports/model-performance-stage2-stage3.qmd --to pdf
+quarto render archive/model_exploration_2026-11-15/model-performance-stage2-stage3.qmd --to pdf
 ```
 
 The HK run selects one nonseasonal order on squared returns available at the
@@ -60,7 +76,7 @@ refreshes the saved comparisons and baseline GARCH figure.
 ```bash
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python scripts/refit_stage3_garch.py
 python scripts/plot_stage3_all_model_forecasts.py
-quarto render reports/model-performance-stage2-stage3.qmd --to pdf
+quarto render archive/model_exploration_2026-11-15/model-performance-stage2-stage3.qmd --to pdf
 ```
 
 The fit scales returns by their root mean square at each origin and rescales

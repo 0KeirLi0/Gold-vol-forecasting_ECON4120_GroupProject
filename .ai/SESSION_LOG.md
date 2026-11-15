@@ -2,6 +2,43 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-15 — Focused the Group 2 deliverable on GARCH-X
+- Author: User-directed implementation by Copilot
+- Type: handoff
+- Context: The user asked to reduce the report to GARCH-X and basic comparisons, archive other explorations, clarify project pointers for people and AI, and commit the finished work.
+- Outcome: The active report and same-source Beamer deck now focus on lagged-VIX GARCH-X plus seven basic benchmarks. On the integrated 443-origin Yahoo/FRED sample, GARCH-X has the lowest MSE in the 25-model comparison but does not significantly beat expanding historical variance after Holm correction. This is a user-directed working focus, not a confirmed team-wide decision. The broad report and previous Group 2 outputs are preserved under `archive/model_exploration_2026-11-15/`; implementation code and local evaluation inputs remain in place.
+- Artifacts: `report_group2/Group2_Report.qmd`, `report_group2/Group2_Report.pdf`, `report_group2/Group2_Slides.pdf`, `report_group2/figures/core_forecasts.png`, `scripts/plot_group2_core_models.py`, `README.md`, `llms.txt`, `REPRODUCE.md`, `presentations/project-progress.qmd`, `archive/model_exploration_2026-11-15/`.
+- Next: Group members to confirm the required agreed contribution statement; review GARCH-X's constant-future-VIX assumption and evaluate on a later holdout before treating the model choice as a team decision.
+
+## 2026-11-15 — Added a Beamer deck to the Group 2 report source
+- Author: User-directed implementation by Copilot
+- Type: implementation
+- Context: The user asked for a modern Beamer presentation generated from the same source file as the report.
+- Outcome: Added format-specific content to `Group2_Report.qmd`, using a Metropolis 16:9 theme for a 10-slide presentation while retaining the 11-page A4 report output. Rendered and visually checked both PDFs; report and slide content remain separated by output format.
+- Artifacts: `report_group2/Group2_Report.qmd`, `report_group2/Group2_Report.pdf`, `report_group2/Group2_Slides.pdf`
+
+## 2026-11-15 — Added a predictor inventory to the Group 2 report
+- Author: User-directed report update by Copilot
+- Type: implementation
+- Context: The user asked for a table listing all predictors used in the report.
+- Outcome: Added a consolidated inventory of historical gold inputs and external predictor candidates, distinguishing the Yahoo/FRED integrated comparison from the separate, partial LSEG exploratory screen. Documented unavailable LSEG fields and emphasized that not every candidate enters every model.
+- Artifacts: `report_group2/Group2_Report.qmd`, `report_group2/Group2_Report.pdf`
+
+## 2026-11-15 — Made the recommended GARCH-X forecast equation explicit
+- Author: User-directed report update by Copilot
+- Type: implementation
+- Context: The user asked for the selected model to be written explicitly, in a form comparable to a regression equation.
+- Outcome: Expanded the report's GARCH-X section to define the return and variance process, normalized lagged-VIX regressor, parameter constraints, constant-future-VIX assumption, and five-session realized-variance forecast. Clarified that GARCH-X is a conditional-variance model rather than an ordinary linear regression.
+- Artifacts: `report_group2/Group2_Report.qmd`, `report_group2/Group2_Report.pdf`
+
+## 2026-11-15 — Updated Group 2 report with integrated volatility-model comparison
+- Author: User-directed report update by Copilot
+- Type: handoff
+- Context: The user asked to review the latest integrated Stage 3 commit, add quantile GARCH and GARCH-X with lagged VIX to the Group 2 report, and identify the best model.
+- Outcome: Updated the Group 2 report with the GARCH-X and quantile-GARCH specifications, a 443-common-origin metric comparison, and the criterion-dependent conclusion. GARCH-X has the lowest MSE; asymmetric EGARCH has the lowest MAE and QLIKE. Holm-adjusted tests do not establish that GARCH-X beats expanding historical variance. Clarified that the integrated ranking uses Yahoo/FRED data and is distinct from the exploratory Refinitiv/LSEG screen.
+- Artifacts: `report_group2/Group2_Report.qmd`, `report_group2/Group2_Report.pdf`
+- Next: Team to agree on the primary forecast loss and review GARCH-X's constant-future-VIX assumption before treating the MSE-based recommendation as final.
+
 ## 2026-11-15 — Integrated Stage 3 model comparison and recommendation
 - Author: User-directed implementation by Copilot
 - Type: finding

@@ -370,11 +370,13 @@ The first modeling stage uses traditional univariate time-series methods on one
 gold-derived series: return-only candidate forecasts, sequential rolling-origin
 comparisons with MAE/RMSE, exploratory diagnostics, configurable in-sample
 candidate comparisons, and a nonseasonal Hyndman-Khandakar ARIMA selector.
-The current provisional recommendation is GARCH-X with lagged VIX, pending team
-review as described below. The automatic ARIMA selector
-is included in an exploratory 20-origin rolling comparison. The integrated Stage 3
-evaluation selects one HK order using data at its first origin and
-refits that fixed order at each subsequent origin.
+The current user-directed working model is GARCH-X with lagged VIX. It has the
+lowest MSE in the integrated 25-model comparison, but does not significantly
+beat expanding historical variance after Holm correction; this is not a
+confirmed team-wide model decision. The concise Group 2 report focuses on this
+model and seven basic benchmarks. The prior broad report and presentation are
+preserved in [`archive/model_exploration_2026-11-15/`](archive/model_exploration_2026-11-15/).
+The automatic ARIMA selector remains available for exploratory comparisons.
 For Stage 2, Keir selected daily DXY,
 nominal 10-year Treasury yield, S&P 500 returns, VIX, 10-year breakeven
 inflation, WTI spot, and optional gold-futures volume. The pipeline is
@@ -407,15 +409,18 @@ provisional recommendation is **GARCH-X with lagged VIX**, using MSE as the
 primary criterion: MSE is 9.492e-7 (RMSE 0.000974), lowest in that sample.
 Asymmetric EGARCH has the lowest MAE and QLIKE; no candidate significantly
 beats historical variance after Holm adjustment. GARCH-X holds VIX fixed at
-its origin value during the forecast horizon. This is an exploratory
-recommendation, not a confirmed team decision; optimizer warnings, failed
-fits, source timing and overlapping targets limit the evidence. See the
-[Stage 2–3 report](reports/model-performance-stage2-stage3.qmd) for the
-equations, full comparison and limitations, and [`REPRODUCE.md`](REPRODUCE.md)
-for the integrated workflow.
+its origin value during the forecast horizon. This is an exploratory working
+choice, not a confirmed team-wide decision; optimizer warnings, failed fits,
+source timing and overlapping targets limit the evidence. See the
+[focused Group 2 report](report_group2/Group2_Report.qmd) for its equation and
+shortlist. The broad 25-model comparison is preserved in the
+[exploration archive](archive/model_exploration_2026-11-15/). See
+[`REPRODUCE.md`](REPRODUCE.md) for report rendering and evaluation reproduction.
 
 For AI-agent collaboration guidance, see [`AGENTS.md`](AGENTS.md) and [`.github/copilot-instructions.md`](.github/copilot-instructions.md). Shared AI/team decisions and handoffs are recorded in [`.ai/SESSION_LOG.md`](.ai/SESSION_LOG.md), using the protocol in [`.ai/README.md`](.ai/README.md). The project uses a main-only Git workflow described in [`GIT_WORKFLOW.md`](GIT_WORKFLOW.md). For a compact project context and pointers, see [`llms.txt`](llms.txt).
 
 The presentation-ready progress tracker is [`presentations/project-progress.qmd`](presentations/project-progress.qmd). It summarizes stage status and reads Git submission history when rendered. The model-development report is available as a [Beamer PDF](presentations/iteration-1-summary.pdf), with its [Quarto source](presentations/iteration-1-summary.qmd). Fetch the latest `main` with `git fetch origin main` before rendering updated presentations.
 
-The draft [Stage 2 and Stage 3 model-performance report](reports/model-performance-stage2-stage3.qmd) summarizes baseline errors, predictor screens, and advanced-model comparisons with tables and figures; its rendered PDF is available alongside the source.
+The [Group 2 report and Beamer source](report_group2/Group2_Report.qmd)
+renders the concise report and presentation from one file. Regenerate its
+forecast figure with `python scripts/plot_group2_core_models.py`.

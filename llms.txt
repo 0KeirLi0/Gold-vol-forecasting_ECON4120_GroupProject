@@ -16,6 +16,8 @@ Responsibilities are areas of focus; coordinate cross-stage changes and handoffs
 
 Early iterations may explore course methods such as AR, MA, ARMA, ARCH, GARCH, or EGARCH. Later extensions may include quantile regression or shock analysis. These are illustrative examples, not a prescribed or exhaustive method list; choose methods based on project questions and findings.
 
+The current user-directed working model is GARCH-X with lagged VIX. It has the lowest MSE in the integrated 25-model comparison, but does not significantly beat expanding historical variance after Holm correction; this is not a confirmed team-wide decision. The concise Group 2 report compares GARCH-X with seven basic models. The broader report and presentation are archived under `archive/model_exploration_2026-11-15/`.
+
 The current default is Yahoo Finance `GC=F`, a COMEX gold futures continuous series, downloaded through yfinance; the CLI and notebook also accept local CSV input. This is not spot or one fixed expiry. Record provider, instrument, currency, units, and observation dates; never mix futures and spot in one series. The pipeline computes close-to-close log returns and a forward five-observed-session target by default: realized variance (sum of squared daily log returns), with realized volatility (its square root) also selectable. Horizon and target are configurable. Do not commit restricted data. Downloaded data under `data/` are git-ignored.
 
 Model development should hand off model specifications and inputs to analysis; analysis should report evidence, limitations, and a recommended next step to the team. Do not invent results or unapproved project decisions. Capture reproducibility details, evaluation evidence, model-selection criteria, and limitations as they become known.
@@ -34,8 +36,10 @@ Model development should hand off model specifications and inputs to analysis; a
 - [Data pipeline](src/gold_vol_pipeline/pipeline.py): Yahoo futures API download, CSV input, and no-look-ahead target construction.
 - [Pipeline tests](tests/test_pipeline.py): `python -m pytest`; see README for a single-test command.
 - [Interactive data review notebook](notebooks/01_inspect_gold_data.ipynb): inspect prices, review target alignment, visualize series, and save a run manifest.
-- [Return-only forecast baselines](src/gold_vol_pipeline/models.py): historical variance, rolling variance, EWMA, AR/MA squared returns, ARCH, and GARCH forecasts. These are candidates, not evaluated or selected models.
-- [Volatility extensions](src/gold_vol_pipeline/models.py): asymmetric GJR-GARCH and EGARCH, Student-t GARCH, and QLIKE-selected EWMA forecasts; GARCH-X is explicitly skipped pending a leakage-safe two-step design.
+- [Focused Group 2 report and Beamer source](report_group2/Group2_Report.qmd): GARCH-X specification, seven basic benchmarks, evaluation, limitations, and presentation.
+- [Return-only baselines and GARCH-X](src/gold_vol_pipeline/models.py): historical variance, rolling variance, EWMA, AR/MA squared returns, ARCH, GARCH, and lagged-VIX GARCH-X forecasts.
+- [Other volatility extensions](src/gold_vol_pipeline/models.py): asymmetric GJR-GARCH and EGARCH, Student-t GARCH, and quantile GARCH; see the exploration archive for their broader comparison.
+- [Archived broad model report and outputs](archive/model_exploration_2026-11-15/README.md): earlier model exploration retained for reference, not the concise active report.
 - [Regression and VAR forecasts](src/gold_vol_pipeline/regression_models.py): HAR/HARX, standardized lasso/ridge with purged time-series cross-validation, and optional small VAR.
 - [Rolling-origin evaluation](src/gold_vol_pipeline/evaluation.py): MSE, MAE, QLIKE, Diebold-Mariano and Mincer-Zarnowitz inference, forecast combinations, common-origin evaluation, and summary tables.
 - [Final evaluation notebook](notebooks/06_final_evaluation.ipynb): full-sample forecast comparison, diagnostics, and report-ready plots; run after preparing the Stage 2 panel.
