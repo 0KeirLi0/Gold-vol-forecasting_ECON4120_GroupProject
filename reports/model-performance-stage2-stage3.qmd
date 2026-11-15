@@ -21,6 +21,13 @@ execute:
 
 # Executive summary
 
+> **Historical comparison:** This report evaluates Yahoo `GC=F` using a
+> five-session forward realized-variance target. The current model-development
+> workflow instead uses LSEG `GCc1.csv`, 2-observation Yang-Zhang daily
+> volatility, and a chronological 80/20 holdout. The two sets of metrics are
+> not directly comparable; reproduce the current comparison with
+> [`REPRODUCE.md`](../REPRODUCE.md).
+
 This draft brings together three related, but non-identical, pieces of evidence:
 
 1. A Stage 1 rolling-origin comparison of seven univariate variance baselines

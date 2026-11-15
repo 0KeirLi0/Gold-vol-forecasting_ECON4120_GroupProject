@@ -51,6 +51,86 @@ The pipeline computes close-to-close log returns and a forward target over the n
 
 Raw and prepared downloads are written under `data/` and excluded from Git. Preserve them for each analysis run and record their provenance, observation date range, and pipeline options. The prepared CSV includes the forecast-origin date, close, log return, target-window dates, target value, and provider/instrument metadata. Do not mix futures and spot observations. Do not share Bloomberg or other restricted exports unless the applicable license permits it.
 
+### Current daily-volatility model comparison
+
+The current model-development comparison uses only LSEG Workspace
+`data/refinitiv/GCc1.csv`, a generic COMEX gold futures series that is distinct
+from Yahoo `GC=F`. It constructs unannualized daily volatility as the square
+root of the 2-observation Yang-Zhang variance estimator from overnight
+returns $r_o=\log(O_t/C_{t-1})$, open-to-close returns
+$r_c=\log(C_t/O_t)$, and Rogers-Satchell terms
+$RS_t=\log(H_t/O_t)\log(H_t/C_t)+\log(L_t/O_t)\log(L_t/C_t)$:
+
+$$
+\widehat{\sigma}_{YZ,t}^2 =
+s_o^2 + k s_c^2 + (1-k)\overline{RS},\qquad
+k=\frac{0.34}{1.34+(n+1)/(n-1)},\quad n=2.
+$$
+
+The target is $\widehat{\sigma}_{YZ,t}=\sqrt{\widehat{\sigma}_{YZ,t}^2}$;
+`s_o^2` and `s_c^2` are sample variances. It is not annualized. Rows with
+incomplete OHLC are not imputed; estimator windows containing incomplete
+observations have no target and are excluded from model fitting and scoring.
+The 2-observation target windows overlap, so the resulting loss series is
+dependent; reported MAE/RMSE rankings are descriptive and no significance
+tests are run.
+
+Run the end-to-end workflow from the repository root:
+
+```bash
+PYTHONPATH=src python scripts/evaluate_yang_zhang_volatility.py
+```
+
+The prepared target is saved to
+`data/processed/GCc1_yang_zhang_volatility.csv`. Forecasts, the out-of-sample
+summary, and a provenance manifest are saved as `stage4_yz_forecasts.csv`,
+`stage4_yz_summary.csv`, and `stage4_yz_manifest.json` in the same directory.
+The evaluation uses a chronological 80/20 split of available target
+observations and sequential one-step forecasts over valid target dates: at
+each test origin, models are refit on the original training period and actual
+target observations available before that origin. Because incomplete OHLC
+windows have no label, one step means the next valid target observation, not
+necessarily the next market calendar session. The Yang-Zhang persistence
+forecast uses the latest available target. The script uses four workers by
+default; adjust with `--workers N`. Candidate families include expanding-mean and EWMA
+baselines; AR, MA, ARMA, and fixed-order HK auto-ARIMA; ARCH/GARCH,
+GJR-GARCH, EGARCH, Student-t GARCH, GARCH-X, and threshold-GARCH; HAR/HARX;
+Ridge, Lasso, HistGradientBoosting; and VAR. The dedicated rolling-variance
+baseline is omitted. Results rank MAE and RMSE on shared successful test
+dates; failures remain in the forecast file with error messages. These are
+exploratory user-selected specifications, not a team-approved model decision.
+
+The completed two-observation run evaluated all 20 candidates on the same
+761 test dates with zero recorded fit failures. HistGradientBoosting had the
+lowest MAE (0.00241765) and RMSE (0.00476724). Optimizer and convergence
+warnings were emitted during fitting, so the ranking is descriptive evidence,
+not a validated model recommendation; no significance tests were run.
+This is the original no-VIX run. A separate VIX-augmented rerun is complete:
+VIX is added to HARX, Ridge, Lasso, gradient boosting, range GARCH-X, and VAR
+using the latest observation available by the forecast origin under the
+next-weekday proxy. The earlier predictor significance finding concerned a
+different five-session variance target and does not establish significance
+for this Yang-Zhang target; that screen's training interval also overlaps
+the start of this holdout. In the VIX-augmented run, all 20 models had 761
+common successful dates and no recorded failures; gradient boosting had the
+lowest MAE (0.00242640) and RMSE (0.00478093). These are descriptive
+comparisons, not significance tests or a team recommendation. See
+[`REPRODUCE.md`](REPRODUCE.md) for the command.
+
+The existing Yahoo/CSV forward-realized-variance pipeline, notebooks, and
+Stage 1–3 outputs are retained as historical analyses; they are not the target
+or holdout used by this current comparison. Do not compare their metrics
+directly with the Yang-Zhang holdout.
+
+The standalone analysis report gives the target and all candidate-model
+formulas, the full MAE/RMSE table, and forecast graphs with the chronological
+test period shaded. See
+[`reports/yang-zhang-volatility.qmd`](reports/yang-zhang-volatility.qmd) and
+its rendered
+[`PDF`](reports/yang-zhang-volatility.pdf). Regenerate figures with
+`python scripts/plot_yang_zhang_report.py --processed-dir data/processed/stage4_yz_vix --output-dir reports/figures/stage4_yz_vix`,
+then render with `quarto render reports/yang-zhang-volatility.qmd`.
+
 ### Stage 2 daily predictor panel
 
 Keir selected the following daily candidates from Enoch's requirements:

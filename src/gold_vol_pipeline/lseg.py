@@ -120,6 +120,41 @@ def _make_predictor_series(
     return series, series.attrs["source"]
 
 
+def align_lseg_vix(data: pd.DataFrame, path: str | Path) -> pd.DataFrame:
+    """Attach the latest VIX close available by each date under the weekday proxy."""
+    path = Path(path)
+    series, _ = _make_predictor_series(
+        path.parent, path.name, "vix_close", "TRDPRC_1", "CBOE Volatility Index"
+    )
+    if series is None:
+        raise FileNotFoundError(f"LSEG VIX export CSV not found: {path}")
+    if "date" not in data:
+        raise ValueError("Target data must include date.")
+    if "vix_close" in data or "vix_close_observation_date" in data:
+        raise ValueError("Target data already contains VIX columns.")
+    series = series.rename(columns={"date": "vix_available_date"})
+    if series["vix_available_date"].duplicated().any():
+        raise ValueError("VIX availability dates must be unique.")
+    result = data.copy()
+    result["date"] = pd.to_datetime(result["date"], errors="raise")
+    if result["date"].isna().any() or result["date"].duplicated().any():
+        raise ValueError("Target dates must be nonmissing and unique.")
+    result = pd.merge_asof(
+        result.sort_values("date"),
+        series.sort_values("vix_available_date"),
+        left_on="date",
+        right_on="vix_available_date",
+        direction="backward",
+    )
+    if "daily_volatility" in result:
+        missing = result["daily_volatility"].notna() & result["vix_close"].isna()
+        if missing.any():
+            raise ValueError(
+                f"VIX unavailable for {int(missing.sum())} valid target dates."
+            )
+    return result
+
+
 def _read_source_manifest(input_dir: Path) -> dict[str, object]:
     path = input_dir / "download_manifest.json"
     if not path.is_file():

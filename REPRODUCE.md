@@ -1,4 +1,90 @@
-# Reproducing the integrated Stage 3 evaluation
+# Current Yang-Zhang daily-volatility comparison
+
+The current model comparison uses LSEG `GCc1.csv` OHLC. It computes
+unannualized 2-observation Yang-Zhang volatility, leaves windows with
+incomplete OHLC unscored, and evaluates sequential one-step forecasts after a
+chronological 80/20 split of available target observations. Each model is
+re-estimated from the initial training data plus prior observed test targets.
+One step advances to the next valid target date, which may skip dates after an
+incomplete OHLC window. The Yang-Zhang persistence forecast uses the latest
+available target. Candidate failures are retained;
+the rankings use the common successful test observations and report both MAE
+and RMSE. The overlapping 2-observation targets make the loss sequence
+dependent; the current output is descriptive and does not apply significance
+tests.
+
+Run from the repository root:
+
+```bash
+PYTHONPATH=src python scripts/evaluate_yang_zhang_volatility.py
+```
+
+The script uses four workers by default; pass `--workers 1` for sequential
+execution or another positive integer for a different worker count.
+
+For the user-requested VIX-augmented variant, keep the original no-VIX
+artifacts separate and run:
+
+```bash
+PYTHONPATH=src python scripts/evaluate_yang_zhang_volatility.py \
+  --vix-input data/refinitiv/VIX.csv --output-dir data/processed/stage4_yz_vix
+```
+
+The latest VIX close available by each origin under the next-weekday proxy is
+added to HARX, Ridge, Lasso, gradient boosting, range GARCH-X, and VAR.
+VIX source and availability dates are retained in the prepared file, and the
+input hash is included in the manifest. The proxy does not reconstruct
+publication times. The earlier significance finding used a different target;
+it does not establish significance for Yang-Zhang volatility, and the screen
+training sample extended into the start of this holdout. The completed VIX
+run has 761 common successful dates and zero recorded failures; gradient
+boosting has the lowest MAE (0.00242640) and RMSE (0.00478093).
+
+The run reads `data/refinitiv/GCc1.csv` and writes the prepared target,
+forecast attempts, summary, and source-hash manifest under `data/processed/`:
+
+- `GCc1_yang_zhang_volatility.csv`
+- `stage4_yz_forecasts.csv`
+- `stage4_yz_summary.csv`
+- `stage4_yz_manifest.json`
+
+The original no-VIX n=2 run covered all 761 test observations for all 20 candidates,
+with zero recorded fit failures. HistGradientBoosting had the lowest MAE
+(0.00241765) and RMSE (0.00476724). Optimizer and convergence warnings were
+emitted; because target windows overlap, these scores are descriptive and no
+significance tests were run.
+
+The estimator and candidate set are documented in the current-model section
+of [`README.md`](README.md). Rows without complete OHLC are not imputed, so
+their Yang-Zhang windows are unavailable and do not enter the 80/20 target
+split. The holdout advances to the next valid target observation at each
+one-step origin; check the saved target dates and manifest when interpreting
+results around missing source bars. This specification is a user-selected
+working analysis, not a team-approved model decision.
+
+## Yang-Zhang report and forecast figures
+
+The full formula and model-specification report is available as
+[`reports/yang-zhang-volatility.pdf`](reports/yang-zhang-volatility.pdf), with
+its editable Quarto source at
+[`reports/yang-zhang-volatility.qmd`](reports/yang-zhang-volatility.qmd).
+The report includes the full MAE/RMSE comparison and a timeline for each
+candidate; the chronological test interval is shaded in the plots.
+
+Regenerate the figures and render the PDF after running the holdout:
+
+```bash
+python scripts/plot_yang_zhang_report.py \
+  --processed-dir data/processed/stage4_yz_vix \
+  --output-dir reports/figures/stage4_yz_vix
+quarto render reports/yang-zhang-volatility.qmd
+```
+
+Figures are saved under `reports/figures/stage4_yz_vix/`. The plotting command
+requires Matplotlib. The report's numerical table and narrative are a
+snapshot; update them from the new summary before rendering a different run.
+
+## Historical integrated Stage 3 evaluation
 
 Run the evaluation from the repository root. It refits seven candidates on all
 requested origins and reuses the other 18 models from the existing aligned

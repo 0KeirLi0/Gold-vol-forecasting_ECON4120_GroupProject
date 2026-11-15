@@ -1,4 +1,4 @@
-"""HAR, exogenous, penalized, and VAR realized-variance forecasts."""
+"""Legacy HAR, exogenous, penalized, and VAR realized-variance forecasts."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Gold-return-only baseline forecasts for forward realized variance."""
+"""Legacy gold-return baselines for the forward realized-variance workflow."""
 
 from __future__ import annotations
 

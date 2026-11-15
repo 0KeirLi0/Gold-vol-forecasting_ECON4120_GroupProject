@@ -2,6 +2,54 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-15 — Completed VIX-augmented Yang-Zhang holdout
+- Author: User-directed implementation by Copilot
+- Type: finding
+- Context: The user requested the next-weekday as-of LSEG VIX feature for five external-input models and as a third VAR series, while keeping the Yang-Zhang volatility target and existing split.
+- Outcome: All 20 models produced forecasts on all 761 common test dates with zero recorded failures. HistGradientBoosting with VIX had the lowest MAE (0.00242640) and RMSE (0.00478093). Against the no-VIX run on the same dates, HARX and GARCH-X improved on both metrics while Ridge, Lasso, gradient boosting, and VAR worsened on both; no significance tests were run. Optimizer/convergence warnings occurred. The earlier VIX significance screen used a different target and its training interval overlaps the start of this holdout.
+- Artifacts: `data/processed/stage4_yz_vix/`, `reports/yang-zhang-volatility.qmd`, `reports/yang-zhang-volatility.pdf`, `reports/figures/stage4_yz_vix/`, `presentations/project-progress.qmd`.
+- Next: Samuel to review the comparative evidence, VIX availability proxy, warning caveats, and earlier-screen overlap before any recommendation.
+
+## 2026-11-15 — Added VIX to the Yang-Zhang comparison
+- Author: User-directed implementation by Copilot
+- Type: decision
+- Context: The user requested model-specific report subsections, an explanation of the Yang-Zhang variance and HAR horizons, and VIX in models with external predictors. The user confirmed retaining volatility (the square root of Yang-Zhang variance) as the dependent variable, also adding VIX as a third VAR series, and using the latest VIX available under the next-weekday proxy.
+- Outcome: The VIX-augmented experiment adds the LSEG VIX close to HARX, Ridge, Lasso, gradient boosting, range GARCH-X, and VAR. The original no-VIX artifacts remain separate. The 20-model sequential holdout rerun is in progress. VIX was previously significant for a different five-session realized-variance target, not shown to be significant for this target.
+- Artifacts: `src/gold_vol_pipeline/lseg.py`, `src/gold_vol_pipeline/volatility_forecasting.py`, `scripts/evaluate_yang_zhang_volatility.py`, `data/processed/stage4_yz_vix/`, `reports/yang-zhang-volatility.qmd`.
+- Next: Complete the holdout, inspect common-date metrics and fit warnings, and regenerate the report and figures.
+
+## 2026-11-15 — Published Yang-Zhang formulas and forecast graphs
+- Author: User-directed implementation by Copilot
+- Type: implementation
+- Context: The user requested a report containing all target/model formulas and forecast graphs with the test period shaded.
+- Outcome: Added an editable Quarto report covering the two-observation Yang-Zhang estimator, all 20 model specifications, metrics, and limitations; generated comparison plots with the chronological test interval shaded and rendered the PDF. All charts use the saved prepared target and forecast outputs.
+- Artifacts: `reports/yang-zhang-volatility.qmd`, `reports/yang-zhang-volatility.pdf`, `reports/figures/stage4_yz/`, `scripts/plot_yang_zhang_report.py`, `README.md`, `REPRODUCE.md`, `presentations/project-progress.qmd`.
+- Next: Samuel to review the formulas and descriptive model comparison alongside the fit-warning limitations.
+
+## 2026-11-15 — Set Yang-Zhang window to two observations
+- Author: User-directed implementation by Copilot
+- Type: decision
+- Context: The user first requested n=1, then selected the minimum valid standard Yang-Zhang window after n=1 was explained to be undefined for the canonical estimator.
+- Outcome: The default target is n=2 with a chronological 80/20 split and sequential one-step forecasts. The input yields 3,801 targets (3,040 train / 761 test). All 20 candidates completed on the same 761 test dates with zero recorded failures; HistGradientBoosting had the lowest MAE (0.00241765) and RMSE (0.00476724). These are descriptive rankings only because target windows overlap; no significance tests were run. Optimizer and convergence warnings were emitted. The earlier n=20 evaluation stopped at 325/471 dates and produced no final metrics.
+- Artifacts: `data/processed/GCc1_yang_zhang_volatility.csv`, `data/processed/stage4_yz_forecasts.csv`, `data/processed/stage4_yz_summary.csv`, `data/processed/stage4_yz_manifest.json`, `src/gold_vol_pipeline/yang_zhang.py`, `scripts/evaluate_yang_zhang_volatility.py`, `README.md`, `REPRODUCE.md`, `presentations/project-progress.qmd`.
+- Next: Samuel to review the comparative evidence and optimizer warnings before any recommendation.
+
+## 2026-11-15 — Prepared Yang-Zhang target and started holdout
+- Author: User-directed implementation by Copilot
+- Type: finding
+- Context: The approved 20-observation Yang-Zhang workflow was run on the supplied LSEG `GCc1.csv` OHLC data without filling incomplete quotes.
+- Outcome: The 4,241 source rows contain 4,064 complete OHLC bars; strict rolling-window validity yields 2,354 daily-volatility labels, split into 1,883 training and 471 test observations. The full 20-model sequential one-step holdout evaluation is running. Missing-bar windows are excluded; test steps advance between valid target labels and may skip market sessions.
+- Artifacts: `data/processed/GCc1_yang_zhang_volatility.csv`, `src/gold_vol_pipeline/yang_zhang.py`, `presentations/project-progress.qmd`.
+- Next: Record the common-date MAE/RMSE ranking, failures, and target-window caveat after the evaluation finishes.
+
+## 2026-11-15 — Switched current comparison to Yang-Zhang daily volatility
+- Author: User-directed implementation by Copilot
+- Type: decision
+- Context: The user selected LSEG `GCc1.csv` OHLC, unannualized 20-observation Yang-Zhang volatility as the dependent variable, a chronological 80/20 split, sequential one-step test forecasts, and a Yang-Zhang persistence benchmark. This is a user-selected working specification, not yet a team-wide decision.
+- Outcome: Added a shared target-preparation and model-comparison workflow covering the project’s univariate, ARMA/HK, ARCH/GARCH, regression, tree, and VAR families. The dedicated rolling-variance baseline is omitted. Incomplete OHLC is not imputed; windows containing incomplete rows have no target. The pre-existing deletion of `src/gold_vol_pipeline/pipeline.py` was restored with user approval; all other existing deletions remain untouched.
+- Artifacts: `src/gold_vol_pipeline/yang_zhang.py`, `src/gold_vol_pipeline/volatility_forecasting.py`, `scripts/evaluate_yang_zhang_volatility.py`, `tests/test_yang_zhang.py`, `README.md`, `presentations/project-progress.qmd`.
+- Next: Run the complete holdout evaluation, report common-date MAE/RMSE and fit failures, and ask Samuel/team to review the target and comparison before treating a ranking as a project decision.
+
 ## 2026-11-15 — Integrated Stage 3 model comparison and recommendation
 - Author: User-directed implementation by Copilot
 - Type: finding

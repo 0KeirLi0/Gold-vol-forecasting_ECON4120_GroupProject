@@ -30,10 +30,10 @@ Each round should hand off documented inputs, evidence, limitations, and a next-
 | Stage | Current evidence | Status |
 |---|---|---|
 | Infrastructure | The gold-pipeline prototype uses Yahoo `GC=F` (COMEX continuous futures) and supports labeled local CSV input. A Stage 2 daily predictor panel downloads Yahoo DXY, S&P 500, and VIX observations plus FRED Treasury-yield, breakeven-inflation, and WTI series. An optional LSEG importer now builds a separate dataset from local Workspace exports, including `GCc1`, DXY, S&P 500, VIX, Treasury quotes, and gold-option quotes; this does not change the working Yahoo/FRED sources. Raw data and manifests remain Git-ignored. | Yahoo/FRED panel available; LSEG import is a partial alternative pending source-use, availability, and model-input review |
-| Model development | The integrated Stage 3 run compares 25 candidates on 443 common successful origins from 445 requested dates. It includes HK auto-ARIMA, VAR, GJR-GARCH, asymmetric EGARCH, Student-t GARCH, lagged-VIX GARCH-X and quantile GARCH in the same evaluation; 18 earlier forecasts are reused. The quantile model failed at two origins. GARCH-X holds VIX fixed during each forecast horizon. | Integrated comparison complete; full data provenance and failed fits retained |
-| Model analysis | GARCH-X has the lowest MSE (9.492e-7; RMSE 0.000974); asymmetric EGARCH has the lowest MAE and QLIKE. No candidate significantly beats historical variance after Holm adjustment. | Provisional recommendation: GARCH-X if MSE is primary. Samuel to review loss choices, statistical uncertainty and robustness before team adoption. |
+| Model development | The current iteration constructs unannualized 2-observation Yang-Zhang daily volatility from LSEG `GCc1.csv` OHLC. Of 4,241 source rows, 4,064 have complete OHLC and 3,801 yield target labels; the chronological split is 3,040 train / 761 test. All 20 candidates forecast the shared dependent variable with sequential one-step updates. | Prepared target, forecasts, summary, and manifest are saved under `data/processed/`; the holdout run and full formula/forecast-graph report are complete |
+| Model analysis | The VIX-augmented rerun adds LSEG VIX to five external-input models and VAR. All 20 candidates completed on 761 common test dates with zero recorded failures; HistGradientBoosting had the lowest MAE (0.00242640) and RMSE (0.00478093). | Complete and documented in `reports/yang-zhang-volatility.pdf`. Results are descriptive: overlapping targets, optimizer warnings, and overlap between the earlier VIX-selection screen and this holdout limit interpretation. Samuel to review before any recommendation. |
 
-## GARCH estimation update
+## Earlier GARCH estimation update (historical target)
 
 - At every origin, fit returns scaled by their historical root mean square and convert forecast variance back to original units.
 - All 445 fits passed convergence and parameter-constraint checks. Optimizer bounds-clipping warnings occurred during intermediate steps; convergence does not prove a global optimum.
@@ -48,16 +48,17 @@ Each round should hand off documented inputs, evidence, limitations, and a next-
 - A separate LSEG import uses only `GCc1` for the gold target and assigns predictors to the next weekday after observation as an availability proxy. The current local export has no `ACVOL_1`, breakeven-inflation, or WTI file; LSEG spot/fixing requests failed. It produced 4,058 five-session forecast origins through 2026-11-03 and includes additional option-quote columns. This is a partial alternative dataset, not a replacement for the selected seven-variable panel or a model decision.
 - Central-bank gold demand is deferred until a source and publication schedule support point-in-time alignment. Gold volume is optional and is a continuous-futures series measure, not a fixed-contract or exchange-wide volume measure.
 - Raw downloads, prepared data, and manifests remain under Git-ignored `data/`. FRED series are downloaded as public CSVs without an API key. Check source-specific redistribution terms before committing any CSV; file size does not establish permission.
-- The current prototype uses a five-observation forward realized-variance label by default; confirm the target definition and horizon before treating results as project decisions or fixing pipeline requirements.
+- The legacy Yahoo/CSV prototype retains a five-observation forward realized-variance label. The current separate `GCc1` iteration uses the Yang-Zhang target above; its data source and scores must not be mixed with the legacy results.
+- In the current `GCc1` input, 177 rows have incomplete OHLC. Their affected 2-observation windows are not imputed or scored, so test origins are successive valid labels rather than every market session; the target windows overlap and rankings are descriptive.
 
 ## Current handoffs
 
 | Owner | Next item |
 |---|---|
-| Enoch | Confirm source-date freshness and the common-origin output in `data/processed/evaluation_forecasts.csv`; hand the Stage 3 summary and its separate-sample caveat to Samuel. Preserve prior baselines and review whether the partial LSEG panel warrants follow-up. |
-| Team | Confirm that the working `GC=F` continuous futures series and selected predictor definitions answer the research question; confirm data-use permissions before sharing observations. |
-| Keir | Maintain the API/CSV pipeline, its local provenance manifest, and source-date alignment; investigate LSEG's missing volume, breakeven, and WTI fields and central-bank-demand publication timing before adding these inputs. |
-| Samuel | Review the provisional MSE-based GARCH-X recommendation, the EGARCH MAE/QLIKE trade-off, failure exclusions, and DM/Mincer-Zarnowitz evidence; assess robustness on a later holdout. |
+| Enoch | Hand the completed `GCc1` 2-observation results, fit-warning caveat, forecasts, and manifest to Samuel for review. |
+| Team | Confirm data-use permissions before sharing LSEG-derived observations; decide whether this user-selected target/model specification should become the project-wide standard. |
+| Keir | Review the separate `GCc1` preprocessing output and the treatment of incomplete OHLC windows; do not merge it with the Yahoo/FRED panel without an explicit decision. |
+| Samuel | Review the new common holdout metrics, failed fits, and ranking sensitivity by MAE versus RMSE before any model recommendation. |
 
 ## Git submissions by team member
 

@@ -45,14 +45,25 @@ from .model_evaluation import (
     save_residuals,
     transform_price_series,
 )
+from .volatility_forecasting import (
+    MODEL_NAMES,
+    evaluate_daily_volatility,
+    forecast_daily_volatility,
+    save_daily_volatility_evaluation,
+)
+from .yang_zhang import add_chronological_split, prepare_yang_zhang_dataset
 
 __all__ = [
     "DEFAULT_HORIZON",
     "DEFAULT_TARGET",
+    "MODEL_NAMES",
     "ModelEvaluation",
     "adf_unit_root_test",
     "compare_candidate_models",
     "download_futures_prices",
+    "add_chronological_split",
+    "evaluate_daily_volatility",
+    "forecast_daily_volatility",
     "load_gold_prices_csv",
     "ljung_box_residual_tests",
     "arch1_variance_forecast",
@@ -79,11 +90,13 @@ __all__ = [
     "main",
     "ma1_squared_return_forecast",
     "prepare_dataset",
+    "prepare_yang_zhang_dataset",
     "prediction_history",
     "plot_acf_pacf",
     "plot_residual_panel",
     "plot_series_transformations",
     "rolling_variance_forecast",
     "save_residuals",
+    "save_daily_volatility_evaluation",
     "transform_price_series",
 ]
