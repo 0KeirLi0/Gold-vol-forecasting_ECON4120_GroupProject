@@ -2,6 +2,30 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-16 — Removed calibration subsection from report
+- Author: User-directed update by Copilot
+- Type: implementation
+- Context: The user requested deleting the calibration discussion from the Yang–Zhang report.
+- Outcome: Removed the Past-error calibration diagnostic subsection from the report; the separate calibration code and saved experiment outputs remain unchanged.
+- Artifacts: `reports/yang-zhang-volatility.qmd`.
+- Next: None.
+
+## 2026-11-16 — Interpreted calibration in report evaluation
+- Author: User-directed implementation by Copilot
+- Type: implementation
+- Context: The user asked for the calibration result to be explained in Part 5 of the Yang–Zhang report.
+- Outcome: Added the 509-date prequential calibration comparison, including mean error, MAE, and empirical interval coverage for each of the six models. Clarified the reduction in average bias, the MAE trade-off, below-nominal interval coverage, and holdout limitations.
+- Artifacts: `reports/yang-zhang-volatility.qmd`; results sourced from `data/processed/stage2_yz_diagnostics/empirical_error_model/distribution_summary.csv` and `forecast_error_tests.csv`.
+- Next: Treat calibration performance as exploratory until evaluated on a later independent period.
+
+## 2026-11-16 — Added volatility-regime results
+- Author: User-directed implementation by Copilot
+- Type: implementation
+- Context: The user requested a report note clarifying that holdout volatility-tercile labels are retrospective diagnostics, not deployable forecast-origin regimes.
+- Outcome: Added the six expanding-history predictor models' low-, middle-, and high-tercile MAE to the report; recorded the tercile boundaries and rank-based assignment rule in the Stage 2 manifest.
+- Artifacts: `reports/yang-zhang-volatility.qmd`, `src/gold_vol_pipeline/volatility_forecasting.py`, `tests/test_yang_zhang.py`; full variant-level results remain in `data/processed/stage2_yz_diagnostics/stage2_yz_summary.csv`.
+- Next: Team to interpret high-tercile errors descriptively, not as evidence from a deployable regime classifier.
+
 ## 2026-11-16 — Added paired predictor forecast plots
 - Author: User-directed implementation by Copilot
 - Type: implementation

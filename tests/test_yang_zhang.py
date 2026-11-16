@@ -88,6 +88,10 @@ def test_experimental_forecasts_are_leakage_safe_and_report_qlike():
     assert {"low_actual_tercile_MAE", "middle_actual_tercile_MAE", "high_actual_tercile_MAE"} <= set(summary)
     assert manifest["rolling_windows"] == [50]
     assert manifest["bias_calibration_window"] == 3
+    regime_cutoffs = manifest["regime_cutoffs"]
+    assert regime_cutoffs["low_middle"] <= regime_cutoffs["middle_high"]
+    assert regime_cutoffs["units"] == "unannualized daily volatility"
+    assert "rank(method='first'" in manifest["regime_cutoffs"]["assignment"]
 
 
 def _ohlc_data(size: int = 120) -> pd.DataFrame:

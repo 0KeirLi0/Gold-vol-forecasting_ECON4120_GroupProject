@@ -691,10 +691,25 @@ def evaluate_daily_volatility(
         .drop_duplicates("target_date")
         .sort_values("target_date")
     )
-    tercile = np.ceil(
-        actual_by_date["actual"].rank(method="first", pct=True).to_numpy() * 3
-    ).astype(int)
+    tercile_rank = actual_by_date["actual"].rank(method="first", pct=True)
+    tercile = np.ceil(tercile_rank.to_numpy() * 3).astype(int)
     actual_by_date["actual_tercile"] = np.clip(tercile, 1, 3)
+    low_regime = actual_by_date.loc[
+        actual_by_date["actual_tercile"].eq(1), "actual"
+    ]
+    middle_regime = actual_by_date.loc[
+        actual_by_date["actual_tercile"].eq(2), "actual"
+    ]
+    regime_cutoffs = {
+        "low_middle": float(low_regime.max()) if not low_regime.empty else None,
+        "middle_high": (
+            float(middle_regime.max()) if not middle_regime.empty else None
+        ),
+        "units": "unannualized daily volatility",
+        "assignment": (
+            "rank(method='first', pct=True), ceil(3 * rank), clipped to [1, 3]"
+        ),
+    }
     common = common.merge(
         actual_by_date[["target_date", "actual_tercile"]],
         on="target_date",
@@ -810,6 +825,7 @@ def evaluate_daily_volatility(
             "Retrospective terciles of realized holdout volatility on the "
             "common successful dates; diagnostic only, not a forecast-time feature."
         ),
+        "regime_cutoffs": regime_cutoffs,
         "statistical_significance_tests": False,
         "failures": {
             str(model): int(

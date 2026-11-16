@@ -496,6 +496,29 @@ predictor effects or tests of statistical significance. The GARCH-X point
 forecast is its conditional mean; its predictor terms enter the variance
 recursion and affect the fitted mean indirectly.
 
+## Volatility regimes and extreme days
+
+The holdout targets are split into low, middle, and high terciles using
+realized Yang–Zhang volatility. These labels are retrospective diagnostics
+based on the outcomes, not forecast-origin information or a deployable regime
+classifier. The cutoffs and full model-by-regime results are saved with the
+diagnostic outputs. MAE below is in $10^{-3}$ daily-volatility units.
+
+The table shows the six expanding-history predictor models. Regime-specific
+MAE for all evaluated variants is retained in
+`data/processed/stage2_yz_diagnostics/stage2_yz_summary.csv`; cutoff values
+and the rank-based assignment rule are recorded in
+`data/processed/stage2_yz_diagnostics/stage2_yz_manifest.json`.
+
+| Model | Low-tercile MAE | Middle-tercile MAE | High-tercile MAE |
+|---|---:|---:|---:|
+| Histogram gradient boosting | 1.458 | 1.535 | 4.273 |
+| HARX | 1.676 | 1.536 | 5.057 |
+| Ridge | 1.902 | 1.635 | 4.949 |
+| Lasso | 1.948 | 1.617 | 5.191 |
+| Range GARCH-X | 2.094 | 1.560 | 5.084 |
+| VAR | 1.935 | 1.643 | 5.077 |
+
 ![Actual and best-five model forecasts. Shading indicates the chronological test period.](figures/stage2_yz_selected/top5_forecasts.png)
 
 # Forecast graphs
