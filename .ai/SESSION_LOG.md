@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-16 — Added forecast-level quintile residual analysis
+- Author: User-directed implementation by Copilot
+- Type: implementation
+- Context: The test-branch residual report already summarized forecast errors and retrospective realized-volatility terciles; the user requested analysis by predicted-value level.
+- Outcome: Extended the diagnostics pipeline to assign within-model equal-count Q1–Q5 labels, save per-row out-of-sample residuals and group distribution summaries, and plot the group error distributions. Across 761 common holdout dates, all 30 model/quintile mean errors are positive. For histogram gradient boosting, Q5 mean error is 2.025e-3 versus 0.637e-3 in Q1; its Q5 error skewness is 4.01 and excess kurtosis 22.68. These descriptive results are sensitive to extremes and overlapping targets; they are not significance tests or fixed deployable cutoffs.
+- Artifacts: `src/gold_vol_pipeline/forecast_diagnostics.py`, `scripts/analyze_yang_zhang_forecast_errors.py`, `tests/test_forecast_diagnostics.py`, `data/processed/stage2_yz_selected/forecast_errors.csv`, `data/processed/stage2_yz_selected/forecast_error_forecast_quantiles.csv`, `reports/yang-zhang-residual-diagnostics.qmd`, `reports/yang-zhang-residual-diagnostics.pdf`, `reports/figures/residual_diagnostics/forecast_error_by_forecast_quantile.png`, `REPRODUCE.md`.
+- Next: Validate forecast-level error patterns on a later pre-specified holdout with thresholds set using only prior data.
+
 ## 2026-11-16 — Added test-branch forecast-error diagnostics
 - Author: User-directed implementation by Copilot
 - Type: finding

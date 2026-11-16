@@ -11,6 +11,7 @@ import pandas as pd
 
 from gold_vol_pipeline.forecast_diagnostics import (
     build_forecast_error_diagnostics,
+    build_forecast_quantile_diagnostics,
     build_regime_and_extreme_diagnostics,
     create_forecast_error_figures,
 )
@@ -53,16 +54,20 @@ def main() -> int:
     summary_path = args.processed_dir / "forecast_error_diagnostics.csv"
     regimes_path = args.processed_dir / "forecast_error_regimes.csv"
     extremes_path = args.processed_dir / "forecast_error_extremes.csv"
+    quantiles_path = args.processed_dir / "forecast_error_forecast_quantiles.csv"
     manifest_path = args.processed_dir / "forecast_error_manifest.json"
+    errors, quantiles = build_forecast_quantile_diagnostics(errors)
     errors.to_csv(errors_path, index=False)
     summary.to_csv(summary_path, index=False)
     regimes.to_csv(regimes_path, index=False)
     extremes.to_csv(extremes_path, index=False)
+    quantiles.to_csv(quantiles_path, index=False)
     figures = create_forecast_error_figures(
         errors,
         str(args.figure_dir),
         acf_lags=args.acf_lags,
         regime_summary=regimes,
+        forecast_quantile_summary=quantiles,
     )
     manifest = {
         "input_path": str(forecasts_path),
@@ -73,6 +78,10 @@ def main() -> int:
         "models": sorted(errors["model"].unique().tolist()),
         "regime_method": "terciles of realized holdout target; retrospective diagnostic only",
         "regime_cutoffs": regime_cutoffs,
+        "forecast_quantile_method": (
+            "five equal-count groups formed separately within each model by sorting "
+            "forecast values ascending; tied forecasts are ordered by target date"
+        ),
         "ljung_box_lags": [5, 10, 20],
         "acf_lags": args.acf_lags,
         "inference_note": (
@@ -84,6 +93,7 @@ def main() -> int:
             "summary": str(summary_path),
             "regimes": str(regimes_path),
             "extremes": str(extremes_path),
+            "forecast_quantiles": str(quantiles_path),
             "figures": figures,
         },
     }
@@ -93,6 +103,7 @@ def main() -> int:
         summary_path,
         regimes_path,
         extremes_path,
+        quantiles_path,
         manifest_path,
         *map(Path, figures),
     ):

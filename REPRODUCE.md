@@ -218,12 +218,18 @@ quarto render reports/yang-zhang-residual-diagnostics.qmd --to pdf
 ```
 
 The script writes `forecast_errors.csv`, `forecast_error_diagnostics.csv`,
-`forecast_error_regimes.csv`, `forecast_error_extremes.csv`, and
-`forecast_error_manifest.json` beside the input forecasts. The figures are
-written under `reports/figures/residual_diagnostics/`. Regime labels are
-retrospective terciles of realized holdout volatility, not information
-available to the models at forecast time. The report summarizes
-out-of-sample forecast errors, not in-sample equation innovations;
+`forecast_error_regimes.csv`, `forecast_error_extremes.csv`,
+`forecast_error_forecast_quantiles.csv`, and `forecast_error_manifest.json`
+beside the input forecasts. `forecast_errors.csv` contains the out-of-sample
+residual (`actual - forecast`) for each successful common-date prediction and
+its within-model forecast-quintile label. The quintile summary reports each
+group's forecast range, mean/median error, error dispersion, MAE, RMSE,
+skewness, excess kurtosis, and tail quantiles. The figures are written under
+`reports/figures/residual_diagnostics/`, including forecast-error
+distributions across Q1–Q5. Forecast quintiles are ranked separately per
+model, with tied forecasts ordered by target date; full-holdout thresholds
+make them descriptive rather than fixed real-time cutoffs. The report
+analyzes out-of-sample forecast errors, not in-sample equation innovations;
 conditional-variance innovation diagnostics require saving fitted
 conditional variances and residuals during model estimation. Because the
 two-observation targets overlap, Ljung–Box p-values in the report are
