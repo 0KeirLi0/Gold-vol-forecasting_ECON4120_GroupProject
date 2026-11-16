@@ -41,6 +41,55 @@ def test_saved_evaluation_uses_stage2_names_and_records_input_hash(tmp_path):
     assert len(manifest["input_sha256"]) == 64
 
 
+def test_experimental_forecasts_are_leakage_safe_and_report_qlike():
+    prepared = prepare_yang_zhang_dataset(_ohlc_data(size=120), window=2)
+    results, summary, manifest = evaluate_daily_volatility(
+        prepared,
+        model_names=("hist_gradient_boosting_ohlc",),
+        rolling_windows=(50,),
+        bias_window=3,
+        hgb_transform_experiments=True,
+        progress=False,
+    )
+    first_date = results["target_date"].min()
+    first_origin = results.loc[results["target_date"].eq(first_date)]
+    base_first = first_origin.loc[
+        first_origin["model"].eq("hist_gradient_boosting_ohlc"), "forecast"
+    ].item()
+    bias_first = first_origin.loc[
+        first_origin["model"].eq("hist_gradient_boosting_ohlc__bias_3"), "forecast"
+    ].item()
+    assert bias_first == pytest.approx(base_first)
+
+    second_date = results["target_date"].sort_values().unique()[1]
+    second_origin = results.loc[results["target_date"].eq(second_date)]
+    base_second = second_origin.loc[
+        second_origin["model"].eq("hist_gradient_boosting_ohlc"), "forecast"
+    ].item()
+    first_actual = first_origin.loc[
+        first_origin["model"].eq("hist_gradient_boosting_ohlc"), "actual"
+    ].item()
+    bias_second = second_origin.loc[
+        second_origin["model"].eq("hist_gradient_boosting_ohlc__bias_3"), "forecast"
+    ].item()
+    assert bias_second == pytest.approx(
+        max(base_second + first_actual - base_first, 1e-12)
+    )
+
+    rolling = results.loc[
+        results["model"].eq("hist_gradient_boosting_ohlc__rolling_50")
+    ]
+    assert rolling["history_count"].eq(50).all()
+    assert {
+        "hist_gradient_boosting_ohlc__smearing",
+        "hist_gradient_boosting_ohlc__gamma",
+    } <= set(results["model"])
+    assert np.isfinite(summary["common_QLIKE"]).all()
+    assert {"low_actual_tercile_MAE", "middle_actual_tercile_MAE", "high_actual_tercile_MAE"} <= set(summary)
+    assert manifest["rolling_windows"] == [50]
+    assert manifest["bias_calibration_window"] == 3
+
+
 def _ohlc_data(size: int = 120) -> pd.DataFrame:
     rng = np.random.default_rng(42)
     close = 100 * np.exp(np.cumsum(rng.normal(0, 0.01, size)))

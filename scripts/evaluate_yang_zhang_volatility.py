@@ -23,6 +23,25 @@ from gold_vol_pipeline.yang_zhang import (
 )
 
 
+def _positive_int_list(value: str) -> tuple[int, ...]:
+    parts = value.split(",")
+    if any(not item.strip() for item in parts):
+        raise argparse.ArgumentTypeError(
+            "rolling windows must be comma-separated positive integers"
+        )
+    try:
+        windows = tuple(int(item.strip()) for item in parts)
+    except ValueError as exception:
+        raise argparse.ArgumentTypeError(
+            "rolling windows must be comma-separated positive integers"
+        ) from exception
+    if not windows or any(window < 1 for window in windows) or len(set(windows)) != len(windows):
+        raise argparse.ArgumentTypeError(
+            "rolling windows must be unique positive integers"
+        )
+    return windows
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
@@ -67,12 +86,29 @@ def main() -> int:
         "--external-models-only", action="store_true",
         help="Evaluate only the six models that accept the selected predictors.",
     )
+    parser.add_argument(
+        "--rolling-windows",
+        type=_positive_int_list,
+        help="Also evaluate comma-separated rolling histories (valid target observations).",
+    )
+    parser.add_argument(
+        "--bias-window",
+        type=int,
+        help="Also apply additive bias calibration using this many prior test errors.",
+    )
+    parser.add_argument(
+        "--hgb-transform-experiments",
+        action="store_true",
+        help="Compare HGB log-target smearing and raw-target Gamma-loss variants.",
+    )
     args = parser.parse_args()
 
     if args.vix_input is not None and args.predictor_dir is not None:
         parser.error("--vix-input and --predictor-dir are separate experiments.")
     if args.external_models_only and args.predictor_dir is None:
         parser.error("--external-models-only requires --predictor-dir.")
+    if args.bias_window is not None and args.bias_window < 1:
+        parser.error("--bias-window must be a positive integer.")
     prepared = prepare_yang_zhang_dataset(args.input, window=args.window)
     prepared = add_chronological_split(prepared, train_fraction=0.8)
     if args.vix_input is not None:
@@ -95,9 +131,13 @@ def main() -> int:
     )
     print(f"Saved daily-volatility data to {prepared_path}.", flush=True)
 
-    evaluation_options = (
-        {"model_names": EXTERNAL_MODEL_NAMES} if args.external_models_only else {}
-    )
+    evaluation_options = {
+        "rolling_windows": args.rolling_windows or (),
+        "bias_window": args.bias_window,
+        "hgb_transform_experiments": args.hgb_transform_experiments,
+    }
+    if args.external_models_only:
+        evaluation_options["model_names"] = EXTERNAL_MODEL_NAMES
     results, summary, manifest = evaluate_daily_volatility(
         prepared, train_fraction=0.8, workers=args.workers, progress=True,
         include_vix=args.vix_input is not None,
@@ -151,6 +191,8 @@ def main() -> int:
                 "common_n",
                 "common_MAE",
                 "common_RMSE",
+                "common_bias",
+                "common_QLIKE",
                 "failure_count",
             ]
         ].to_string(index=False, float_format=lambda value: f"{value:.8g}"),

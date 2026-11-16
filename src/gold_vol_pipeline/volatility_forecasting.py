@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from concurrent.futures import ProcessPoolExecutor
 from collections.abc import Sequence
+from dataclasses import dataclass
 import hashlib
 import json
 from pathlib import Path
@@ -57,6 +58,14 @@ EXTERNAL_MODEL_NAMES = (
 )
 
 
+@dataclass(frozen=True)
+class _ForecastSpec:
+    name: str
+    model: str
+    rolling_window: int | None = None
+    hgb_variant: str = "log"
+
+
 def _target(history: pd.DataFrame) -> np.ndarray:
     if "daily_volatility" not in history:
         raise ValueError("history must contain daily_volatility.")
@@ -107,8 +116,14 @@ def _arch_forecast(
     return float(fit.forecast(horizon=1).mean.iloc[-1, 0]) / 100
 
 
-def _lagged_design(history: pd.DataFrame, *, include_ohlc: bool, include_vix: bool = False, external_predictors: tuple[str, ...] = ()) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _lagged_design(
+    history: pd.DataFrame, *, include_ohlc: bool, include_vix: bool = False,
+    external_predictors: tuple[str, ...] = (), target_transform: str = "log",
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     log_vol = _log_target(history)
+    if target_transform not in {"log", "raw"}:
+        raise ValueError(f"Unknown target transform: {target_transform}")
+    target_values = _target(history) if target_transform == "raw" else log_vol
     if len(log_vol) <= HAR_LAGS + 3:
         raise ValueError(
             f"HAR models require more than {HAR_LAGS + 3} observations."
@@ -132,7 +147,9 @@ def _lagged_design(history: pd.DataFrame, *, include_ohlc: bool, include_vix: bo
         if exogenous is not None:
             row.extend(exogenous[origin_position].tolist())
         features.append(row)
-        targets.append(float(log_vol[target_position]))
+        targets.append(
+            float(target_values[target_position])
+        )
 
     origin_position = len(log_vol) - 1
     forecast_features = [
@@ -151,11 +168,20 @@ def _lagged_design(history: pd.DataFrame, *, include_ohlc: bool, include_vix: bo
 
 def _linear_forecast(
     history: pd.DataFrame, *, kind: str, include_ohlc: bool, include_vix: bool = False,
-    external_predictors: tuple[str, ...] = (),
+    external_predictors: tuple[str, ...] = (), hgb_variant: str = "log",
 ) -> float:
+    if kind == "hist_gradient_boosting" and hgb_variant not in {
+        "log", "smearing", "gamma"
+    }:
+        raise ValueError(f"Unknown histogram gradient boosting variant: {hgb_variant}")
+    target_transform = (
+        "raw"
+        if kind == "hist_gradient_boosting" and hgb_variant == "gamma"
+        else "log"
+    )
     features, targets, forecast_features = _lagged_design(
         history, include_ohlc=include_ohlc, include_vix=include_vix,
-        external_predictors=external_predictors,
+        external_predictors=external_predictors, target_transform=target_transform,
     )
     if kind == "har":
         design = np.column_stack((np.ones(len(features)), features))
@@ -169,12 +195,23 @@ def _linear_forecast(
         model = Lasso(alpha=0.01, max_iter=50_000, tol=1e-5).fit(features, targets)
         prediction = float(model.predict(forecast_features)[0])
     elif kind == "hist_gradient_boosting":
+        if hgb_variant == "gamma" and np.any(targets <= 0):
+            raise ValueError("Gamma-loss HGB requires strictly positive training targets.")
         model = HistGradientBoostingRegressor(
+            loss="gamma" if hgb_variant == "gamma" else "squared_error",
             learning_rate=0.05, max_iter=100, max_leaf_nodes=15, random_state=42
         ).fit(features, targets)
         prediction = float(model.predict(forecast_features)[0])
+        if hgb_variant == "smearing":
+            residuals = targets - model.predict(features)
+            smearing_factor = float(np.mean(np.exp(residuals)))
+            prediction = float(np.exp(prediction) * smearing_factor)
+        elif hgb_variant != "gamma":
+            prediction = float(np.exp(prediction))
     else:
         raise ValueError(f"Unknown linear forecast kind: {kind}")
+    if kind == "hist_gradient_boosting":
+        return float(prediction)
     return float(np.exp(prediction))
 
 
@@ -328,6 +365,7 @@ def forecast_daily_volatility(
     auto_arima_order: tuple[int, int, int],
     include_vix: bool = False,
     external_predictors: tuple[str, ...] = (),
+    hgb_variant: str = "log",
 ) -> float:
     """Return one positive forecast of daily volatility from history through origin."""
     values = _target(history)
@@ -374,7 +412,9 @@ def forecast_daily_volatility(
         prediction = _linear_forecast(history, kind="lasso", include_ohlc=True, include_vix=include_vix, external_predictors=external_predictors)
     elif model == "hist_gradient_boosting_ohlc":
         prediction = _linear_forecast(
-            history, kind="hist_gradient_boosting", include_ohlc=True, include_vix=include_vix, external_predictors=external_predictors
+            history, kind="hist_gradient_boosting", include_ohlc=True,
+            include_vix=include_vix, external_predictors=external_predictors,
+            hgb_variant=hgb_variant,
         )
     elif model == "var_ohlc":
         prediction = _var_forecast(history, include_vix=include_vix, external_predictors=external_predictors)
@@ -395,6 +435,13 @@ def _metrics(actual: np.ndarray, forecast: np.ndarray) -> tuple[float, float, fl
     )
 
 
+def _qlike(actual: np.ndarray, forecast: np.ndarray) -> float:
+    actual_variance = np.square(actual)
+    forecast_variance = np.square(forecast)
+    ratio = np.maximum(actual_variance, np.finfo(float).tiny) / forecast_variance
+    return float(np.mean(ratio - np.log(ratio) - 1.0))
+
+
 def _forecast_origin(
     task: tuple[
         pd.DataFrame,
@@ -402,18 +449,24 @@ def _forecast_origin(
         pd.Timestamp,
         float,
         tuple[int, int, int],
-        tuple[str, ...],
+        tuple[_ForecastSpec, ...],
         bool,
         tuple[str, ...],
     ],
 ) -> list[dict[str, object]]:
-    history, origin, target_date, actual, order, model_names, include_vix, external_predictors = task
+    history, origin, target_date, actual, order, forecast_specs, include_vix, external_predictors = task
     rows: list[dict[str, object]] = []
-    for model in model_names:
+    for spec in forecast_specs:
+        model_history = (
+            history.tail(spec.rolling_window)
+            if spec.rolling_window is not None
+            else history
+        )
         try:
             forecast = forecast_daily_volatility(
-                model, history, auto_arima_order=order, include_vix=include_vix,
-                external_predictors=external_predictors,
+                spec.model, model_history, auto_arima_order=order,
+                include_vix=include_vix, external_predictors=external_predictors,
+                hgb_variant=spec.hgb_variant,
             )
             error = ""
         except (
@@ -428,12 +481,14 @@ def _forecast_origin(
             {
                 "origin_date": origin,
                 "target_date": target_date,
-                "model": model,
+                "model": spec.name,
                 "forecast": forecast,
                 "actual": actual,
                 "converged": not error,
                 "error": error,
-                "history_count": len(history),
+                "history_count": len(model_history),
+                "rolling_window": spec.rolling_window,
+                "hgb_variant": spec.hgb_variant,
             }
         )
     return rows
@@ -448,6 +503,9 @@ def evaluate_daily_volatility(
     progress: bool = True,
     include_vix: bool = False,
     external_predictors: tuple[str, ...] = (),
+    rolling_windows: Sequence[int] = (),
+    bias_window: int | None = None,
+    hgb_transform_experiments: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, object]]:
     """Evaluate models on a chronological split with sequential one-step updates.
 
@@ -459,6 +517,16 @@ def evaluate_daily_volatility(
         raise ValueError("train_fraction must be strictly between zero and one.")
     if not model_names or len(set(model_names)) != len(model_names):
         raise ValueError("model_names must contain unique model names.")
+    if any(
+        isinstance(window, bool) or not isinstance(window, int) or window < 1
+        for window in rolling_windows
+    ) or len(set(rolling_windows)) != len(rolling_windows):
+        raise ValueError("rolling_windows must contain unique positive integers.")
+    if bias_window is not None and (
+        isinstance(bias_window, bool) or not isinstance(bias_window, int)
+        or bias_window < 1
+    ):
+        raise ValueError("bias_window must be a positive integer or None.")
     if isinstance(workers, bool) or not isinstance(workers, int) or workers < 1:
         raise ValueError("workers must be a positive integer.")
     unknown = sorted(set(model_names) - set(MODEL_NAMES))
@@ -468,6 +536,27 @@ def evaluate_daily_volatility(
         raise ValueError("Unsupported or duplicate external predictors.")
     if include_vix and external_predictors:
         raise ValueError("VIX and selected predictors are separate experiments.")
+    forecast_specs = [_ForecastSpec(model, model) for model in model_names]
+    forecast_specs.extend(
+        _ForecastSpec(f"{model}__rolling_{window}", model, rolling_window=window)
+        for model in model_names
+        for window in rolling_windows
+    )
+    if hgb_transform_experiments and "hist_gradient_boosting_ohlc" in model_names:
+        forecast_specs.extend(
+            (
+                _ForecastSpec(
+                    "hist_gradient_boosting_ohlc__smearing",
+                    "hist_gradient_boosting_ohlc",
+                    hgb_variant="smearing",
+                ),
+                _ForecastSpec(
+                    "hist_gradient_boosting_ohlc__gamma",
+                    "hist_gradient_boosting_ohlc",
+                    hgb_variant="gamma",
+                ),
+            )
+        )
     required = {
         "date",
         "daily_volatility",
@@ -533,7 +622,7 @@ def evaluate_daily_volatility(
                 pd.Timestamp(frame.at[test_position, "date"]),
                 float(frame.at[test_position, "daily_volatility"]),
                 order,
-                tuple(model_names),
+                tuple(forecast_specs),
                 include_vix,
                 external_predictors,
             )
@@ -554,19 +643,67 @@ def evaluate_daily_volatility(
             executor.shutdown()
 
     results = pd.DataFrame(attempts)
+    if bias_window is not None:
+        calibrated_rows: list[dict[str, object]] = []
+        for model in model_names:
+            baseline = results.loc[results["model"].eq(model)].sort_values(
+                "target_date"
+            )
+            previous_errors: list[float] = []
+            for _, row in baseline.iterrows():
+                calibrated = row.to_dict()
+                correction = (
+                    float(np.mean(previous_errors[-bias_window:]))
+                    if previous_errors
+                    else 0.0
+                )
+                calibrated["model"] = f"{model}__bias_{bias_window}"
+                calibrated["forecast"] = max(
+                    float(row["forecast"]) + correction, MIN_LOG_VALUE
+                )
+                calibrated["bias_adjustment"] = correction
+                calibrated_rows.append(calibrated)
+                if bool(row["converged"]):
+                    previous_errors.append(
+                        float(row["actual"]) - float(row["forecast"])
+                    )
+        results = pd.concat(
+            (results, pd.DataFrame(calibrated_rows)), ignore_index=True
+        )
+    evaluation_names = [spec.name for spec in forecast_specs]
+    if bias_window is not None:
+        evaluation_names.extend(
+            f"{model}__bias_{bias_window}" for model in model_names
+        )
     successful = results.loc[
         results["converged"] & np.isfinite(results["forecast"])
     ]
     common_dates = set(frame.iloc[split_position:]["date"])
-    for model in model_names:
+    for model in evaluation_names:
         valid_dates = set(
             successful.loc[successful["model"].eq(model), "target_date"]
         )
         common_dates.intersection_update(valid_dates)
     common = successful.loc[successful["target_date"].isin(common_dates)]
 
+    actual_by_date = (
+        common[["target_date", "actual"]]
+        .drop_duplicates("target_date")
+        .sort_values("target_date")
+    )
+    tercile = np.ceil(
+        actual_by_date["actual"].rank(method="first", pct=True).to_numpy() * 3
+    ).astype(int)
+    actual_by_date["actual_tercile"] = np.clip(tercile, 1, 3)
+    common = common.merge(
+        actual_by_date[["target_date", "actual_tercile"]],
+        on="target_date",
+        how="left",
+        validate="many_to_one",
+    )
+
     rows: list[dict[str, object]] = []
-    for model in model_names:
+    for model in evaluation_names:
         own = successful.loc[successful["model"].eq(model)]
         own_mae, own_rmse, own_bias = (
             _metrics(
@@ -585,20 +722,49 @@ def evaluate_daily_volatility(
             if not shared.empty
             else (np.nan, np.nan, np.nan)
         )
-        rows.append(
-            {
-                "model": model,
-                "n_successful": len(own),
-                "failure_count": int((~results.loc[results["model"].eq(model), "converged"]).sum()),
-                "MAE": own_mae,
-                "RMSE": own_rmse,
-                "bias": own_bias,
-                "common_n": len(shared),
-                "common_MAE": common_mae,
-                "common_RMSE": common_rmse,
-                "common_bias": common_bias,
-            }
-        )
+        row_summary: dict[str, object] = {
+            "model": model,
+            "n_successful": len(own),
+            "failure_count": int(
+                (~results.loc[results["model"].eq(model), "converged"]).sum()
+            ),
+            "MAE": own_mae,
+            "RMSE": own_rmse,
+            "bias": own_bias,
+            "QLIKE": (
+                _qlike(
+                    own["actual"].to_numpy(dtype=float),
+                    own["forecast"].to_numpy(dtype=float),
+                )
+                if not own.empty
+                else np.nan
+            ),
+            "common_n": len(shared),
+            "common_MAE": common_mae,
+            "common_RMSE": common_rmse,
+            "common_bias": common_bias,
+            "common_QLIKE": (
+                _qlike(
+                    shared["actual"].to_numpy(dtype=float),
+                    shared["forecast"].to_numpy(dtype=float),
+                )
+                if not shared.empty
+                else np.nan
+            ),
+        }
+        for tercile_id, label in ((1, "low"), (2, "middle"), (3, "high")):
+            regime = shared.loc[shared["actual_tercile"].eq(tercile_id)]
+            regime_mae, _, regime_bias = (
+                _metrics(
+                    regime["actual"].to_numpy(dtype=float),
+                    regime["forecast"].to_numpy(dtype=float),
+                )
+                if not regime.empty
+                else (np.nan, np.nan, np.nan)
+            )
+            row_summary[f"{label}_actual_tercile_MAE"] = regime_mae
+            row_summary[f"{label}_actual_tercile_bias"] = regime_bias
+        rows.append(row_summary)
     summary = pd.DataFrame(rows)
     summary["rank_common_MAE"] = summary["common_MAE"].rank(
         method="min", na_option="bottom"
@@ -624,6 +790,10 @@ def evaluate_daily_volatility(
             "observed test targets at each origin"
         ),
         "model_names": list(model_names),
+        "experiment_model_names": evaluation_names,
+        "rolling_windows": list(rolling_windows),
+        "bias_calibration_window": bias_window,
+        "hgb_transform_experiments": hgb_transform_experiments,
         "fixed_auto_arima_order": list(fixed_order) if fixed_order else None,
         "workers": workers,
         "training_observations": split_position,
@@ -632,12 +802,20 @@ def evaluate_daily_volatility(
         "test_start": pd.Timestamp(frame.iloc[split_position]["date"]).date().isoformat(),
         "test_end": pd.Timestamp(frame.iloc[-1]["date"]).date().isoformat(),
         "ranking_metrics": ["MAE", "RMSE"],
+        "reported_metrics": ["MAE", "RMSE", "bias", "QLIKE"],
+        "qlike_definition": (
+            "mean(r - log(r) - 1), r = actual_variance / forecast_variance"
+        ),
+        "regime_diagnostic": (
+            "Retrospective terciles of realized holdout volatility on the "
+            "common successful dates; diagnostic only, not a forecast-time feature."
+        ),
         "statistical_significance_tests": False,
         "failures": {
             str(model): int(
                 (~results.loc[results["model"].eq(model), "converged"]).sum()
             )
-            for model in model_names
+            for model in evaluation_names
         },
     }
     return results, summary, manifest

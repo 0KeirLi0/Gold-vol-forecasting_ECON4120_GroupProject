@@ -73,6 +73,89 @@ after earlier holdout results had been observed, so the comparison is not a
 fully untouched holdout. Differences are joint descriptive comparisons, not
 isolated predictor effects or forecast-loss significance tests.
 
+For the separate drift and loss-function experiment, preserve the current
+baseline and use a distinct output directory:
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=src \
+  python scripts/evaluate_yang_zhang_volatility.py --predictor-dir data/refinitiv \
+  --external-models-only --rolling-windows 252,504,756 --bias-window 252 \
+  --hgb-transform-experiments \
+  --output-dir data/processed/stage2_yz_diagnostics
+```
+
+The evaluation retains expanding-history forecasts, adds 252/504/756-valid-
+target rolling variants, and applies 252-origin additive bias calibration
+using only prior sequential forecast errors. The first calibrated forecast is
+uncorrected because no prior holdout error exists. HGB log smearing is
+estimated from in-sample training residuals; HGB Gamma loss is a distinct
+raw-volatility alternative and requires positive training targets. MAE, RMSE,
+forecast-minus-actual bias, and variance-scale QLIKE are reported. The summary
+also includes retrospective actual-volatility-tercile MAE and bias on common
+successful dates; these labels use realized targets and are diagnostics, not
+deployable forecast-time regimes. These variants do not overwrite the
+existing baseline output unless the same output directory is explicitly
+chosen.
+
+The completed run produced 761 common forecasts for all 32 candidates with
+zero recorded failures. HGB's 252-origin correction reduced the magnitude of
+its mean forecast-minus-actual error from 0.821e-3 to 0.184e-3, while MAE
+increased from 0.002423 to 0.002489. Smearing and Gamma loss lowered HGB RMSE
+and QLIKE but slightly increased MAE. None of the 18 rolling-window
+candidates beat expanding-history HGB on overall MAE or RMSE. These are
+descriptive results on the previously examined holdout, not independent
+confirmation or a final model decision. The outputs remain local and
+Git-ignored under `data/processed/stage2_yz_diagnostics/`.
+
+Test saved forecast errors and reproduce the HAC(10) analysis with:
+
+```bash
+PYTHONPATH=src python scripts/diagnose_yang_zhang_forecast_errors.py
+```
+
+The script checks common successful dates across models, tests mean actual
+minus forecast against zero using an intercept-only regression, and tests the
+linear slope of globally centered squared errors against standardized
+forecasts. Both use HAC standard errors with the specified maximum lag and
+two-sided t references. Holm correction is applied separately across models
+to the mean and squared-error slope families. The latter is a targeted
+variance-scaling diagnostic, not a general homoskedasticity test; conditional
+mean misspecification can affect it. Results and a manifest with the input
+hash are saved under `data/processed/stage2_yz_diagnostics/error_tests/`.
+To repeat the sensitivity checks, pass `--hac-lags 4` or `--hac-lags 20`
+and a separate `--output-dir`.
+
+For the separate empirical forecast-error model, run after generating the
+saved 32-candidate forecasts:
+
+```bash
+PYTHONPATH=src python scripts/evaluate_empirical_error_model.py
+```
+
+For each of the six expanding-history baselines, the first 252 sequential
+forecast errors warm up a rolling distribution of relative errors
+$(y-\widehat y)/\widehat y$. Only prior target outcomes available at the
+current origin enter the estimate. The rolling relative-error mean adjusts the
+point forecast; its sample standard deviation multiplied by the baseline
+forecast supplies the forecast-error scale. Past empirical 5th and 95th
+percentiles supply nominal 90% prediction intervals without assuming normal
+errors. The 509 post-warm-up observations are evaluated against the matching
+baseline dates. Output under
+`data/processed/stage2_yz_diagnostics/empirical_error_model/` includes
+date-level forecasts, errors and intervals, distribution summaries and
+coverage, paired-sample HAC/Holm diagnostics, and an input-hash manifest.
+This post-processing uses previous holdout errors as they become available;
+it is not a fit to in-sample model residuals and is not an untouched holdout
+experiment.
+
+All six raw calibrated means are closer to zero on these 509 dates and do not
+reject zero with the recorded correction; raw squared-error slopes still
+reject for all six. Targeted squared standardized-error slope tests do not
+reject after adjustment, but this neither proves constant variance nor removes
+heavy tails. Observed 90% interval coverage ranges from 87.6% to 89.4%.
+Assess interval width and score, serial dependence, extreme errors, and a
+later independent period before adopting a model.
+
 The run reads `data/refinitiv/GCc1.csv` and writes the prepared target,
 forecast attempts, summary, and source-hash manifest under `data/processed/`:
 

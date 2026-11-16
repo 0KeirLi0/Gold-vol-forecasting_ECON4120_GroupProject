@@ -2,6 +2,30 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-16 — Evaluated empirical forecast-error calibration
+- Author: User-directed implementation by Copilot
+- Type: finding
+- Context: The user chose all six baseline models and empirical past standardized errors to address mean bias and changing uncertainty. Implemented separate 252-origin relative-error bias and scale calibration, with empirical 90% intervals; prior target availability is checked and the baseline forecasts remain unchanged.
+- Outcome: On 509 common post-warm-up dates, all six calibrated raw means moved closer to zero and do not reject zero with Holm-adjusted HAC(10), but all six raw squared-error slopes still reject. No standardized squared-error slope versus the baseline forecast rejects after separate Holm adjustment; range GARCH-X standardized mean does reject (p=0.031), and HGB standardized errors remain right-skewed/heavy-tailed. Interval coverage ranges from 87.6% to 89.4%; MAE worsens for five models. These do not prove zero future bias, constant variance, or guaranteed interval coverage, and the holdout is not untouched.
+- Artifacts: `src/gold_vol_pipeline/empirical_error_model.py`, `scripts/evaluate_empirical_error_model.py`, `tests/test_empirical_error_model.py`, `reports/yang-zhang-volatility.qmd`, `REPRODUCE.md`; ignored local output `data/processed/stage2_yz_diagnostics/empirical_error_model/`.
+- Next: Samuel to review raw versus standardized errors, interval coverage and accuracy trade-offs; test on an independent later period before any model-selection decision.
+
+## 2026-11-16 — Tested forecast-error mean and variance scaling
+- Author: User-directed implementation by Copilot
+- Type: finding
+- Context: The user requested testing mean and constant-variance assumptions on the saved Stage 2 experiment errors. Tested all 32 candidates on 761 common holdout dates with HAC(10) inference and separate Holm correction across models.
+- Outcome: All six baseline models reject zero mean actual-minus-forecast error at 5%; HGB smearing, Gamma and 252-origin bias correction do not, which does not establish zero bias. A targeted regression of globally centered squared errors on forecast levels has positive slopes for all 32 and 21 adjusted rejections, including four baselines. HGB and HARX baseline slopes do not reject after correction, but non-rejection is not proof of constant variance; changing conditional means can also affect the slopes. HAC lag 4 and 20 sensitivity yields 20/19 mean and 20/28 slope rejections. These are exploratory tests on a previously examined holdout with overlapping targets and extreme errors, not comparisons of model bias or a model decision.
+- Artifacts: `src/gold_vol_pipeline/forecast_error_diagnostics.py`, `scripts/diagnose_yang_zhang_forecast_errors.py`, `tests/test_forecast_error_diagnostics.py`, `reports/yang-zhang-volatility.qmd`, `REPRODUCE.md`; local ignored outputs in `data/processed/stage2_yz_diagnostics/error_tests*/`.
+- Next: Samuel to review lag sensitivity, residual-dependence limitations, and the forecast-loss trade-offs before a model recommendation.
+
+## 2026-11-16 — Ran drift and loss-function diagnostics
+- Author: User-directed implementation by Copilot
+- Type: finding
+- Context: The user requested rolling-history, leakage-safe bias-calibration, HGB log-smearing/Gamma-loss comparisons, and QLIKE diagnostics while retaining the existing Stage 2 models.
+- Outcome: Added optional variants and evaluated them on the same 761 sequential holdout origins; all 32 candidates completed with zero fit failures. HGB 252-origin additive calibration reduced forecast-minus-actual bias magnitude from 0.821e-3 to 0.184e-3 but increased MAE from 0.002423 to 0.002489. Smearing and Gamma loss reduced RMSE and QLIKE but slightly increased MAE; no rolling window beat expanding HGB on overall MAE or RMSE. The high/low volatility-tercile results are retrospective diagnostics, and all comparisons reuse an already examined holdout, so they are descriptive and not model-selection evidence.
+- Artifacts: `src/gold_vol_pipeline/volatility_forecasting.py`, `scripts/evaluate_yang_zhang_volatility.py`, `tests/test_yang_zhang.py`, `reports/yang-zhang-volatility.qmd`, `REPRODUCE.md`; local outputs under ignored `data/processed/stage2_yz_diagnostics/`.
+- Next: Samuel to review the trade-offs and overlapping-target dependence before recommending any model change; preserve the expanding-history baseline.
+
 ## 2026-11-16 — Evaluated the three selected predictors jointly
 - Author: User-directed implementation by Copilot
 - Type: finding
