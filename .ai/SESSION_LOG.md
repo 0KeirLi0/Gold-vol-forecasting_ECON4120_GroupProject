@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-16 — Samuel's Stage 3 model comparison
+- Author: Copilot analysis at Samuel's request
+- Type: finding
+- Context: Samuel requested an out-of-sample comparison, benchmark analysis, calibration, residual checks, and workspace outputs using the available project data.
+- Outcome: The requested Stage 4 Yang–Zhang forecast artifacts were absent, so the reproducible analysis used the existing Stage 3 five-session `GC=F` realized-variance forecasts instead. Across 25 models and 443 common origins, GARCH-X with VIX had the lowest RMSE; no model beat expanding historical variance under MSE after Holm correction, while VAR had significantly higher MSE. The LSEG 1M IV series includes one prior quote of 0.132% in the test period, which inflates its QLIKE; raw and sensitivity results are clearly distinguished in the output.
+- Artifacts: `scripts/samuel_model_comparison.py`, `outputs/samuel/`.
+- Next: Samuel/team to confirm the intended target and supply the missing Stage 4 Yang–Zhang forecasts before presenting any of these results as YZ evidence; verify the flagged IV observation with the data owner.
+
 ## 2026-11-15 — Focused the Group 2 deliverable on GARCH-X
 - Author: User-directed implementation by Copilot
 - Type: handoff
