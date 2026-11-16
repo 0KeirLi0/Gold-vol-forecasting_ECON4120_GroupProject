@@ -83,6 +83,10 @@ See the [report](reports/yang-zhang-volatility.pdf) and its
 [editable source](reports/yang-zhang-volatility.qmd) for formulas, VIF and
 screen results, model specifications, metrics, and forecast graphs with the
 test period shaded. See [REPRODUCE.md](REPRODUCE.md) for reproduction steps.
+The [Stage 2 forecast-error report](reports/yang-zhang-residual-diagnostics.pdf)
+summarizes holdout error bias, tails, serial dependence, extreme misses, and
+retrospective volatility-regime performance. It analyzes out-of-sample
+forecast errors, not fitted GARCH innovations.
 
 ## Collaboration
 

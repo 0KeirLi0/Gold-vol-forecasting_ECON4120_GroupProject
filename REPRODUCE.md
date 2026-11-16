@@ -203,3 +203,30 @@ panels overlaying the no-external-predictor and joint forecasts for each
 selected model, checking target dates, origins, actuals, and successful
 forecasts before plotting. The report's numerical table and narrative are a
 snapshot; update them from the new summary before rendering a different run.
+
+## Stage 2 forecast-error diagnostics
+
+After generating the selected-predictor holdout, derive errors from the saved
+successful predictions, retain target dates common to all models, and create
+time-series, forecast-level and autocorrelation plots:
+
+```bash
+PYTHONPATH=src python scripts/analyze_yang_zhang_forecast_errors.py \
+  --processed-dir data/processed/stage2_yz_selected \
+  --figure-dir reports/figures/residual_diagnostics
+quarto render reports/yang-zhang-residual-diagnostics.qmd --to pdf
+```
+
+The script writes `forecast_errors.csv`, `forecast_error_diagnostics.csv`,
+`forecast_error_regimes.csv`, `forecast_error_extremes.csv`, and
+`forecast_error_manifest.json` beside the input forecasts. The figures are
+written under `reports/figures/residual_diagnostics/`. Regime labels are
+retrospective terciles of realized holdout volatility, not information
+available to the models at forecast time. The report summarizes
+out-of-sample forecast errors, not in-sample equation innovations;
+conditional-variance innovation diagnostics require saving fitted
+conditional variances and residuals during model estimation. Because the
+two-observation targets overlap, Ljung–Box p-values in the report are
+exploratory rather than confirmatory. The report tables are a snapshot of
+the current generated outputs; refresh them before rendering after a new
+forecast run.

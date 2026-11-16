@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-16 — Added test-branch forecast-error diagnostics
+- Author: User-directed implementation by Copilot
+- Type: finding
+- Context: The user requested a reproducible residual study focused on the `test` branch.
+- Outcome: Added descriptive diagnostics for out-of-sample forecast errors on 761 common dates from the six-model joint-predictor holdout. Errors show positive mean bias, heavy tails, and raw-error autocorrelation flags; overlapping target windows make Ljung–Box p-values exploratory. Retrospective volatility-tercile results and extreme misses are reported, with HistGradientBoosting treated as provisional. These are forecast errors, not fitted GARCH innovations, and no paired forecast-loss test or untouched holdout was performed.
+- Artifacts: `src/gold_vol_pipeline/forecast_diagnostics.py`, `scripts/analyze_yang_zhang_forecast_errors.py`, `tests/test_forecast_diagnostics.py`, `reports/yang-zhang-residual-diagnostics.qmd`, `reports/yang-zhang-residual-diagnostics.pdf`, `reports/figures/residual_diagnostics/`, `REPRODUCE.md`.
+- Next: Validate on a later pre-specified holdout and use overlap-aware paired loss inference before an operational model decision.
+
 ## 2026-11-16 — Removed calibration subsection from report
 - Author: User-directed update by Copilot
 - Type: implementation
