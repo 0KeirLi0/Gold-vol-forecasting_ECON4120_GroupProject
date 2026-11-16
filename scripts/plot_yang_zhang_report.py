@@ -7,6 +7,7 @@ from pathlib import Path
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 
@@ -205,6 +206,80 @@ def _format_dates(axis: plt.Axes) -> None:
     axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
 
 
+def create_paired_forecast_figures(
+    baseline_path: Path, selected_path: Path, summary_path: Path, output_dir: Path
+) -> list[Path]:
+    """Plot matched no-external and joint-predictor forecasts for each model."""
+    baseline = pd.read_csv(baseline_path, parse_dates=["origin_date", "target_date"])
+    selected = pd.read_csv(selected_path, parse_dates=["origin_date", "target_date"])
+    summary = pd.read_csv(summary_path).sort_values(
+        ["rank_common_MAE", "rank_common_RMSE", "model"]
+    )
+    required = {"model", "origin_date", "target_date", "actual", "forecast", "converged"}
+    for path, frame in ((baseline_path, baseline), (selected_path, selected)):
+        if not required <= set(frame.columns):
+            raise ValueError(f"{path} is missing columns: {sorted(required - set(frame.columns))}")
+        if frame.duplicated(["model", "target_date"]).any():
+            raise ValueError(f"{path} has duplicate model and target dates.")
+
+    pairs = {}
+    for model in summary["model"]:
+        left = baseline.loc[baseline["model"].eq(model)]
+        right = selected.loc[selected["model"].eq(model)]
+        if left.empty or right.empty:
+            raise ValueError(f"Forecasts missing for {model}.")
+        paired = left.merge(
+            right, on=["model", "target_date"], how="outer",
+            suffixes=("_baseline", "_joint"), indicator=True, validate="one_to_one",
+        )
+        if not paired["_merge"].eq("both").all():
+            raise ValueError(f"Forecast target dates differ for {model}.")
+        if not paired["origin_date_baseline"].eq(paired["origin_date_joint"]).all():
+            raise ValueError(f"Forecast origins differ for {model}.")
+        if not np.allclose(paired["actual_baseline"], paired["actual_joint"], rtol=1e-12, atol=1e-12):
+            raise ValueError(f"Forecast actuals differ for {model}.")
+        successful = (
+            paired["converged_baseline"].eq(True) & paired["converged_joint"].eq(True)
+            & np.isfinite(paired["forecast_baseline"]) & np.isfinite(paired["forecast_joint"])
+        )
+        if not successful.all():
+            raise ValueError(f"Unsuccessful or nonfinite paired forecasts for {model}.")
+        pairs[model] = paired.sort_values("target_date")
+
+    if not pairs:
+        raise ValueError("The selected summary contains no models.")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    paths = []
+    model_names = list(pairs)
+    for start in range(0, len(model_names), 4):
+        names = model_names[start:start + 4]
+        rows = (len(names) + 1) // 2
+        figure, axes = plt.subplots(
+            rows, 2, figsize=(12, 4 * rows), sharex=True, constrained_layout=True
+        )
+        flat_axes = np.asarray(axes).reshape(-1)
+        for axis, model in zip(flat_axes, names):
+            data = pairs[model]
+            axis.plot(data["target_date"], data["actual_baseline"], color="#34495e",
+                      linewidth=0.8, label="Actual target")
+            axis.plot(data["target_date"], data["forecast_baseline"], color="#0072b2",
+                      linewidth=0.9, label="No external predictors")
+            axis.plot(data["target_date"], data["forecast_joint"], color="#d55e00",
+                      linestyle="--", linewidth=1.0, label="Joint predictors")
+            axis.set(title=model, xlabel="Date", ylabel="Daily volatility")
+            axis.grid(axis="y", alpha=0.2)
+            _format_dates(axis)
+        for axis in flat_axes[len(names):]:
+            axis.set_visible(False)
+        flat_axes[0].legend(loc="upper left", frameon=False, fontsize=8)
+        figure.suptitle("Matched forecasts on the test period", fontsize=13)
+        path = output_dir / f"paired_forecasts_{start // 4 + 1:02d}.png"
+        figure.savefig(path, dpi=180)
+        plt.close(figure)
+        paths.append(path)
+    return paths
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -219,8 +294,20 @@ def main() -> int:
         default=Path("reports/figures/stage2_yz"),
         help="Directory for generated report figures.",
     )
+    parser.add_argument(
+        "--baseline-forecasts",
+        type=Path,
+        help="Also plot paired no-external and joint-predictor forecasts from this file.",
+    )
     args = parser.parse_args()
     paths = create_report_figures(args.processed_dir, args.output_dir)
+    if args.baseline_forecasts is not None:
+        paths.extend(create_paired_forecast_figures(
+            args.baseline_forecasts,
+            args.processed_dir / "stage2_yz_forecasts.csv",
+            args.processed_dir / "stage2_yz_summary.csv",
+            args.output_dir,
+        ))
     for path in paths:
         print(f"Saved {path}")
     return 0

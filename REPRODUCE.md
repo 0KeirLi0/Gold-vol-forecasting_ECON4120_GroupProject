@@ -192,10 +192,14 @@ Regenerate the figures and render the PDF after running the holdout:
 ```bash
 python scripts/plot_yang_zhang_report.py \
   --processed-dir data/processed/stage2_yz_selected \
-  --output-dir reports/figures/stage2_yz_selected
+  --output-dir reports/figures/stage2_yz_selected \
+  --baseline-forecasts data/processed/stage2_yz_forecasts.csv
 quarto render reports/yang-zhang-volatility.qmd
 ```
 
 Figures are saved under `reports/figures/stage2_yz_selected/`. The plotting command
-requires Matplotlib. The report's numerical table and narrative are a
+requires Matplotlib. With `--baseline-forecasts`, it also creates test-period
+panels overlaying the no-external-predictor and joint forecasts for each
+selected model, checking target dates, origins, actuals, and successful
+forecasts before plotting. The report's numerical table and narrative are a
 snapshot; update them from the new summary before rendering a different run.

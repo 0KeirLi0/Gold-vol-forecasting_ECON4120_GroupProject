@@ -2,6 +2,38 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-16 — Added paired predictor forecast plots
+- Author: User-directed implementation by Copilot
+- Type: implementation
+- Context: The user requested plotting the no-external-predictor and joint-predictor forecasts together for the same model.
+- Outcome: Added test-period paired panels for the six joint models, with matching dates, origins and actuals checked before plotting. Retained existing full-history and baseline figures; comparisons remain descriptive.
+- Artifacts: `scripts/plot_yang_zhang_report.py`, `tests/test_plot_yang_zhang_report.py`, `reports/yang-zhang-volatility.qmd`, `reports/figures/stage2_yz_selected/paired_forecasts_*.png`, `REPRODUCE.md`.
+- Next: Team to inspect visual differences alongside the existing holdout and predictor-timing caveats.
+
+## 2026-11-16 — Removed report section 5.1
+- Author: User-directed update by Copilot
+- Type: implementation
+- Context: The user requested deleting the report's drift, retransformation, and variance-loss section.
+- Outcome: Removed section 5.1 and its forecast-error testing and empirical calibration subsections from the report; the evaluation table, forecast figure, experiment code, results and reproduction instructions remain unchanged.
+- Artifacts: `reports/yang-zhang-volatility.qmd`; the separate experiment details remain in `REPRODUCE.md`.
+- Next: Team may consult the retained experiment artifacts if needed.
+
+## 2026-11-16 — Included all experiment performance results
+- Author: User-directed update by Copilot
+- Type: implementation
+- Context: The drift, retransformation, and variance-loss section described 32 candidates but displayed only HGB variant metrics.
+- Outcome: Expanded its results table to list all 32 candidates, including rolling-window and 252-origin bias-corrected variants across six model families and HGB-only smearing/Gamma experiments. Clarified the experiment scope and retained the descriptive-comparison caveats.
+- Artifacts: `reports/yang-zhang-volatility.qmd`; performance values sourced from the local `data/processed/stage2_yz_diagnostics/stage2_yz_summary.csv`.
+- Next: Team to review trade-offs and limitations before any model-selection decision.
+
+## 2026-11-16 — Expanded forecast performance comparison
+- Author: User-directed update by Copilot
+- Type: implementation
+- Context: The Stage 2 report's evaluation table showed only the six model families rerun with DXY, gold IV 1M and gold IV 1Y, omitting the broader no-external-predictor comparison.
+- Outcome: Expanded the table to all 20 no-external-predictor models and retained joint-predictor metrics for the six matched model families; joint cells are blank for models not evaluated with external predictors.
+- Artifacts: `reports/yang-zhang-volatility.qmd`; values sourced from `data/processed/stage2_yz_summary.csv` and `data/processed/stage2_yz_selected/stage2_yz_summary.csv`.
+- Next: Team to interpret the descriptive rankings with the report's holdout and model-comparison caveats.
+
 ## 2026-11-16 — Evaluated empirical forecast-error calibration
 - Author: User-directed implementation by Copilot
 - Type: finding

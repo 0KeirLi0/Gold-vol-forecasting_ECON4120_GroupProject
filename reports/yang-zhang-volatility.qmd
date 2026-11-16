@@ -452,217 +452,69 @@ are
 $$
 \operatorname{MAE}=\frac1m\sum_{i=1}^{m}|\widehat y_i-y_i|,\qquad
 \operatorname{RMSE}=
-\sqrt{\frac1m\sum_{i=1}^{m}(\widehat y_i-y_i)^2}.
+\sqrt{\frac1m\sum_{i=1}^{m}(\widehat y_i-y_i)^2},\qquad
+\operatorname{Mean\ error}=\frac1m\sum_{i=1}^{m}(\widehat y_i-y_i).
 $$
 
-All six models share 761 successful test dates, matching the original
-no-external-predictor baseline. The table shows descriptive errors before
-and after adding DXY, gold IV 1M and gold IV 1Y together; smaller is better.
-The baseline already includes the original OHLC-derived inputs.
+All 20 no-external-predictor candidates share 761 successful test dates.
+The table reports their errors and, for the six evaluated again with DXY,
+gold IV 1M and gold IV 1Y added jointly, the corresponding joint-predictor
+errors. Blank joint-predictor cells mean that no external-predictor version
+was evaluated. Smaller MAE and RMSE are better. Mean error is signed:
+negative values indicate forecasts were below actuals on average, while
+positive values indicate forecasts were above actuals on average. All
+metrics use unannualized daily-volatility units. The no-external-predictor
+baseline already includes the original OHLC-derived inputs.
 
-| Model | Baseline MAE | Joint MAE | Baseline RMSE | Joint RMSE |
-|---|---:|---:|---:|---:|
-| HARX | 0.0027112 | 0.0027579 | 0.0050913 | 0.0056250 |
-| Ridge | 0.0029126 | 0.0028301 | 0.0052572 | 0.0049478 |
-| Lasso | 0.0030210 | 0.0029199 | 0.0054931 | 0.0050886 |
-| Histogram gradient boosting | 0.0024176 | 0.0024235 | 0.0047672 | 0.0047356 |
-| Range GARCH-X | 0.0029138 | 0.0029136 | 0.0050293 | 0.0050372 |
-| VAR | 0.0030520 | 0.0028863 | 0.0054574 | 0.0050055 |
+| Model | No-ext MAE | Joint MAE | No-ext RMSE | Joint RMSE | No-ext mean error | Joint mean error |
+|---|---:|---:|---:|---:|---:|---:|
+| Histogram gradient boosting | 0.0024176 | 0.0024235 | 0.0047672 | 0.0047356 | −0.0008663 | −0.0008212 |
+| HARX | 0.0027112 | 0.0027579 | 0.0050913 | 0.0056250 | −0.0008536 | −0.0006233 |
+| GJR-GARCH | 0.0029115 |  | 0.0050209 |  | −0.0006164 |  |
+| GARCH(1,1) | 0.0029116 |  | 0.0050245 |  | −0.0006438 |  |
+| EGARCH | 0.0029122 |  | 0.0050218 |  | −0.0006208 |  |
+| Ridge | 0.0029126 | 0.0028301 | 0.0052572 | 0.0049478 | −0.0011101 | −0.0008322 |
+| Range GARCH-X | 0.0029138 | 0.0029136 | 0.0050293 | 0.0050372 | −0.0006579 | −0.0007163 |
+| Threshold GARCH | 0.0029167 |  | 0.0050275 |  | −0.0006466 |  |
+| Student-t GARCH | 0.0029209 |  | 0.0050596 |  | −0.0008700 |  |
+| ARCH(1) | 0.0029301 |  | 0.0050706 |  | −0.0007508 |  |
+| Auto-ARIMA | 0.0029679 |  | 0.0053106 |  | −0.0008862 |  |
+| HAR | 0.0029950 |  | 0.0053970 |  | −0.0011196 |  |
+| Lasso | 0.0030210 | 0.0029199 | 0.0054931 | 0.0050886 | −0.0012739 | −0.0008979 |
+| VAR | 0.0030520 | 0.0028863 | 0.0054574 | 0.0050055 | −0.0013548 | −0.0008403 |
+| ARMA(1,1) | 0.0030588 |  | 0.0054781 |  | −0.0013244 |  |
+| AR(1) | 0.0030645 |  | 0.0054824 |  | −0.0013533 |  |
+| Yang–Zhang persistence | 0.0031897 |  | 0.0054473 |  | −0.0000002 |  |
+| MA(1) | 0.0033048 |  | 0.0060261 |  | −0.0017240 |  |
+| EWMA | 0.0034447 |  | 0.0058841 |  | −0.0000625 |  |
+| Expanding mean | 0.0039063 |  | 0.0067799 |  | −0.0011854 |  |
 
-Ridge, Lasso and VAR improve on both metrics; HARX worsens on both.
-Gradient boosting and GARCH-X have mixed changes. These are joint,
-descriptive changes, not separate predictor effects or tests of statistical
-significance. The GARCH-X point forecast is its conditional mean; its
-predictor terms enter the variance recursion and affect the fitted mean
-indirectly.
-
-## Drift, retransformation, and variance-loss experiments
-
-The existing sequential expanding-history forecasts remain the baseline. The
-optional experiment below compares shorter rolling histories, a past-error
-bias correction, HGB log-target smearing, and HGB Gamma loss without replacing
-or overwriting the baseline artifacts:
-
-```bash
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=src \
-  python scripts/evaluate_yang_zhang_volatility.py --predictor-dir data/refinitiv \
-  --external-models-only --rolling-windows 252,504,756 --bias-window 252 \
-  --hgb-transform-experiments \
-  --output-dir data/processed/stage2_yz_diagnostics
-```
-
-Rolling windows are counts of valid target observations, and each variant
-still refits at every origin. The additive correction uses only prior
-sequential holdout errors (actual minus forecast), with a positive floor on
-the adjusted forecast; the first forecast has no prior error and is unchanged.
-HGB smearing uses the mean exponentiated in-sample log-target residual within
-each training window. HGB Gamma loss instead fits raw positive volatility and
-is a separate alternative. These are exploratory variants, not assumed
-improvements.
-
-The summary adds QLIKE computed on variance proxies $y_t^2$ and
-$\widehat y_t^2$ as
-$r_t-\log(r_t)-1$, where $r_t=y_t^2/\widehat y_t^2$; a tiny positive floor is
-used if an actual target is zero. It also reports MAE and forecast-minus-actual
-bias within low, middle, and high retrospective actual-volatility terciles on
-the common successful dates. Those terciles use realized outcomes and are
-diagnostic only, not forecast-time information. The log-target approach does
-not require constant variance in raw forecast errors.
-
-All 32 baseline and experimental candidates produced forecasts for the same
-761 origins with zero recorded failures. The table compares HGB transforms and
-calibration with the expanding-history HGB baseline; errors and high-tercile
-MAE are in $10^{-3}$ daily-volatility units.
-
-| HGB specification | MAE | RMSE | Mean forecast − actual | QLIKE | High-tercile MAE |
-|---|---:|---:|---:|---:|---:|
-| Expanding-history log target | 2.423 | 4.736 | −0.821 | 0.4514 | 4.273 |
-| Log target + smearing | 2.432 | 4.652 | −0.400 | 0.4105 | 4.008 |
-| Raw target + Gamma loss | 2.455 | 4.701 | −0.408 | 0.3991 | 4.028 |
-| Expanding HGB + 252-origin bias correction | 2.489 | 4.667 | −0.184 | 0.3956 | 3.922 |
-| 252-target rolling log target | 2.907 | 5.277 | −0.714 | 0.5919 | 5.042 |
-| 504-target rolling log target | 2.751 | 5.163 | −0.811 | 0.5669 | 4.777 |
-| 756-target rolling log target | 2.683 | 5.131 | −0.783 | 0.5558 | 4.692 |
-
-The 252-origin correction reduced HGB's mean forecast-minus-actual error in
-magnitude, but its MAE rose. Smearing and Gamma loss lowered RMSE and QLIKE
-while slightly raising MAE. None of the rolling-window variants beat the
-expanding HGB baseline on overall MAE or RMSE. The smearing, Gamma, and
-bias-corrected variants have lower high-tercile MAE than baseline but higher
-low-tercile MAE; rolling-window high-tercile results vary by window length.
-These are descriptive results from the same previously examined holdout, not
-independent confirmation, forecast-loss significance tests, or a
-model-selection decision.
-
-### Forecast-error mean and variance-scaling tests
-
-Using the saved 32 candidates and their 761 common successful holdout dates,
-define $e_t=y_t-\widehat y_t$. An intercept-only regression tests zero
-unconditional mean error using HAC(10) standard errors. As a *specific*
-variance-scaling diagnostic, regress $(e_t-\overline e)^2$ on the forecast
-and test a zero slope with HAC(10) standard errors. The test detects a linear
-relationship in centered squared errors with forecast levels; it is not an
-omnibus test for all forms of heteroskedasticity, and a changing conditional
-mean can also affect the squared-error slope. Both use two-sided $t$
-references and separate Holm corrections across all 32 models within each
-test family.
-
-| Model | Mean $e_t$ ($10^{-3}$) | Mean Holm p | Squared-error slope Holm p |
-|---|---:|---:|---:|
-| HARX | 0.623 | 0.0207 | 0.0740 |
-| Ridge | 0.832 | 0.0015 | 0.0116 |
-| Lasso | 0.898 | 0.0012 | 0.0048 |
-| HGB baseline | 0.821 | 0.0081 | 0.0885 |
-| Range GARCH-X | 0.716 | 0.0162 | 0.0018 |
-| VAR | 0.840 | 0.0010 | 0.0116 |
-| HGB + smearing | 0.400 | 0.5233 | 0.0885 |
-| HGB + Gamma loss | 0.408 | 0.5233 | 0.0885 |
-| HGB + 252-origin bias correction | 0.184 | 1.0000 | 0.0885 |
-
-At the 5% adjusted level, all six baseline models reject zero mean error.
-HGB with smearing, Gamma loss, and rolling bias correction does not reject
-zero mean error, but this does not prove unbiasedness or that bias reduction
-is statistically significant. The squared-error slope is positive for all
-32 candidates and significant for 21 after Holm correction, including four
-of the six baselines. The HGB and HARX baseline slope tests do not reject at
-5% after correction; this does not establish constant variance. Before Holm
-adjustment, all 32 slopes have $p<0.05$.
-
-Sensitivity checks using HAC lags 4 and 20 yield 20 and 19 mean rejections,
-and 20 and 28 slope rejections, respectively. In particular, range GARCH-X's
-mean adjusted $p$ is 0.0502 at lag 20, and HGB's slope adjusted $p$ is 0.0510.
-The targets overlap, forecast errors are serially dependent, and large
-outliers, model selection on this holdout, choice of HAC lag, and approximate
-finite-sample inference limit the conclusions. The tests do not compare
-differences in bias across models and do not imply that raw forecast errors
-must have constant variance.
-
-Reproduce the tests with:
-
-```bash
-PYTHONPATH=src python scripts/diagnose_yang_zhang_forecast_errors.py
-```
-
-The script saves full adjusted and unadjusted results and an input-hash
-manifest under `data/processed/stage2_yz_diagnostics/error_tests/`. Pass
-`--hac-lags 4` or `--hac-lags 20` and a distinct `--output-dir` to reproduce
-the sensitivity checks.
-
-### Sequential empirical error-distribution calibration
-
-This separate experiment post-processes the six expanding-history forecasts;
-it does not alter their fitted in-sample residuals or assume normally
-distributed errors. At each origin, the previous 252 available sequential
-forecasts for that model provide relative errors
-$r_i=(y_i-\widehat y_i)/\widehat y_i$. Their sample mean $\overline r_t$
-and sample standard deviation $s_{r,t}$ are computed strictly before the
-current target is observed:
-
-$$
-\widetilde y_t=\widehat y_t(1+\overline r_t),\qquad
-\widehat s_t=\widehat y_t\,s_{r,t},\qquad
-z_t=(y_t-\widetilde y_t)/\widehat s_t.
-$$
-
-The nominal 90% interval uses the 5th and 95th percentiles of those past
-relative errors, multiplied by the current baseline forecast:
-$[\widehat y_t(1+q_{.05,t}),\widehat y_t(1+q_{.95,t})]$.
-This assumes the past relative-error distribution and forecast-proportional
-scale are useful for the next origin. The first 252 forecasts are warm-up;
-the comparison below uses the remaining 509 common target dates, from
-2024-07-12 to 2026-11-10, without fitting to their current or future errors.
-
-| Model | Baseline mean error | Calibrated mean error | Baseline MAE | Calibrated MAE | 90% interval coverage |
-|---|---:|---:|---:|---:|---:|
-| HARX | 0.688 | −0.301 | 3.196 | 3.374 | 89.2% |
-| Ridge | 0.975 | −0.013 | 3.227 | 3.277 | 89.4% |
-| Lasso | 1.071 | 0.024 | 3.342 | 3.379 | 88.8% |
-| HGB | 1.016 | 0.077 | 2.839 | 2.918 | 88.6% |
-| Range GARCH-X | 1.225 | 0.297 | 3.321 | 3.270 | 87.6% |
-| VAR | 0.989 | −0.048 | 3.296 | 3.341 | 89.0% |
-
-Errors and MAE are in $10^{-3}$ daily-volatility units, with error defined
-as actual minus forecast. All six calibrated raw-error means fail to reject
-zero using HAC(10) with Holm adjustment over the 12 baseline and calibrated
-models; this does not prove unbiasedness or establish a significant
-improvement. MAE increases for five models, and the HARX RMSE also increases.
-The estimated interval coverage is descriptive, not a guarantee of
-conditional or future coverage.
-
-All six calibrated **raw** squared-error slopes versus the calibrated
-forecast still reject zero after Holm correction, so the intervention has
-not made raw errors homoskedastic. When errors are standardized by the
-forecast-relative scale, none of six targeted squared-error slope tests
-versus the baseline forecast rejects after separate Holm adjustment; this is
-not proof that standardized errors have constant conditional variance. The
-standardized mean for range GARCH-X remains significant (adjusted $p=0.031$).
-The standardized distributions remain right-skewed and heavy-tailed: for HGB,
-sample skewness is 3.65 and excess kurtosis is 23.13. Ljung–Box results in
-the output are descriptive and unadjusted; overlapping targets and estimated
-scales complicate their null calibration. No distributional or variance
-assumption is established by failure to reject these tests. The holdout has
-already informed model exploration, so a later independent period is needed.
-
-Reproduce the separate post-processing experiment after generating the
-saved baseline forecasts:
-
-```bash
-PYTHONPATH=src python scripts/evaluate_empirical_error_model.py
-```
-
-The local output contains date-level calibrated forecasts, standardized
-errors and intervals, a distribution/coverage summary, HAC/Holm test results
-and an input-hash manifest. It is not a replacement for the existing model
-forecasts or a team model-selection decision.
+Among the six models with joint-predictor results, Ridge, Lasso and VAR
+improve on both metrics; HARX worsens on both. Gradient boosting and GARCH-X
+have mixed changes. These are joint, descriptive changes, not separate
+predictor effects or tests of statistical significance. The GARCH-X point
+forecast is its conditional mean; its predictor terms enter the variance
+recursion and affect the fitted mean indirectly.
 
 ![Actual and best-five model forecasts. Shading indicates the chronological test period.](figures/stage2_yz_selected/top5_forecasts.png)
 
 # Forecast graphs
 
 Each panel below plots the observed target and its sequential one-step
-forecasts. The orange shaded area is the test period; forecasts are shown
-only there. All panels use the same time axis to show the training history
-and holdout together.
+forecasts. The paired panels focus on the test period; the later full-history
+panels shade the test period in orange.
+
+The following paired panels focus on the test period and overlay the
+no-external-predictor and joint-predictor forecasts for the same model.
+Both are compared with the same actual target; the joint predictors are DXY,
+gold IV 1M and gold IV 1Y. These plots are descriptive, not tests of
+forecast-loss differences.
+
+![Paired forecasts for joint models ranked 1–4 by MAE.](figures/stage2_yz_selected/paired_forecasts_01.png)
+
+![Paired forecasts for joint models ranked 5–6 by MAE.](figures/stage2_yz_selected/paired_forecasts_02.png)
+
+The following panels show the joint-predictor forecasts and full target history.
 
 ![Forecasts for models ranked 1–4 by MAE.](figures/stage2_yz_selected/forecasts_01.png)
 
@@ -714,7 +566,8 @@ report:
 ```bash
 python scripts/plot_yang_zhang_report.py \
   --processed-dir data/processed/stage2_yz_selected \
-  --output-dir reports/figures/stage2_yz_selected
+  --output-dir reports/figures/stage2_yz_selected \
+  --baseline-forecasts data/processed/stage2_yz_forecasts.csv
 quarto render reports/yang-zhang-volatility.qmd
 ```
 
