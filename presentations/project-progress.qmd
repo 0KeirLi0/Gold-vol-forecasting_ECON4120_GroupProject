@@ -31,7 +31,7 @@ Each round should hand off documented inputs, evidence, limitations, and a next-
 |---|---|---|
 | Infrastructure | The gold-pipeline prototype uses Yahoo `GC=F` (COMEX continuous futures) and supports labeled local CSV input. A Stage 2 daily predictor panel downloads Yahoo DXY, S&P 500, and VIX observations plus FRED Treasury-yield, breakeven-inflation, and WTI series. An optional LSEG importer now builds a separate dataset from local Workspace exports, including `GCc1`, DXY, S&P 500, VIX, Treasury quotes, and gold-option quotes; this does not change the working Yahoo/FRED sources. Raw data and manifests remain Git-ignored. | Yahoo/FRED panel available; LSEG import is a partial alternative pending source-use, availability, and model-input review |
 | Model development | The integrated Stage 3 run compares 25 candidates on 443 common successful origins from 445 requested dates. It includes HK auto-ARIMA, VAR, GJR-GARCH, asymmetric EGARCH, Student-t GARCH, lagged-VIX GARCH-X and quantile GARCH in the same evaluation; 18 earlier forecasts are reused. The quantile model failed at two origins. GARCH-X holds VIX fixed during each forecast horizon. | Integrated comparison complete; full data provenance and failed fits retained |
-| Model analysis | GARCH-X has the lowest MSE (9.492e-7; RMSE 0.000974); asymmetric EGARCH has the lowest MAE and QLIKE. No candidate significantly beats historical variance after Holm adjustment. | Current report focus by user direction: GARCH-X plus seven basic benchmarks. This is not a confirmed team-wide decision; retain uncertainty and review on a later holdout. |
+| Model analysis | For the five-session Yahoo/FRED comparison, GARCH-X has the lowest MSE (9.492e-7; RMSE 0.000974); asymmetric EGARCH has the lowest MAE and QLIKE. No candidate significantly beats historical variance after Holm adjustment. A separate LSEG `GCc1` next-session Yang-Zhang evaluation covers 761 test dates; histogram gradient boosting leads MAE and RMSE and significantly beats persistence, HAR, and GARCH(1,1) under absolute loss after Holm correction. | Keep the two targets and samples distinct. The Yang-Zhang result does not revise the provisional five-session GARCH-X focus or establish a team-wide model choice; use a later untouched holdout. |
 
 ## GARCH estimation update
 
@@ -57,7 +57,7 @@ Each round should hand off documented inputs, evidence, limitations, and a next-
 | Enoch | Confirm source-date freshness and the common-origin output in `data/processed/evaluation_forecasts.csv`; hand the Stage 3 summary and its separate-sample caveat to Samuel. Preserve prior baselines and review whether the partial LSEG panel warrants follow-up. |
 | Team | Confirm that the working `GC=F` continuous futures series and selected predictor definitions answer the research question; confirm data-use permissions before sharing observations. |
 | Keir | Maintain the API/CSV pipeline, its local provenance manifest, and source-date alignment; investigate LSEG's missing volume, breakeven, and WTI fields and central-bank-demand publication timing before adding these inputs. |
-| Samuel | Review the provisional MSE-based GARCH-X recommendation, the EGARCH MAE/QLIKE trade-off, failure exclusions, and DM/Mincer-Zarnowitz evidence; assess robustness on a later holdout. |
+| Samuel | Review the provisional MSE-based GARCH-X recommendation and the separate Yang-Zhang findings with Enoch and Keir; keep the targets distinct and assess robustness on a later holdout. |
 
 ## Git submissions by team member
 

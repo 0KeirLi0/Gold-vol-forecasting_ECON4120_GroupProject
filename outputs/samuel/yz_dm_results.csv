@@ -1,0 +1,253 @@
+family,candidate,benchmark,loss,horizon,bandwidth,n,mean_loss_difference_candidate_minus_benchmark,dm_hln_statistic,p_raw,p_holm,direction
+base_models_vs_fixed_benchmarks,ar1,garch11,absolute_error,1,1,761,0.0001529096703507962,2.828490390208771,0.004799944334951519,0.1487982743834971,candidate higher loss
+base_models_vs_fixed_benchmarks,ar1,har,absolute_error,1,1,761,6.958491510960153e-05,2.003100690374487,0.0455211368943527,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,ar1,yang_zhang_persistence,absolute_error,1,1,761,-0.0001251519083369568,-1.2769217713434873,0.20201986036862782,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,arch1,garch11,absolute_error,1,1,761,1.8466847455733642e-05,1.736383627524785,0.08290125216168628,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,arch1,har,absolute_error,1,1,761,-6.485790778546097e-05,-1.1670766444771956,0.24354546467835878,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,arch1,yang_zhang_persistence,absolute_error,1,1,761,-0.0002595947312320193,-3.30341196523983,0.0009998678589467566,0.032995639345242966,candidate lower loss
+base_models_vs_fixed_benchmarks,arma11,garch11,absolute_error,1,1,761,0.00014717803933962374,2.737658478491018,0.0063325209408278535,0.18530886139151853,candidate higher loss
+base_models_vs_fixed_benchmarks,arma11,har,absolute_error,1,1,761,6.385328409842912e-05,1.9534064113280905,0.05113801906227933,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,arma11,yang_zhang_persistence,absolute_error,1,1,761,-0.0001308835393481292,-1.3363750543621213,0.18182667005306355,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,auto_arima_hk,garch11,absolute_error,1,1,761,5.622582638118045e-05,0.8158059394058773,0.4148667387450081,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,auto_arima_hk,har,absolute_error,1,1,761,-2.7098928860014197e-05,-0.9052441439565843,0.36562293909225996,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,auto_arima_hk,yang_zhang_persistence,absolute_error,1,1,761,-0.00022183575230657254,-2.343242813213164,0.019373860614972097,0.5230942366042466,candidate lower loss
+base_models_vs_fixed_benchmarks,egarch,garch11,absolute_error,1,1,761,5.131349287774194e-07,0.47108329032809393,0.6377164431016067,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,egarch,har,absolute_error,1,1,761,-8.28116203124172e-05,-1.3422444326184357,0.17991756936382844,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,egarch,yang_zhang_persistence,absolute_error,1,1,761,-0.00027754844375897555,-3.902156687990398,0.00010379458022842038,0.004047988628908395,candidate lower loss
+base_models_vs_fixed_benchmarks,ewma,garch11,absolute_error,1,1,761,0.000533070673256745,4.6066923943193565,4.796202517370922e-06,0.00020623670824694966,candidate higher loss
+base_models_vs_fixed_benchmarks,ewma,har,absolute_error,1,1,761,0.00044974591801555044,5.652560209630793,2.2365299259320025e-08,1.006438466669401e-06,candidate higher loss
+base_models_vs_fixed_benchmarks,ewma,yang_zhang_persistence,absolute_error,1,1,761,0.0002550090945689921,1.9084886936964878,0.056704550797393054,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,expanding_mean,garch11,absolute_error,1,1,761,0.0009946115113821246,7.029669637399839,4.6133171477732164e-12,2.214392230931144e-10,candidate higher loss
+base_models_vs_fixed_benchmarks,expanding_mean,har,absolute_error,1,1,761,0.00091128675614093,8.340936308190644,3.4542419949837334e-16,1.761663417441704e-14,candidate higher loss
+base_models_vs_fixed_benchmarks,expanding_mean,yang_zhang_persistence,absolute_error,1,1,761,0.0007165499326943717,4.310811299912774,1.8406142379550657e-05,0.0007546518375615769,candidate higher loss
+base_models_vs_fixed_benchmarks,garch_t,garch11,absolute_error,1,1,761,9.281990128988677e-06,1.1292028831124528,0.25916854672056966,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,garch_t,har,absolute_error,1,1,761,-7.404276511220597e-05,-1.2336295664306636,0.21772234515247632,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,garch_t,yang_zhang_persistence,absolute_error,1,1,761,-0.00026877958855876425,-3.6805687680683357,0.00024916094811107777,0.008471472235776644,candidate lower loss
+base_models_vs_fixed_benchmarks,garchx_ohlc_range,garch11,absolute_error,1,1,761,2.1734195188812e-06,0.3244410743134502,0.7456934027704046,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,garchx_ohlc_range,har,absolute_error,1,1,761,-8.115133572231342e-05,-1.3365868569102195,0.18175751731875697,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,garchx_ohlc_range,yang_zhang_persistence,absolute_error,1,1,761,-0.0002758881591688718,-3.786881218281845,0.00016458701519946877,0.005925132547180876,candidate lower loss
+base_models_vs_fixed_benchmarks,gjr_garch,garch11,absolute_error,1,1,761,-1.7769460254232673e-07,-0.1737538750227981,0.8621051642354814,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,gjr_garch,har,absolute_error,1,1,761,-8.350244984373698e-05,-1.361390030366705,0.1737939323913533,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,gjr_garch,yang_zhang_persistence,absolute_error,1,1,761,-0.00027823927329029535,-3.8905508725146567,0.00010878421822757885,0.004133800292647996,candidate lower loss
+base_models_vs_fixed_benchmarks,harx_ohlc,garch11,absolute_error,1,1,761,-0.00020042650327713104,-2.745910983816748,0.006176962046383951,0.18530886139151853,candidate lower loss
+base_models_vs_fixed_benchmarks,harx_ohlc,har,absolute_error,1,1,761,-0.00028375125851832567,-4.445159075137277,1.0090882223560915e-05,0.00042381705338955845,candidate lower loss
+base_models_vs_fixed_benchmarks,harx_ohlc,yang_zhang_persistence,absolute_error,1,1,761,-0.00047848808196488394,-5.277389349901518,1.7111046865693494e-07,7.528860620905138e-06,candidate lower loss
+base_models_vs_fixed_benchmarks,hist_gradient_boosting_ohlc,garch11,absolute_error,1,1,761,-0.0004939928462174407,-6.710288813208768,3.796743242044223e-11,1.7844693237607847e-09,candidate lower loss
+base_models_vs_fixed_benchmarks,hist_gradient_boosting_ohlc,har,absolute_error,1,1,761,-0.0005773176014586353,-8.091014400988094,2.339506405974599e-15,1.1463581389275535e-13,candidate lower loss
+base_models_vs_fixed_benchmarks,hist_gradient_boosting_ohlc,yang_zhang_persistence,absolute_error,1,1,761,-0.0007720544249051936,-8.141950942275805,1.5902546093072406e-15,7.951273046536203e-14,candidate lower loss
+base_models_vs_fixed_benchmarks,lasso_ohlc,garch11,absolute_error,1,1,761,0.00010939192898134611,1.6894689098816997,0.09153974286923938,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,lasso_ohlc,har,absolute_error,1,1,761,2.6067173740151497e-05,1.7135659913598718,0.08701624974560401,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,lasso_ohlc,yang_zhang_persistence,absolute_error,1,1,761,-0.00016866964970640682,-1.653961063077412,0.09854835419730949,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,ma1,garch11,absolute_error,1,1,761,0.0003932026110519182,3.8548926381850164,0.00012557125652570424,0.004646136491451056,candidate higher loss
+base_models_vs_fixed_benchmarks,ma1,har,absolute_error,1,1,761,0.00030987785581072357,4.2613546839332805,2.2872099295889826e-05,0.000914883971835593,candidate higher loss
+base_models_vs_fixed_benchmarks,ma1,yang_zhang_persistence,absolute_error,1,1,761,0.00011514103236416522,0.8797185420701692,0.37928987540298886,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,quantile_garch,garch11,absolute_error,1,1,761,5.019460034977271e-06,1.4252709545940718,0.15448943858168343,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,quantile_garch,har,absolute_error,1,1,761,-7.830529520621737e-05,-1.283873396452882,0.1995775293868646,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,quantile_garch,yang_zhang_persistence,absolute_error,1,1,761,-0.00027304211865277573,-3.777527835781493,0.00017077148868371443,0.005977002103930006,candidate lower loss
+base_models_vs_fixed_benchmarks,ridge_ohlc,garch11,absolute_error,1,1,761,9.965869720857808e-07,0.01841947511305014,0.9853090506202045,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,ridge_ohlc,har,absolute_error,1,1,761,-8.232816826910884e-05,-5.93307962631135,4.514999540070811e-09,2.076899788432573e-07,candidate lower loss
+base_models_vs_fixed_benchmarks,ridge_ohlc,yang_zhang_persistence,absolute_error,1,1,761,-0.0002770649917156672,-2.9523226014494943,0.003251086381761803,0.1040347642163777,candidate lower loss
+base_models_vs_fixed_benchmarks,var_ohlc,garch11,absolute_error,1,1,761,0.00014034364287592623,2.711899800028885,0.006841051377717097,0.19154943857607873,candidate higher loss
+base_models_vs_fixed_benchmarks,var_ohlc,har,absolute_error,1,1,761,5.701888763473162e-05,1.5776733634487232,0.11505678449277514,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,var_ohlc,yang_zhang_persistence,absolute_error,1,1,761,-0.0001377179358118267,-1.436023094615009,0.15140723460913416,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,ar1,garch11,absolute_error,1,4,761,0.0001529096703507962,2.695856560233766,0.007176072669722835,0.2081061074219622,candidate higher loss
+base_models_vs_fixed_benchmarks,ar1,har,absolute_error,1,4,761,6.958491510960153e-05,2.0629050357572325,0.039460839779196746,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,ar1,yang_zhang_persistence,absolute_error,1,4,761,-0.0001251519083369568,-1.5022410365950363,0.133450237473223,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,arch1,garch11,absolute_error,1,4,761,1.8466847455733642e-05,1.9070954916920666,0.05688498379784784,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,arch1,har,absolute_error,1,4,761,-6.485790778546097e-05,-1.143915236473568,0.25301895452896106,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,arch1,yang_zhang_persistence,absolute_error,1,4,761,-0.0002595947312320193,-3.902169585222309,0.0001037891577346069,0.0036326205207112415,candidate lower loss
+base_models_vs_fixed_benchmarks,arma11,garch11,absolute_error,1,4,761,0.00014717803933962374,2.73823128728005,0.006321610528425563,0.1896483158527669,candidate higher loss
+base_models_vs_fixed_benchmarks,arma11,har,absolute_error,1,4,761,6.385328409842912e-05,2.070662442090982,0.0387274546205178,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,arma11,yang_zhang_persistence,absolute_error,1,4,761,-0.0001308835393481292,-1.6071461768282358,0.10843765389118937,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,auto_arima_hk,garch11,absolute_error,1,4,761,5.622582638118045e-05,0.7956923055639323,0.42645934507001737,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,auto_arima_hk,har,absolute_error,1,4,761,-2.7098928860014197e-05,-0.9079998496474777,0.3641661232963252,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,auto_arima_hk,yang_zhang_persistence,absolute_error,1,4,761,-0.00022183575230657254,-2.5596823546170877,0.010669168847800992,0.2987367277384278,candidate lower loss
+base_models_vs_fixed_benchmarks,egarch,garch11,absolute_error,1,4,761,5.131349287774194e-07,0.5271618481354333,0.5982350408790512,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,egarch,har,absolute_error,1,4,761,-8.28116203124172e-05,-1.3194460152114746,0.18741739284807188,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,egarch,yang_zhang_persistence,absolute_error,1,4,761,-0.00027754844375897555,-4.500850290690974,7.828690557253788e-06,0.0003288050034046591,candidate lower loss
+base_models_vs_fixed_benchmarks,ewma,garch11,absolute_error,1,4,761,0.000533070673256745,4.525821706995852,6.980267385147886e-06,0.0003001514975613591,candidate higher loss
+base_models_vs_fixed_benchmarks,ewma,har,absolute_error,1,4,761,0.00044974591801555044,5.20183794741189,2.540137099724015e-07,1.1176603238785666e-05,candidate higher loss
+base_models_vs_fixed_benchmarks,ewma,yang_zhang_persistence,absolute_error,1,4,761,0.0002550090945689921,1.9798731007895651,0.048078126164591395,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,expanding_mean,garch11,absolute_error,1,4,761,0.0009946115113821246,5.99640561408387,3.117270452287996e-09,1.465117112575358e-07,candidate higher loss
+base_models_vs_fixed_benchmarks,expanding_mean,har,absolute_error,1,4,761,0.00091128675614093,6.928759218343822,9.059827906572485e-12,4.3487173951547923e-10,candidate higher loss
+base_models_vs_fixed_benchmarks,expanding_mean,yang_zhang_persistence,absolute_error,1,4,761,0.0007165499326943717,4.015831217387856,6.51167557373655e-05,0.002344203206545158,candidate higher loss
+base_models_vs_fixed_benchmarks,garch_t,garch11,absolute_error,1,4,761,9.281990128988677e-06,1.1681257633672952,0.2431223454890883,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,garch_t,har,absolute_error,1,4,761,-7.404276511220597e-05,-1.2219954942329119,0.2220882025766102,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,garch_t,yang_zhang_persistence,absolute_error,1,4,761,-0.00026877958855876425,-4.320592437232327,1.7627581133731668e-05,0.0006698480830818034,candidate lower loss
+base_models_vs_fixed_benchmarks,garchx_ohlc_range,garch11,absolute_error,1,4,761,2.1734195188812e-06,0.30699672415398765,0.7589299612324188,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,garchx_ohlc_range,har,absolute_error,1,4,761,-8.115133572231342e-05,-1.322880886690233,0.18627288262969552,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,garchx_ohlc_range,yang_zhang_persistence,absolute_error,1,4,761,-0.0002758881591688718,-4.295837324876443,1.9661947708552985e-05,0.0007274920652164604,candidate lower loss
+base_models_vs_fixed_benchmarks,gjr_garch,garch11,absolute_error,1,4,761,-1.7769460254232673e-07,-0.17745064904025076,0.8592017085340067,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,gjr_garch,har,absolute_error,1,4,761,-8.350244984373698e-05,-1.3358534701040463,0.18199704873130765,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,gjr_garch,yang_zhang_persistence,absolute_error,1,4,761,-0.00027823927329029535,-4.495490765498388,8.023244093479144e-06,0.0003289530078326449,candidate lower loss
+base_models_vs_fixed_benchmarks,harx_ohlc,garch11,absolute_error,1,4,761,-0.00020042650327713104,-2.8027542110717847,0.005195859138717328,0.16107163330023716,candidate lower loss
+base_models_vs_fixed_benchmarks,harx_ohlc,har,absolute_error,1,4,761,-0.00028375125851832567,-4.401827466282721,1.2270986190668307e-05,0.0004908394476267323,candidate lower loss
+base_models_vs_fixed_benchmarks,harx_ohlc,yang_zhang_persistence,absolute_error,1,4,761,-0.00047848808196488394,-5.810504845124181,9.159652674102399e-09,4.213440230087103e-07,candidate lower loss
+base_models_vs_fixed_benchmarks,hist_gradient_boosting_ohlc,garch11,absolute_error,1,4,761,-0.0004939928462174407,-6.957536748519546,7.479904215806576e-12,3.6651530657452223e-10,candidate lower loss
+base_models_vs_fixed_benchmarks,hist_gradient_boosting_ohlc,har,absolute_error,1,4,761,-0.0005773176014586353,-7.586134049692942,9.643576162074321e-14,4.821788081037161e-12,candidate lower loss
+base_models_vs_fixed_benchmarks,hist_gradient_boosting_ohlc,yang_zhang_persistence,absolute_error,1,4,761,-0.0007720544249051936,-8.503974400121171,9.670205912727414e-17,4.9318050154909816e-15,candidate lower loss
+base_models_vs_fixed_benchmarks,lasso_ohlc,garch11,absolute_error,1,4,761,0.00010939192898134611,1.6045004164442385,0.10901923387067072,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,lasso_ohlc,har,absolute_error,1,4,761,2.6067173740151497e-05,1.6649718620320304,0.09633052091633876,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,lasso_ohlc,yang_zhang_persistence,absolute_error,1,4,761,-0.00016866964970640682,-1.8626149545554642,0.06290210170941997,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,ma1,garch11,absolute_error,1,4,761,0.0003932026110519182,3.2797831519007983,0.0010861991284505546,0.03475837211041775,candidate higher loss
+base_models_vs_fixed_benchmarks,ma1,har,absolute_error,1,4,761,0.00030987785581072357,3.589263875539234,0.00035289101385707833,0.011998294471140663,candidate higher loss
+base_models_vs_fixed_benchmarks,ma1,yang_zhang_persistence,absolute_error,1,4,761,0.00011514103236416522,0.8636729473706869,0.38804006086765364,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,quantile_garch,garch11,absolute_error,1,4,761,5.019460034977271e-06,1.5140216194139753,0.13043609954129085,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,quantile_garch,har,absolute_error,1,4,761,-7.830529520621737e-05,-1.265671312533347,0.20601864426996871,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,quantile_garch,yang_zhang_persistence,absolute_error,1,4,761,-0.00027304211865277573,-4.377213612915158,1.3702908633680046e-05,0.0005344134367135218,candidate lower loss
+base_models_vs_fixed_benchmarks,ridge_ohlc,garch11,absolute_error,1,4,761,9.965869720857808e-07,0.018552527151831203,0.9852029435236229,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,ridge_ohlc,har,absolute_error,1,4,761,-8.232816826910884e-05,-5.259141680207563,1.8832784364689172e-07,8.474752964110127e-06,candidate lower loss
+base_models_vs_fixed_benchmarks,ridge_ohlc,yang_zhang_persistence,absolute_error,1,4,761,-0.0002770649917156672,-3.401459527187873,0.0007053104541171431,0.023275244985865723,candidate lower loss
+base_models_vs_fixed_benchmarks,var_ohlc,garch11,absolute_error,1,4,761,0.00014034364287592623,2.556980528738699,0.010751665526374323,0.2987367277384278,candidate higher loss
+base_models_vs_fixed_benchmarks,var_ohlc,har,absolute_error,1,4,761,5.701888763473162e-05,1.6410425888262454,0.10120231726960875,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,var_ohlc,yang_zhang_persistence,absolute_error,1,4,761,-0.0001377179358118267,-1.6997318358562492,0.0895905588816548,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,ar1,garch11,squared_error,1,1,761,4.81108778382537e-06,2.4658916768156436,0.01388705262415188,0.5138209470936196,candidate higher loss
+base_models_vs_fixed_benchmarks,ar1,har,squared_error,1,1,761,9.292007311768731e-07,1.7103791276111229,0.08760390586593018,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,ar1,yang_zhang_persistence,squared_error,1,1,761,3.839190318739205e-07,0.13655208454258613,0.8914210157955724,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,arch1,garch11,squared_error,1,1,761,4.6546910880943833e-07,1.7463976137910258,0.08114588843677076,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,arch1,har,squared_error,1,1,761,-3.4164179438390577e-06,-1.8095132196510153,0.07076625967453277,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,arch1,yang_zhang_persistence,squared_error,1,1,761,-3.9616996431420095e-06,-1.9407495052625063,0.05265810844734706,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,arma11,garch11,squared_error,1,1,761,4.764181136414265e-06,2.394200119354928,0.016898049325372925,0.6083297757134253,candidate higher loss
+base_models_vs_fixed_benchmarks,arma11,har,squared_error,1,1,761,8.822940837657687e-07,1.7327358923323242,0.08354827925732258,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,arma11,yang_zhang_persistence,squared_error,1,1,761,3.3701238446281673e-07,0.11920430648042916,0.9051449961902449,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,auto_arima_hk,garch11,squared_error,1,1,761,2.956605252355732e-06,1.491267958755334,0.13630608801173877,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,auto_arima_hk,har,squared_error,1,1,761,-9.252818002927647e-07,-1.9083612340901699,0.05672103818041006,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,auto_arima_hk,yang_zhang_persistence,squared_error,1,1,761,-1.4705634995957161e-06,-0.5514529695181086,0.5814852889359097,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,egarch,garch11,squared_error,1,1,761,-2.723395631604721e-08,-1.4339654663575325,0.1519934130709456,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,egarch,har,squared_error,1,1,761,-3.909121008964545e-06,-1.8574511670477163,0.06363360451008095,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,egarch,yang_zhang_persistence,squared_error,1,1,761,-4.454402708267496e-06,-2.371419775010745,0.01796821832267479,0.6288876412936176,candidate lower loss
+base_models_vs_fixed_benchmarks,ewma,garch11,squared_error,1,1,761,9.377429289253307e-06,2.664987558007861,0.007862477471359345,0.32236157632573315,candidate higher loss
+base_models_vs_fixed_benchmarks,ewma,har,squared_error,1,1,761,5.495542236604809e-06,3.3128793615188084,0.0009670987676969286,0.04351944454636179,candidate higher loss
+base_models_vs_fixed_benchmarks,ewma,yang_zhang_persistence,squared_error,1,1,761,4.950260537301858e-06,1.2994585005364896,0.19418065754701164,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,expanding_mean,garch11,squared_error,1,1,761,2.072092639258143e-05,3.4615383413139846,0.000567106005980803,0.026086876275116938,candidate higher loss
+base_models_vs_fixed_benchmarks,expanding_mean,har,squared_error,1,1,761,1.6839039339932932e-05,4.11296442385596,4.332249856235267e-05,0.0021228024295552807,candidate higher loss
+base_models_vs_fixed_benchmarks,expanding_mean,yang_zhang_persistence,squared_error,1,1,761,1.6293757640629977e-05,2.65568864645064,0.008080499286676555,0.3232199714670622,candidate higher loss
+base_models_vs_fixed_benchmarks,garch_t,garch11,squared_error,1,1,761,3.536320619851159e-07,4.08846709134056,4.8049872406454674e-05,0.0023063938755098243,candidate higher loss
+base_models_vs_fixed_benchmarks,garch_t,har,squared_error,1,1,761,-3.5282549906633815e-06,-1.72180724697838,0.08551133977553758,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,garch_t,yang_zhang_persistence,squared_error,1,1,761,-4.073536689966332e-06,-2.110686175849742,0.0351253820332236,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,garchx_ohlc_range,garch11,squared_error,1,1,761,4.780678075726765e-08,0.749842567682742,0.45358157845966635,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,garchx_ohlc_range,har,squared_error,1,1,761,-3.834080271891229e-06,-1.8344579006976351,0.06697681382874755,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,garchx_ohlc_range,yang_zhang_persistence,squared_error,1,1,761,-4.379361971194181e-06,-2.3114100936398887,0.021076856580909967,0.674459410589119,candidate lower loss
+base_models_vs_fixed_benchmarks,gjr_garch,garch11,squared_error,1,1,761,-3.665997492269166e-08,-4.180921321408308,3.241354783012854e-05,0.001620677391506427,candidate lower loss
+base_models_vs_fixed_benchmarks,gjr_garch,har,squared_error,1,1,761,-3.9185470275711885e-06,-1.8709572531702343,0.06173505572528886,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,gjr_garch,yang_zhang_persistence,squared_error,1,1,761,-4.46382872687414e-06,-2.364309523996881,0.0183142068843606,0.6288876412936176,candidate lower loss
+base_models_vs_fixed_benchmarks,harx_ohlc,garch11,squared_error,1,1,761,6.76011117075898e-07,0.32714948743851247,0.7436449086972647,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,harx_ohlc,har,squared_error,1,1,761,-3.2058759355725986e-06,-1.9156764622732712,0.05578123166639426,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,harx_ohlc,yang_zhang_persistence,squared_error,1,1,761,-3.75115763487555e-06,-1.5239046966590373,0.12794850458798931,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,hist_gradient_boosting_ohlc,garch11,squared_error,1,1,761,-2.5190999766780648e-06,-1.5661266595657681,0.117735223247824,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,hist_gradient_boosting_ohlc,har,squared_error,1,1,761,-6.400987029326561e-06,-4.87560481820413,1.3212856476529644e-06,6.738556803030119e-05,candidate lower loss
+base_models_vs_fixed_benchmarks,hist_gradient_boosting_ohlc,yang_zhang_persistence,squared_error,1,1,761,-6.946268728629512e-06,-3.036503619844161,0.00247518045900474,0.10890794019620856,candidate lower loss
+base_models_vs_fixed_benchmarks,lasso_ohlc,garch11,squared_error,1,1,761,4.9288312117919275e-06,2.0754798714203138,0.038277880885575766,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,lasso_ohlc,har,squared_error,1,1,761,1.0469441591434311e-06,2.911806626571591,0.0036986622369110283,0.1553438139502632,candidate higher loss
+base_models_vs_fixed_benchmarks,lasso_ohlc,yang_zhang_persistence,squared_error,1,1,761,5.016624598404789e-07,0.16340584485199108,0.8702423429498339,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,ma1,garch11,squared_error,1,1,761,1.1068545270471695e-05,3.0082387847885794,0.0027144071707581306,0.11671950834259961,candidate higher loss
+base_models_vs_fixed_benchmarks,ma1,har,squared_error,1,1,761,7.186658217823197e-06,3.8209755077435776,0.00014378516109416866,0.006757902571425927,candidate higher loss
+base_models_vs_fixed_benchmarks,ma1,yang_zhang_persistence,squared_error,1,1,761,6.641376518520247e-06,1.6426369034789763,0.10087172870994596,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,quantile_garch,garch11,squared_error,1,1,761,2.9773479702044572e-08,0.7833965062084046,0.43363836340834866,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,quantile_garch,har,squared_error,1,1,761,-3.852113572946453e-06,-1.8422526838911197,0.06582758312495429,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,quantile_garch,yang_zhang_persistence,squared_error,1,1,761,-4.397395272249404e-06,-2.323850245593932,0.020396367125242735,0.6730801151330102,candidate lower loss
+base_models_vs_fixed_benchmarks,ridge_ohlc,garch11,squared_error,1,1,761,2.392594837622192e-06,1.504878845865793,0.13277068762431488,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,ridge_ohlc,har,squared_error,1,1,761,-1.4892922150263043e-06,-2.572981600762114,0.010271259035872792,0.4005791023990389,candidate lower loss
+base_models_vs_fixed_benchmarks,ridge_ohlc,yang_zhang_persistence,squared_error,1,1,761,-2.0345739143292557e-06,-0.7889379502198756,0.4303943086588749,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,var_ohlc,garch11,squared_error,1,1,761,4.5371199230807465e-06,2.515412744702436,0.01209447545877978,0.4595900674336316,candidate higher loss
+base_models_vs_fixed_benchmarks,var_ohlc,har,squared_error,1,1,761,6.552328704322493e-07,1.002679345727028,0.3163347277106103,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,var_ohlc,yang_zhang_persistence,squared_error,1,1,761,1.0995117112929794e-07,0.040741903487192956,0.9675123554614867,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,ar1,garch11,squared_error,1,4,761,4.81108778382537e-06,2.211106066179723,0.027325463533057193,0.8485350174695286,candidate higher loss
+base_models_vs_fixed_benchmarks,ar1,har,squared_error,1,4,761,9.292007311768731e-07,1.7008407539232908,0.08938196752399459,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,ar1,yang_zhang_persistence,squared_error,1,4,761,3.839190318739205e-07,0.16368941288506633,0.870019171459313,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,arch1,garch11,squared_error,1,4,761,4.6546910880943833e-07,1.6831995117893295,0.09274716504357194,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,arch1,har,squared_error,1,4,761,-3.4164179438390577e-06,-1.737490044397075,0.08270580456139669,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,arch1,yang_zhang_persistence,squared_error,1,4,761,-3.9616996431420095e-06,-2.562625975220659,0.01057993166816131,0.3914574717219685,candidate lower loss
+base_models_vs_fixed_benchmarks,arma11,garch11,squared_error,1,4,761,4.764181136414265e-06,2.2124976856534806,0.02722885178178012,0.8485350174695286,candidate higher loss
+base_models_vs_fixed_benchmarks,arma11,har,squared_error,1,4,761,8.822940837657687e-07,1.748405885035357,0.08079752125056572,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,arma11,yang_zhang_persistence,squared_error,1,4,761,3.3701238446281673e-07,0.14542117700383522,0.8844169038502288,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,auto_arima_hk,garch11,squared_error,1,4,761,2.956605252355732e-06,1.4419673157395,0.1497235331086079,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,auto_arima_hk,har,squared_error,1,4,761,-9.252818002927647e-07,-2.111193672650628,0.035081613298843885,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,auto_arima_hk,yang_zhang_persistence,squared_error,1,4,761,-1.4705634995957161e-06,-0.6246245581203888,0.5324049659717894,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,egarch,garch11,squared_error,1,4,761,-2.723395631604721e-08,-1.55418692039512,0.12055613979351876,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,egarch,har,squared_error,1,4,761,-3.909121008964545e-06,-1.764432682290997,0.07806081120957237,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,egarch,yang_zhang_persistence,squared_error,1,4,761,-4.454402708267496e-06,-3.0244991494085327,0.0025743182360402276,0.11584432062181024,candidate lower loss
+base_models_vs_fixed_benchmarks,ewma,garch11,squared_error,1,4,761,9.377429289253307e-06,2.6441910476163555,0.008357560416804672,0.31758729583857753,candidate higher loss
+base_models_vs_fixed_benchmarks,ewma,har,squared_error,1,4,761,5.495542236604809e-06,3.3245943313786532,0.0009279299919681475,0.04454063961447108,candidate higher loss
+base_models_vs_fixed_benchmarks,ewma,yang_zhang_persistence,squared_error,1,4,761,4.950260537301858e-06,1.4166463253266663,0.15699610864715305,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,expanding_mean,garch11,squared_error,1,4,761,2.072092639258143e-05,2.8595791693169863,0.00435827032151438,0.1786890831820896,candidate higher loss
+base_models_vs_fixed_benchmarks,expanding_mean,har,squared_error,1,4,761,1.6839039339932932e-05,3.2097702069912355,0.0013842246297850792,0.06367433297011364,candidate higher loss
+base_models_vs_fixed_benchmarks,expanding_mean,yang_zhang_persistence,squared_error,1,4,761,1.6293757640629977e-05,2.3567952738325064,0.01868619224536891,0.635330536342543,candidate higher loss
+base_models_vs_fixed_benchmarks,garch_t,garch11,squared_error,1,4,761,3.536320619851159e-07,4.020103987668831,6.397118211138275e-05,0.003134587923457755,candidate higher loss
+base_models_vs_fixed_benchmarks,garch_t,har,squared_error,1,4,761,-3.5282549906633815e-06,-1.648469816879532,0.09966958817633245,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,garch_t,yang_zhang_persistence,squared_error,1,4,761,-4.073536689966332e-06,-2.7532958124826363,0.006040690852295056,0.23558694323950718,candidate lower loss
+base_models_vs_fixed_benchmarks,garchx_ohlc_range,garch11,squared_error,1,4,761,4.780678075726765e-08,0.7457966885788835,0.4560208420923214,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,garchx_ohlc_range,har,squared_error,1,4,761,-3.834080271891229e-06,-1.7446769998240441,0.08144532761450922,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,garchx_ohlc_range,yang_zhang_persistence,squared_error,1,4,761,-4.379361971194181e-06,-2.9493394158669175,0.003282272817220638,0.1378554583232668,candidate lower loss
+base_models_vs_fixed_benchmarks,gjr_garch,garch11,squared_error,1,4,761,-3.665997492269166e-08,-4.065039058732382,5.3026222204611214e-05,0.0026513111102305607,candidate lower loss
+base_models_vs_fixed_benchmarks,gjr_garch,har,squared_error,1,4,761,-3.9185470275711885e-06,-1.7764903766826226,0.07605209911394341,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,gjr_garch,yang_zhang_persistence,squared_error,1,4,761,-4.46382872687414e-06,-3.020424197587619,0.002608789347681405,0.11584432062181024,candidate lower loss
+base_models_vs_fixed_benchmarks,harx_ohlc,garch11,squared_error,1,4,761,6.76011117075898e-07,0.3241485596046018,0.7459147528543796,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,harx_ohlc,har,squared_error,1,4,761,-3.2058759355725986e-06,-2.0683128037679013,0.03894835436784995,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,harx_ohlc,yang_zhang_persistence,squared_error,1,4,761,-3.75115763487555e-06,-1.7707215961162526,0.07700779560769978,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,hist_gradient_boosting_ohlc,garch11,squared_error,1,4,761,-2.5190999766780648e-06,-1.6735195226822872,0.09463655906318769,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,hist_gradient_boosting_ohlc,har,squared_error,1,4,761,-6.400987029326561e-06,-4.4852694762130465,8.407194331238653e-06,0.0004287669108931713,candidate lower loss
+base_models_vs_fixed_benchmarks,hist_gradient_boosting_ohlc,yang_zhang_persistence,squared_error,1,4,761,-6.946268728629512e-06,-3.3067089955429223,0.0009883408586693824,0.046452020357460974,candidate lower loss
+base_models_vs_fixed_benchmarks,lasso_ohlc,garch11,squared_error,1,4,761,4.9288312117919275e-06,1.9087378147285854,0.05667233758582848,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,lasso_ohlc,har,squared_error,1,4,761,1.0469441591434311e-06,2.332961386107593,0.019910235261372138,0.6570377636252805,candidate higher loss
+base_models_vs_fixed_benchmarks,lasso_ohlc,yang_zhang_persistence,squared_error,1,4,761,5.016624598404789e-07,0.18512137532691955,0.8531832266171642,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,ma1,garch11,squared_error,1,4,761,1.1068545270471695e-05,2.483177035566674,0.013236284496012114,0.463269957360424,candidate higher loss
+base_models_vs_fixed_benchmarks,ma1,har,squared_error,1,4,761,7.186658217823197e-06,2.8528664587001735,0.004450386002595436,0.1786890831820896,candidate higher loss
+base_models_vs_fixed_benchmarks,ma1,yang_zhang_persistence,squared_error,1,4,761,6.641376518520247e-06,1.5483176359364994,0.12196213137124434,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,quantile_garch,garch11,squared_error,1,4,761,2.9773479702044572e-08,0.8113607068310053,0.41741258079297794,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,quantile_garch,har,squared_error,1,4,761,-3.852113572946453e-06,-1.7512486890050323,0.08030647215429491,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,quantile_garch,yang_zhang_persistence,squared_error,1,4,761,-4.397395272249404e-06,-2.969127203305655,0.0030804079390675293,0.13245754137990376,candidate lower loss
+base_models_vs_fixed_benchmarks,ridge_ohlc,garch11,squared_error,1,4,761,2.392594837622192e-06,1.4324888619796852,0.15241513495114345,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,ridge_ohlc,har,squared_error,1,4,761,-1.4892922150263043e-06,-2.504197634945038,0.012481395033309382,0.4493302211991378,candidate lower loss
+base_models_vs_fixed_benchmarks,ridge_ohlc,yang_zhang_persistence,squared_error,1,4,761,-2.0345739143292557e-06,-0.9547635379725303,0.34000086754047515,1.0,candidate lower loss
+base_models_vs_fixed_benchmarks,var_ohlc,garch11,squared_error,1,4,761,4.5371199230807465e-06,2.2228892709107084,0.02651671929592277,0.8485350174695286,candidate higher loss
+base_models_vs_fixed_benchmarks,var_ohlc,har,squared_error,1,4,761,6.552328704322493e-07,1.05683704918382,0.290921773589179,1.0,candidate higher loss
+base_models_vs_fixed_benchmarks,var_ohlc,yang_zhang_persistence,squared_error,1,4,761,1.0995117112929794e-07,0.04976172319073454,0.960325343886907,1.0,candidate higher loss
+selected_external_predictors_vs_base,garchx_ohlc_range [selected_external_predictors_vs_base],garchx_ohlc_range [base],absolute_error,1,1,761,-1.8965436745030635e-07,-0.02711932049501505,0.978371684134895,1.0,candidate lower loss
+selected_external_predictors_vs_base,harx_ohlc [selected_external_predictors_vs_base],harx_ohlc [base],absolute_error,1,1,761,4.664527805666097e-05,0.6272452377494945,0.5306868836381627,1.0,candidate higher loss
+selected_external_predictors_vs_base,hist_gradient_boosting_ohlc [selected_external_predictors_vs_base],hist_gradient_boosting_ohlc [base],absolute_error,1,1,761,5.810439635964802e-06,0.2955683290429194,0.7676404963066118,1.0,candidate higher loss
+selected_external_predictors_vs_base,lasso_ohlc [selected_external_predictors_vs_base],lasso_ohlc [base],absolute_error,1,1,761,-0.00010111976776318071,-1.9997887140116635,0.04587856078382574,0.2293928039191287,candidate lower loss
+selected_external_predictors_vs_base,ridge_ohlc [selected_external_predictors_vs_base],ridge_ohlc [base],absolute_error,1,1,761,-8.254956020532114e-05,-1.8420973982881437,0.06585031778705311,0.26340127114821243,candidate lower loss
+selected_external_predictors_vs_base,var_ohlc [selected_external_predictors_vs_base],var_ohlc [base],absolute_error,1,1,761,-0.00016563290995104388,-2.7738793402739943,0.0056750711481500515,0.03405042688890031,candidate lower loss
+selected_external_predictors_vs_base,garchx_ohlc_range [selected_external_predictors_vs_base],garchx_ohlc_range [base],absolute_error,1,4,761,-1.8965436745030635e-07,-0.026618136681937393,0.978771294976163,1.0,candidate lower loss
+selected_external_predictors_vs_base,harx_ohlc [selected_external_predictors_vs_base],harx_ohlc [base],absolute_error,1,4,761,4.664527805666097e-05,0.6022159519695873,0.5472100200811757,1.0,candidate higher loss
+selected_external_predictors_vs_base,hist_gradient_boosting_ohlc [selected_external_predictors_vs_base],hist_gradient_boosting_ohlc [base],absolute_error,1,4,761,5.810439635964802e-06,0.2959539923936605,0.7673460631002177,1.0,candidate higher loss
+selected_external_predictors_vs_base,lasso_ohlc [selected_external_predictors_vs_base],lasso_ohlc [base],absolute_error,1,4,761,-0.00010111976776318071,-1.7564611727002581,0.07941241054608299,0.39706205273041495,candidate lower loss
+selected_external_predictors_vs_base,ridge_ohlc [selected_external_predictors_vs_base],ridge_ohlc [base],absolute_error,1,4,761,-8.254956020532114e-05,-1.6925711109952306,0.09094698938059641,0.39706205273041495,candidate lower loss
+selected_external_predictors_vs_base,var_ohlc [selected_external_predictors_vs_base],var_ohlc [base],absolute_error,1,4,761,-0.00016563290995104388,-2.56192658880139,0.010601073423593892,0.06360644054156335,candidate lower loss
+selected_external_predictors_vs_base,garchx_ohlc_range [selected_external_predictors_vs_base],garchx_ohlc_range [base],squared_error,1,1,761,7.941312485657778e-08,1.0331954763165396,0.3018410872587399,0.6036821745174799,candidate higher loss
+selected_external_predictors_vs_base,harx_ohlc [selected_external_predictors_vs_base],harx_ohlc [base],squared_error,1,1,761,5.718796754098714e-06,0.8991501924870015,0.3688574535824476,0.6036821745174799,candidate higher loss
+selected_external_predictors_vs_base,hist_gradient_boosting_ohlc [selected_external_predictors_vs_base],hist_gradient_boosting_ohlc [base],squared_error,1,1,761,-3.0103119482540934e-07,-1.3737618790439816,0.16992067172948885,0.5097620151884665,candidate lower loss
+selected_external_predictors_vs_base,lasso_ohlc [selected_external_predictors_vs_base],lasso_ohlc [base],squared_error,1,1,761,-4.280355782266107e-06,-2.4504191889502733,0.01449341135421562,0.07246705677107809,candidate lower loss
+selected_external_predictors_vs_base,ridge_ohlc [selected_external_predictors_vs_base],ridge_ohlc [base],squared_error,1,1,761,-3.1571982359977274e-06,-2.3414082119092927,0.019468632827395724,0.0778745313095829,candidate lower loss
+selected_external_predictors_vs_base,var_ohlc [selected_external_predictors_vs_base],var_ohlc [base],squared_error,1,1,761,-4.727756192299374e-06,-2.7692875467634077,0.005754855424685046,0.034529132548110276,candidate lower loss
+selected_external_predictors_vs_base,garchx_ohlc_range [selected_external_predictors_vs_base],garchx_ohlc_range [base],squared_error,1,4,761,7.941312485657778e-08,1.0525583583769982,0.2928779829226905,0.585755965845381,candidate higher loss
+selected_external_predictors_vs_base,harx_ohlc [selected_external_predictors_vs_base],harx_ohlc [base],squared_error,1,4,761,5.718796754098714e-06,0.8612743009326317,0.3893586292797364,0.585755965845381,candidate higher loss
+selected_external_predictors_vs_base,hist_gradient_boosting_ohlc [selected_external_predictors_vs_base],hist_gradient_boosting_ohlc [base],squared_error,1,4,761,-3.0103119482540934e-07,-1.4114038836825566,0.1585348022940696,0.47560440688220884,candidate lower loss
+selected_external_predictors_vs_base,lasso_ohlc [selected_external_predictors_vs_base],lasso_ohlc [base],squared_error,1,4,761,-4.280355782266107e-06,-2.075504583158741,0.03827558623846188,0.19137793119230942,candidate lower loss
+selected_external_predictors_vs_base,ridge_ohlc [selected_external_predictors_vs_base],ridge_ohlc [base],squared_error,1,4,761,-3.1571982359977274e-06,-2.062598798716781,0.03949003217430809,0.19137793119230942,candidate lower loss
+selected_external_predictors_vs_base,var_ohlc [selected_external_predictors_vs_base],var_ohlc [base],squared_error,1,4,761,-4.727756192299374e-06,-2.3405981932040163,0.01951060592559308,0.11706363555355849,candidate lower loss
+vix_predictor_vs_base,garchx_ohlc_range [vix_predictor_vs_base],garchx_ohlc_range [base],absolute_error,1,1,761,-1.612704606133427e-05,-1.2641602124969336,0.2065600973337852,0.6196802920013555,candidate lower loss
+vix_predictor_vs_base,harx_ohlc [vix_predictor_vs_base],harx_ohlc [base],absolute_error,1,1,761,-1.5049442864408598e-06,-0.14244427079090644,0.8867668492956968,0.8867668492956968,candidate lower loss
+vix_predictor_vs_base,hist_gradient_boosting_ohlc [vix_predictor_vs_base],hist_gradient_boosting_ohlc [base],absolute_error,1,1,761,8.755329149954935e-06,0.9272441202696371,0.35409416629740653,0.7081883325948131,candidate higher loss
+vix_predictor_vs_base,lasso_ohlc [vix_predictor_vs_base],lasso_ohlc [base],absolute_error,1,1,761,3.717412419548737e-05,2.507421815979448,0.01236905172996698,0.07421431037980188,candidate higher loss
+vix_predictor_vs_base,ridge_ohlc [vix_predictor_vs_base],ridge_ohlc [base],absolute_error,1,1,761,1.758725181881156e-05,1.682035286839317,0.09297278704854227,0.46486393524271136,candidate higher loss
+vix_predictor_vs_base,var_ohlc [vix_predictor_vs_base],var_ohlc [base],absolute_error,1,1,761,2.562875566158884e-05,1.5301753232095339,0.12638944032382568,0.5055577612953027,candidate higher loss
+vix_predictor_vs_base,garchx_ohlc_range [vix_predictor_vs_base],garchx_ohlc_range [base],absolute_error,1,4,761,-1.612704606133427e-05,-1.2847211507279932,0.19928117070971643,0.6490075328846763,candidate lower loss
+vix_predictor_vs_base,harx_ohlc [vix_predictor_vs_base],harx_ohlc [base],absolute_error,1,4,761,-1.5049442864408598e-06,-0.1481848000766567,0.8822362334977983,0.8822362334977983,candidate lower loss
+vix_predictor_vs_base,hist_gradient_boosting_ohlc [vix_predictor_vs_base],hist_gradient_boosting_ohlc [base],absolute_error,1,4,761,8.755329149954935e-06,0.8967971860966881,0.3701111278147741,0.7402222556295482,candidate higher loss
+vix_predictor_vs_base,lasso_ohlc [vix_predictor_vs_base],lasso_ohlc [base],absolute_error,1,4,761,3.717412419548737e-05,2.201686215007106,0.027987252426802226,0.16792351456081336,candidate higher loss
+vix_predictor_vs_base,ridge_ohlc [vix_predictor_vs_base],ridge_ohlc [base],absolute_error,1,4,761,1.758725181881156e-05,1.516528791722204,0.12980150657693526,0.6490075328846763,candidate higher loss
+vix_predictor_vs_base,var_ohlc [vix_predictor_vs_base],var_ohlc [base],absolute_error,1,4,761,2.562875566158884e-05,1.451597834385649,0.14702611648009056,0.6490075328846763,candidate higher loss
+vix_predictor_vs_base,garchx_ohlc_range [vix_predictor_vs_base],garchx_ohlc_range [base],squared_error,1,1,761,-7.643093907726327e-08,-0.6786328967851023,0.49757708101209797,0.8941115799255192,candidate lower loss
+vix_predictor_vs_base,harx_ohlc [vix_predictor_vs_base],harx_ohlc [base],squared_error,1,1,761,-3.140586038332585e-07,-0.7607275069081836,0.4470557899627596,0.8941115799255192,candidate lower loss
+vix_predictor_vs_base,hist_gradient_boosting_ohlc [vix_predictor_vs_base],hist_gradient_boosting_ohlc [base],squared_error,1,1,761,1.307461630047405e-07,1.382878822409417,0.1671081798932921,0.5013245396798763,candidate higher loss
+vix_predictor_vs_base,lasso_ohlc [vix_predictor_vs_base],lasso_ohlc [base],squared_error,1,1,761,7.502295897076095e-07,2.5028815913977587,0.012527510814604244,0.07516506488762546,candidate higher loss
+vix_predictor_vs_base,ridge_ohlc [vix_predictor_vs_base],ridge_ohlc [base],squared_error,1,1,761,4.39854090046108e-07,2.0819002782994778,0.03768563036757262,0.1884281518378631,candidate higher loss
+vix_predictor_vs_base,var_ohlc [vix_predictor_vs_base],var_ohlc [base],squared_error,1,1,761,6.960302014487597e-07,1.8679320996692659,0.062156167175423056,0.24862466870169223,candidate higher loss
+vix_predictor_vs_base,garchx_ohlc_range [vix_predictor_vs_base],garchx_ohlc_range [base],squared_error,1,4,761,-7.643093907726327e-08,-0.7231472978996253,0.4698118832258546,0.8859078463724906,candidate lower loss
+vix_predictor_vs_base,harx_ohlc [vix_predictor_vs_base],harx_ohlc [base],squared_error,1,4,761,-3.140586038332585e-07,-0.7676157382623242,0.4429539231862453,0.8859078463724906,candidate lower loss
+vix_predictor_vs_base,hist_gradient_boosting_ohlc [vix_predictor_vs_base],hist_gradient_boosting_ohlc [base],squared_error,1,4,761,1.307461630047405e-07,1.2653175782246,0.20614530064119888,0.6184359019235967,candidate higher loss
+vix_predictor_vs_base,lasso_ohlc [vix_predictor_vs_base],lasso_ohlc [base],squared_error,1,4,761,7.502295897076095e-07,2.020333203316298,0.04369915360977135,0.2621949216586281,candidate higher loss
+vix_predictor_vs_base,ridge_ohlc [vix_predictor_vs_base],ridge_ohlc [base],squared_error,1,4,761,4.39854090046108e-07,1.7157228236660125,0.08662034297396987,0.43310171486984933,candidate higher loss
+vix_predictor_vs_base,var_ohlc [vix_predictor_vs_base],var_ohlc [base],squared_error,1,4,761,6.960302014487597e-07,1.5923966720264526,0.11171140958116907,0.4468456383246763,candidate higher loss

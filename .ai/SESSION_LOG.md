@@ -2,6 +2,23 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-16 — Added separate Yang-Zhang findings to the Group 2 report
+- Author: Copilot report update at Samuel's request
+- Type: implementation
+- Context: Samuel asked to include the model-analysis evaluation in the main report source used for both the report PDF and Beamer slide PDF.
+- Outcome: Added the LSEG `GCc1` next-session Yang-Zhang results as a supplementary, clearly separated evaluation; retained the existing five-session Yahoo/FRED GARCH-X conclusion. Updated the main report date, refreshed the report and slide PDFs, and clarified the PDF reproduction command.
+- Artifacts: `report_group2/Group2_Report.qmd`, `report_group2/Group2_Report.pdf`, `report_group2/Group2_Slides.pdf`, `REPRODUCE.md`, `presentations/project-progress.qmd`.
+- Next: Samuel and team to review the distinction between targets before submission.
+
+## 2026-11-16 — Samuel's Yang-Zhang model evaluation
+- Author: Copilot analysis at Samuel's request
+- Type: finding
+- Context: Samuel requested a paired out-of-sample comparison, statistical tests, gold implied-volatility reference, calibration, and residual diagnostics for Enoch's Yang-Zhang forecasts.
+- Outcome: Read forecast artifacts from pinned test-branch commit `988adfcdaf80015cce7b2a2d15fccf5dfbf9d8a4` without switching from main. Across 761 common test targets, histogram gradient boosting had the lowest MAE and RMSE; its absolute loss was significantly lower than persistence, HAR, and GARCH(1,1) after Holm correction. Raw and training-scaled 1M gold IV had higher MAE than the selected leader; scaled IV was not distinguished from persistence. Adding VIX did not significantly improve the six predictor models; selected external predictors significantly improved VAR absolute loss only. HAC mean-error tests found under-forecasting in 18 of 20 base models.
+- Artifacts: `scripts/samuel_yz_evaluation.py`, `outputs/samuel/yz_*`.
+- Limitations: The overlapping two-observation target, single holdout, same-test model selection, 1M-versus-1D IV maturity mismatch, and external-predictor availability proxy constrain interpretation.
+- Next: Samuel to review the summary with Enoch and Keir; use a later untouched holdout before treating the winner as a durable model choice.
+
 ## 2026-11-16 — Samuel's Stage 3 model comparison
 - Author: Copilot analysis at Samuel's request
 - Type: finding

@@ -2,7 +2,7 @@
 title: "Gold Future Market Volatility Forecasting"
 subtitle: "Group 2"
 author: "Luo Pui Ki Enoch; Li Hung Kui; Siriasavakul Hok Sum"
-date: "2026-11-15"
+date: "2026-11-16"
 format:
   pdf:
     pdf-engine: lualatex
@@ -43,7 +43,9 @@ one extension: GARCH-X with lagged VIX. The user-selected working model is
 GARCH-X; it has the lowest MSE among the tested models, including the full
 25-model search. This ranking is not statistically decisive: the
 Holm-adjusted Diebold-Mariano test does not show GARCH-X beating expanding
-historical variance.
+historical variance. A separate supplementary section reports Samuel's
+next-session Yang-Zhang evaluation using LSEG GCc1 data; it has a different
+target and sample and does not replace the five-session result.
 
 # Question, target, and data
 
@@ -160,18 +162,151 @@ not establish a reliable improvement. QLIKE also shows little difference
 between GARCH-X and GARCH(1,1), while the expanding benchmark has substantially
 higher QLIKE.
 
+## Residual study: five-session GARCH-X forecasts
+
+Define the forecast error as $e_t=RV_{t,5}-\widehat{RV}_{t,5}$, so a positive
+error means under-forecasting. On the 443 successful weekly origins, the
+GARCH-X mean error was 0.000097; the HAC test did not reject zero mean error
+at the 5% level ($p=0.0685$). Ljung-Box tests rejected no autocorrelation in
+forecast errors at lags 5, 10, and 20 ($p=0.000705$, $0.000497$, and
+$0.000614$). Tests on squared forecast errors did not reject at those lags
+($p=0.997$, $0.936$, and $0.952$). The Mincer-Zarnowitz estimates were an
+intercept of $-0.000024$ and a slope of 1.229; the joint test of intercept
+zero and slope one did not reject ($p=0.148$).
+
+These are exploratory diagnostics of **target forecast errors**, not tests
+that the fitted GARCH model's standardized innovations are independent and
+identically distributed. The serial dependence warrants investigation but
+does not, by itself, show the model is unusable.
+
+## How to handle non-constant error variance
+
+Changing error variance is not automatically a defect in a volatility
+forecast: raw errors can be larger on high-volatility days. The relevant
+question for a conditional-variance model is whether its standardized
+innovations still show changing variance or predictable structure. The
+available forecast-error files do not contain those standardized
+innovations, so the following are proposals for a next iteration, not tested
+results:
+
+1. Save standardized innovations from each fitted GARCH-X or EGARCH model;
+   examine their mean and autocorrelation, then examine autocorrelation in
+   their squares and run an ARCH-LM check.
+2. If standardized residuals retain volatility clustering or asymmetry,
+   compare variance specifications such as GARCH, EGARCH, or GJR-GARCH and
+   alternative innovation distributions on the same untouched holdout.
+3. If recalibration is needed, estimate $a+b\times\text{forecast}$ using
+   training or validation data only, then evaluate it on a later test set.
+   For distributional calibration, check forecast-interval coverage or PIT
+   values and do not assume past errors are i.i.d. without testing.
+4. HAC standard errors can make inference more robust to dependence; they do
+   not remove non-constant variance or repair the forecasting model.
+
+# Supplementary evaluation: next-session Yang-Zhang volatility
+
+This is a separate exercise from the five-session Yahoo/FRED comparison above.
+It uses LSEG COMEX gold futures generic 1 (`GCc1`) and forecasts the next
+valid-session, unannualized volatility measured as the square root of a
+two-observation Yang-Zhang variance estimate. The 20 baseline models share
+761 sequential one-step test dates from 2023-06-02 to 2026-11-10. The target
+windows overlap, so loss differences may be serially dependent. These results
+do not establish a winner for the five-session target and do not revise the
+GARCH-X working choice above.
+
+MAE is the primary ranking metric; RMSE is a complementary measure that
+penalizes large misses more strongly. The reported errors are in daily
+volatility units.
+
+| Forecast | MAE | RMSE |
+|---|---:|---:|
+| Histogram gradient boosting (OHLC) | **0.002418** | **0.004767** |
+| GARCH(1,1) | 0.002912 | 0.005025 |
+| HAR | 0.002995 | 0.005397 |
+| Yang-Zhang persistence | 0.003190 | 0.005447 |
+| Gold 1M implied volatility, unscaled | 0.003935 | 0.005753 |
+| Gold 1M implied volatility, training-scaled | 0.003244 | 0.005587 |
+
+Diebold-Mariano tests compare paired absolute and squared errors using
+Newey-West long-run variances at bandwidths 1 and 4, a one-step
+Harvey-Leybourne-Newbold correction, and Holm adjustment within each
+pre-specified comparison family. For absolute error, histogram gradient
+boosting has significantly lower loss than persistence, HAR, and GARCH(1,1)
+at both bandwidths. At bandwidth 1, the Holm-adjusted p-values are
+$7.95\times10^{-14}$, $1.15\times10^{-13}$, and $1.78\times10^{-9}$,
+respectively. Squared-error evidence is less uniform: the model significantly
+beats HAR at both bandwidths, beats persistence only at bandwidth 4, and does
+not significantly beat GARCH(1,1). The full comparison includes candidate
+tests against the three fixed benchmarks, predictor-ablation tests, both loss
+functions, and bandwidth sensitivities. The reproducible script and detailed
+tables are saved in `scripts/samuel_yz_evaluation.py` and `outputs/samuel/`.
+
+![Actual versus forecast next-session Yang-Zhang volatility for the MAE leader and fixed benchmarks](../outputs/samuel/yz_top_models_actual_vs_forecast.png){#fig-yz-forecasts width=90% fig-align="center"}
+
+## Market-implied volatility and predictor experiments
+
+The gold 1M implied-volatility quote (`XAU1MO_R`, `MID_PRICE`) is annualized
+in percent. It was converted to daily unannualized volatility as
+`MID_PRICE / 100 / sqrt(252)` and aligned using the latest quote available on
+or before each forecast origin. The training-only scale factor was 0.8012,
+estimated from the first 3,040 training targets. On the test sample, raw and
+scaled IV have higher absolute loss than the histogram-gradient-boosting
+leader after Holm adjustment; the scaled IV is not significantly different
+from persistence. This is an imperfect comparison because one-month IV and
+next-session realized volatility have different maturities.
+
+Adding the selected DXY and gold-IV predictors significantly reduced
+absolute loss only for VAR among the six paired predictor models
+(Holm-adjusted $p=0.034$). Adding VIX did not significantly improve any of
+the six models. VIX is an equity-market implied-volatility index, so this is
+a predictor experiment, not a standalone gold-IV benchmark.
+
+## Calibration and residual checks
+
+For histogram gradient boosting, mean error (actual minus forecast) is
+$+0.000866$, indicating average under-forecasting; the HAC mean-error test
+rejects zero bias ($p=6.49\times10^{-5}$). In the
+Mincer-Zarnowitz regression, the estimated intercept is $-0.000674$, the
+slope is 1.194, and the HAC joint test of intercept 0 and slope 1 rejects
+($p=2.02\times10^{-6}$). Across all 20 base models, 18 show significant
+mean error. Persistence has almost zero average error, but its joint
+calibration test rejects, illustrating that zero mean bias alone does not
+imply calibrated forecasts.
+
+The histogram-gradient-boosting forecast errors reject the Ljung-Box
+no-autocorrelation null at lags 1, 4, 10, and 20. The overlapping target
+windows can contribute to this dependence, so it is a diagnostic to
+investigate rather than proof that the model is unusable. Nonconstant error
+variance across high- and low-volatility periods is also not automatically a
+failure.
+
+## Limitations of the supplementary evaluation
+
+1. The Yang-Zhang target is an estimated volatility measure, not latent
+   volatility observed without error, and adjacent two-observation targets
+   overlap.
+2. The result uses one chronological holdout and selects its leader on that
+   same test sample; Holm adjustment does not remove all model-selection
+   uncertainty.
+3. Gold 1M IV and next-session realized volatility are not maturity-matched;
+   the training-period scale factor may not persist.
+4. VIX measures U.S. equity implied volatility, not gold volatility.
+5. The LSEG external-predictor availability dates are proxies, not verified
+   historical publication timestamps.
+
 # Conclusion and limitations
 
-**Working choice:** GARCH-X with lagged VIX, as directed by the user and
-prioritized on MSE. Keep expanding historical variance and GARCH(1,1) as
-primary reference models; the other basic forecasts provide context.
+**Working choice for the five-session Yahoo/FRED comparison:** GARCH-X with
+lagged VIX, as directed by the user and prioritized on MSE. Keep expanding
+historical variance and GARCH(1,1) as primary reference models; the other
+basic forecasts provide context.
 
 This is a working specification, not proof that VIX adds statistically
 significant predictive value. The comparison uses overlapping five-session
 targets, a Yahoo/FRED panel rather than a historical real-time data vintage,
 and an assumption that future VIX stays at its last observed value. Test that
 assumption and the selected model on a later holdout before treating it as a
-confirmed team-wide conclusion.
+confirmed team-wide conclusion. The supplementary Yang-Zhang results above
+use a different target and sample and do not revise this working choice.
 
 # AI use and contributions
 
@@ -243,12 +378,54 @@ Future VIX is held at its last observed value during the forecast horizon.
 
 ## Conclusion
 
-- GARCH-X has the lowest MSE in the focused comparison
+- For the separate five-session Yahoo/FRED comparison, GARCH-X has the lowest MSE
 - MSE is 16.1% below expanding historical variance
 - It does **not** significantly beat that benchmark after Holm correction ($p=0.905$)
 - The future-VIX assumption and later-holdout performance still need review
 
 **Takeaway:** Use GARCH-X as the working model, while retaining historical
-variance and GARCH(1,1) as transparent benchmarks.
+variance and GARCH(1,1) as transparent benchmarks for that target. The
+separate next-session Yang-Zhang experiment has different data, target,
+models, and conclusions.
+
+## Five-session GARCH-X residual study
+
+- Error = actual five-session variance minus forecast; positive means under-forecasting
+- Mean error 0.000097; HAC test p=0.0685
+- Forecast errors show autocorrelation at lags 5, 10, and 20
+- Squared-error tests do not reject at those lags
+- Mincer-Zarnowitz intercept −0.000024, slope 1.229; joint-test p=0.148
+- These are forecast errors, not standardized GARCH innovations
+
+## How to handle non-constant error variance
+
+- Raw errors can naturally be larger on high-volatility days; constant raw-error variance is not required
+- **Proposed:** check standardized innovations and their squares, including an ARCH-LM test
+- **Proposed:** compare variance specifications and innovation distributions on a common untouched holdout
+- **Proposed:** estimate any $a+b\times\text{forecast}$ recalibration on training data only
+- HAC adjusts inference; it does not repair heteroskedasticity
+
+## Separate next-session Yang-Zhang evaluation
+
+- LSEG `GCc1` target: next-valid-session unannualized volatility from a two-observation Yang-Zhang estimate
+- 761 sequential one-step test dates; target windows overlap
+- **Histogram gradient boosting:** MAE 0.002418; RMSE 0.004767
+- Absolute loss is significantly lower than persistence, HAR, and GARCH(1,1) after Holm correction
+- This is a separate target and does **not** replace the five-session GARCH-X comparison
+
+## Yang-Zhang inference and calibration
+
+- DM tests use Newey-West bandwidths 1 and 4 with one-step HLN correction
+- HGB squared-loss advantage is less consistent; it does not significantly beat GARCH(1,1)
+- HGB has significant average under-forecasting; its joint Mincer-Zarnowitz calibration test rejects
+- Adding selected external predictors significantly improves VAR absolute loss only; adding VIX does not significantly improve any tested model
+- Forecast errors are serially dependent; overlapping target windows may contribute
+
+## Yang-Zhang implied-volatility reference and limitations
+
+- Gold 1M IV is converted from annualized percent to daily volatility and aligned to the latest quote available by each forecast origin
+- MAE/RMSE: unscaled IV 0.003935/0.005753; training-scaled IV 0.003244/0.005587; HGB 0.002418/0.004767
+- The 1M IV and next-session realized target have different maturities; VIX is an equity-volatility predictor, not gold implied volatility
+- Overlapping targets, same-test model selection, and a single holdout limit the conclusion
 
 :::

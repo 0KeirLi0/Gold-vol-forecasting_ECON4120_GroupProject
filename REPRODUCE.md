@@ -8,7 +8,7 @@ Quarto source:
 
 ```bash
 python scripts/plot_group2_core_models.py
-quarto render report_group2/Group2_Report.qmd --to pdf
+(cd report_group2 && quarto render Group2_Report.qmd --to pdf)
 (cd report_group2 && quarto render Group2_Report.qmd --to beamer --output Group2_Slides.pdf)
 ```
 
