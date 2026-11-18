@@ -1,129 +1,232 @@
-# Group 2 report and presentation
+# Reproducing the two-stage analysis
 
-The active report focuses on GARCH-X with lagged VIX and seven basic
-benchmarks. It uses the saved integrated Stage 3 comparison; the historical
-full-model report is preserved under `archive/model_exploration_2026-11-15/`.
-Regenerate the focused forecast figure and render both formats from the same
-Quarto source:
+## Stage 1: Training-only Yang-Zhang predictor screen
 
 ```bash
-python scripts/plot_group2_core_models.py
-quarto render report_group2/Group2_Report.qmd --to pdf
-(cd report_group2 && quarto render Group2_Report.qmd --to beamer --output Group2_Slides.pdf)
+PYTHONPATH=src python scripts/screen_yang_zhang_predictors.py
 ```
 
-The figure uses saved common-origin forecasts and does not refit models.
+The script reads `GCc1.csv` and the 11 LSEG predictor sources from
+`data/refinitiv/`; all are required. It retains the existing chronological
+80/20 split before pairing consecutive valid training targets. Predictors
+available by each origin use the one-weekday proxy and backward as-of
+matching. Using these same complete training pairs, it calculates VIFs
+including the current-volatility control, iteratively removes the candidate
+with the highest VIF until every remaining VIF is at most 5, and retains the
+control throughout. Ties follow the original predictor order. It regresses
+next-valid Yang-Zhang volatility on the control and remaining candidates,
+standardizing regressors on the training pairs. The screen uses HAC(4)
+standard errors and Holm correction across retained predictor coefficients
+at 5%; it does not use holdout responses.
 
-# Reproducing the integrated Stage 3 evaluation
+The current 3,039-pair screen removes gold IV 6M, 3M and 2M; eight predictors
+remain, and all final VIFs are at most 4.31. Gold IV 1M, gold IV 1Y and DXY
+are significant after correction; VIX is not. These are exploratory
+post-selection conditional associations; remaining correlation, selection
+on the same sample, and potentially longer dependence limit interpretation. The procedure does not
+reselect or rerun forecast models. Outputs under
+`data/processed/stage1_predictor_significance/` are the source-hash
+`manifest.json`, `training_pairs.csv`, `vif_history.csv`, and
+`predictor_significance.csv`.
 
-Run the evaluation from the repository root. It refits seven candidates on all
-requested origins and reuses the other 18 models from the existing aligned
-forecast file. It does not download data. Preserve the Stage 2 panel and the
-aligned forecast input; both hashes are recorded in the output manifest.
+## Stage 2: Yang-Zhang daily-volatility comparison
 
-## Environment and run
+The current model comparison uses LSEG `GCc1.csv` OHLC. It computes
+unannualized 2-observation Yang-Zhang volatility, leaves windows with
+incomplete OHLC unscored, and evaluates sequential one-step forecasts after a
+chronological 80/20 split of available target observations. Each model is
+re-estimated from the initial training data plus prior observed test targets.
+One step advances to the next valid target date, which may skip dates after an
+incomplete OHLC window. The Yang-Zhang persistence forecast uses the latest
+available target. Candidate failures are retained;
+the rankings use the common successful test observations and report both MAE
+and RMSE. The overlapping 2-observation targets make the loss sequence
+dependent; the forecast comparison is descriptive and does not apply
+forecast-loss significance tests.
+
+Run from the repository root:
 
 ```bash
-python -m pip install -e ".[dev,interactive]"
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python -m nbconvert --to notebook --execute notebooks/06_final_evaluation.ipynb --ExecutePreprocessor.timeout=1800 --output 06_integrated.executed.ipynb --output-dir data/processed
+PYTHONPATH=src python scripts/evaluate_yang_zhang_volatility.py
 ```
 
-The notebook refits fixed-order HK auto-ARIMA, BIC-selected VAR, GJR-GARCH,
-asymmetric EGARCH, Student-t GARCH, VIX-GARCH-X, and quantile GARCH. It checks
-dates and actuals and saves all attempted forecasts, a balanced common-origin
-sample, a loss summary and a manifest as `stage3_integrated_*.csv/json` under
-`data/processed/`. Fit failures remain explicit. It also updates the
-predictor-set comparison and figures under `plots/final_evaluation/`.
-The run can take several minutes; runtime depends on hardware. The GARCH-X
-model holds the origin's VIX constant in the forecast horizon. The HK order
-is selected at the first origin and retained thereafter. See the report for
-the equations and limitations.
+The script uses four workers by default; pass `--workers 1` for sequential
+execution or another positive integer for a different worker count.
 
-## Earlier 20-model comparison
-
-The following legacy commands reproduce the earlier 20-model comparison,
-not the integrated results; run them only when intentionally rebuilding the
-historical cached input and note that they overwrite existing comparison files:
+For the current joint-predictor experiment, keep the original
+no-external-predictor artifacts separate and run:
 
 ```bash
-python scripts/evaluate_stage1_on_stage3_origins.py
-python scripts/evaluate_stage3_var.py
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python scripts/evaluate_stage3_auto_arima.py --workers 4
-python scripts/plot_stage3_all_model_forecasts.py
-quarto render archive/model_exploration_2026-11-15/model-performance-stage2-stage3.qmd --to pdf
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=src \
+  python scripts/evaluate_yang_zhang_volatility.py --predictor-dir data/refinitiv \
+  --external-models-only --output-dir data/processed/stage2_yz_selected
+PYTHONPATH=src python scripts/compare_selected_predictors.py
 ```
 
-The HK run selects one nonseasonal order on squared returns available at the
-first origin, using KPSS differencing and stepwise AICc with the existing
-selector's default search bounds. It then refits that fixed order using
-expanding data at each origin and sums five individually nonnegative daily
-forecasts. Its CSV records the fixed order and explicit fit errors; its manifest
-records the selection origin, AICc, KPSS p-values, input-panel hash and fit
-counts. The 445 fits can take considerably longer than the cached notebook;
-`--workers` controls parallel processes. The combined comparison uses only
-dates with valid forecasts for every model, while the appendix charts retain
-all attempts. Running the baseline script replaces the combined files, so run
-the VAR and HK scripts afterward to restore those models.
+The latest DXY, gold IV 1M and gold IV 1Y available by each origin under
+the next-weekday proxy are added jointly to HARX, Ridge, Lasso, gradient
+boosting, range GARCH-X, and VAR; VIX is not used. Source and availability
+dates are retained in the prepared file, and input hashes are in the
+manifest. The proxy does not reconstruct publication times. The completed run
+has 761 common successful dates and zero recorded failures. Selection occurred
+after earlier holdout results had been observed, so the comparison is not a
+fully untouched holdout. Differences are joint descriptive comparisons, not
+isolated predictor effects or forecast-loss significance tests.
 
-## Refit scaled GARCH only
-
-To reproduce the 445-origin GARCH update while retaining the other completed
-forecasts, run the following against the existing panel and full 20-model
-comparison. This refits every origin, checks convergence and parameter
-constraints, requires all 20 models to have forecasts at every origin, and
-refreshes the saved comparisons and baseline GARCH figure.
+For the separate drift and loss-function experiment, preserve the current
+baseline and use a distinct output directory:
 
 ```bash
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python scripts/refit_stage3_garch.py
-python scripts/plot_stage3_all_model_forecasts.py
-quarto render archive/model_exploration_2026-11-15/model-performance-stage2-stage3.qmd --to pdf
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=src \
+  python scripts/evaluate_yang_zhang_volatility.py --predictor-dir data/refinitiv \
+  --external-models-only --rolling-windows 252,504,756 --bias-window 252 \
+  --hgb-transform-experiments \
+  --output-dir data/processed/stage2_yz_diagnostics
 ```
 
-The fit scales returns by their root mean square at each origin and rescales
-forecast variance to original units. The run used Python 3.13, NumPy 2.4.6,
-pandas 2.3.3, and SciPy 1.15.2. Intermediate bounds-clipping warnings were
-observed; a successful fit and constraint checks do not prove global optimality.
-As an additional sensitivity check, scaled initial parameters
-`(omega, alpha, beta) = (0.05, 0.05, 0.90)` and `(0.20, 0.05, 0.75)` yielded
-negative log-likelihoods within 1e-8 at origins 2018-01-05, 2018-01-22,
-2018-04-05, 2018-11-13, 2019-02-12, 2023-06-20, 2024-11-06, and 2026-11-03.
-This limited check is not proof of global optimality.
+The evaluation retains expanding-history forecasts, adds 252/504/756-valid-
+target rolling variants, and applies 252-origin additive bias calibration
+using only prior sequential forecast errors. The first calibrated forecast is
+uncorrected because no prior holdout error exists. HGB log smearing is
+estimated from in-sample training residuals; HGB Gamma loss is a distinct
+raw-volatility alternative and requires positive training targets. MAE, RMSE,
+forecast-minus-actual bias, and variance-scale QLIKE are reported. The summary
+also includes retrospective actual-volatility-tercile MAE and bias on common
+successful dates; these labels use realized targets and are diagnostics, not
+deployable forecast-time regimes. These variants do not overwrite the
+existing baseline output unless the same output directory is explicitly
+chosen.
 
-To rebuild inputs from raw sources instead, use the pipeline commands in
-[`README.md`](README.md) and verify the fixed end date, data vintage, and
-market-data usage terms. Rebuilding the historical forecast files changes the
-cached input to the integrated run.
+The completed run produced 761 common forecasts for all 32 candidates with
+zero recorded failures. HGB's 252-origin correction reduced the magnitude of
+its mean forecast-minus-actual error from 0.821e-3 to 0.184e-3, while MAE
+increased from 0.002423 to 0.002489. Smearing and Gamma loss lowered HGB RMSE
+and QLIKE but slightly increased MAE. None of the 18 rolling-window
+candidates beat expanding-history HGB on overall MAE or RMSE. These are
+descriptive results on the previously examined holdout, not independent
+confirmation or a final model decision. The outputs remain local and
+Git-ignored under `data/processed/stage2_yz_diagnostics/`.
 
-## Exploratory quantile GARCH calibration
-
-Run the following to reproduce the single-origin calibration, without changing
-the 445-origin comparison or downloading data:
+Test saved forecast errors and reproduce the HAC(10) analysis with:
 
 ```bash
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python scripts/calibrate_quantile_garch.py --origin 2026-11-03 --quantile 0.95 --horizon 5 --simulations 20000 --seed 42
+PYTHONPATH=src python scripts/diagnose_yang_zhang_forecast_errors.py
 ```
 
-The JSON output includes the input hash, origin, fitted coefficients, threshold,
-observation counts, and forecast. Use `--input` to select another compatible
-panel. The threshold is recomputed using only returns through the specified
-origin and held fixed during simulation. The optimizer fits scaled returns
-from two starting points; bounds-clipping warnings can occur. The output is a
-single fitted case, not an out-of-sample comparison or significance test.
-The reported case used a panel with SHA-256
-`a2f957950e4df6d445271b720ac758a4eb777d998e4e37e0f1195229c515afcd`
-and Python 3.13, NumPy 2.4.6, pandas 2.3.3, and SciPy 1.15.2.
+The script checks common successful dates across models, tests mean actual
+minus forecast against zero using an intercept-only regression, and tests the
+linear slope of globally centered squared errors against standardized
+forecasts. Both use HAC standard errors with the specified maximum lag and
+two-sided t references. Holm correction is applied separately across models
+to the mean and squared-error slope families. The latter is a targeted
+variance-scaling diagnostic, not a general homoskedasticity test; conditional
+mean misspecification can affect it. Results and a manifest with the input
+hash are saved under `data/processed/stage2_yz_diagnostics/error_tests/`.
+To repeat the sensitivity checks, pass `--hac-lags 4` or `--hac-lags 20`
+and a separate `--output-dir`.
 
-## Obtaining source data
+For the separate empirical forecast-error model, run after generating the
+saved 32-candidate forecasts:
 
-The pipeline downloads Yahoo Finance `GC=F` gold futures, `DX-Y.NYB` U.S.
-Dollar Index, `^GSPC` S&P 500 price index, and `^VIX` observations. The
-predictor pipeline obtains FRED `DGS10`, `T10YIE`, and `DCOILWTICO` as public
-CSV downloads; no FRED API key is required. Yahoo observations may be
-unavailable or revised, and FRED downloads are current-vintage data, not
-historical real-time vintages. The one-weekday FRED availability date is an
-approximation, not a series-specific release timestamp.
+```bash
+PYTHONPATH=src python scripts/evaluate_empirical_error_model.py
+```
 
-Installations and downloads do not grant rights to redistribute market data.
-Check the applicable Yahoo Finance and FRED series terms before sharing or
-committing observations. Keep downloaded data and manifests local under
-`data/`; do not combine gold spot and gold futures into one series.
+For each of the six expanding-history baselines, the first 252 sequential
+forecast errors warm up a rolling distribution of relative errors
+$(y-\widehat y)/\widehat y$. Only prior target outcomes available at the
+current origin enter the estimate. The rolling relative-error mean adjusts the
+point forecast; its sample standard deviation multiplied by the baseline
+forecast supplies the forecast-error scale. Past empirical 5th and 95th
+percentiles supply nominal 90% prediction intervals without assuming normal
+errors. The 509 post-warm-up observations are evaluated against the matching
+baseline dates. Output under
+`data/processed/stage2_yz_diagnostics/empirical_error_model/` includes
+date-level forecasts, errors and intervals, distribution summaries and
+coverage, paired-sample HAC/Holm diagnostics, and an input-hash manifest.
+This post-processing uses previous holdout errors as they become available;
+it is not a fit to in-sample model residuals and is not an untouched holdout
+experiment.
+
+All six raw calibrated means are closer to zero on these 509 dates and do not
+reject zero with the recorded correction; raw squared-error slopes still
+reject for all six. Targeted squared standardized-error slope tests do not
+reject after adjustment, but this neither proves constant variance nor removes
+heavy tails. Observed 90% interval coverage ranges from 87.6% to 89.4%.
+Assess interval width and score, serial dependence, extreme errors, and a
+later independent period before adopting a model.
+
+The run reads `data/refinitiv/GCc1.csv` and writes the prepared target,
+forecast attempts, summary, and source-hash manifest under `data/processed/`:
+
+- `GCc1_yang_zhang_volatility.csv`
+- `stage2_yz_forecasts.csv`
+- `stage2_yz_summary.csv`
+- `stage2_yz_manifest.json`
+
+The original no-external-predictor n=2 run covered all 761 test observations for all 20 candidates,
+with zero recorded fit failures. HistGradientBoosting had the lowest MAE
+(0.00241765) and RMSE (0.00476724). Optimizer and convergence warnings were
+emitted; because target windows overlap, these scores are descriptive and no
+forecast-comparison significance tests were run.
+
+The estimator and candidate set are documented in the current-model section
+of [`README.md`](README.md). Rows without complete OHLC are not imputed, so
+their Yang-Zhang windows are unavailable and do not enter the 80/20 target
+split. The holdout advances to the next valid target observation at each
+one-step origin; check the saved target dates and manifest when interpreting
+results around missing source bars. This specification is a user-selected
+working analysis, not a team-approved model decision.
+
+## Yang-Zhang report and forecast figures
+
+The full formula and model-specification report is available as
+[`reports/yang-zhang-volatility.pdf`](reports/yang-zhang-volatility.pdf), with
+its editable Quarto source at
+[`reports/yang-zhang-volatility.qmd`](reports/yang-zhang-volatility.qmd).
+The report includes the full MAE/RMSE comparison and a timeline for each
+candidate; the chronological test interval is shaded in the plots.
+
+Regenerate the figures and render the PDF after running the holdout:
+
+```bash
+python scripts/plot_yang_zhang_report.py \
+  --processed-dir data/processed/stage2_yz_selected \
+  --output-dir reports/figures/stage2_yz_selected \
+  --baseline-forecasts data/processed/stage2_yz_forecasts.csv
+quarto render reports/yang-zhang-volatility.qmd
+```
+
+Figures are saved under `reports/figures/stage2_yz_selected/`. The plotting command
+requires Matplotlib. With `--baseline-forecasts`, it also creates test-period
+panels overlaying the no-external-predictor and joint forecasts for each
+selected model, checking target dates, origins, actuals, and successful
+forecasts before plotting. The report's numerical table and narrative are a
+snapshot; update them from the new summary before rendering a different run.
+
+## Stage 2 forecast-error diagnostics
+
+After generating the selected-predictor holdout, derive errors from the saved
+successful predictions, retain target dates common to all models, and create
+time-series, forecast-level and autocorrelation plots:
+
+```bash
+PYTHONPATH=src python scripts/analyze_yang_zhang_forecast_errors.py \
+  --processed-dir data/processed/stage2_yz_selected \
+  --figure-dir reports/figures/residual_diagnostics
+quarto render reports/yang-zhang-residual-diagnostics.qmd --to pdf
+```
+
+The script writes `forecast_errors.csv`, `forecast_error_diagnostics.csv`,
+`forecast_error_regimes.csv`, `forecast_error_extremes.csv`, and
+`forecast_error_manifest.json` beside the input forecasts. The figures are
+written under `reports/figures/residual_diagnostics/`. Regime labels are
+retrospective terciles of realized holdout volatility, not information
+available to the models at forecast time. The report summarizes
+out-of-sample forecast errors, not in-sample equation innovations;
+conditional-variance innovation diagnostics require saving fitted
+conditional variances and residuals during model estimation. Because the
+two-observation targets overlap, Ljung–Box p-values in the report are
+exploratory rather than confirmatory. The report tables are a snapshot of
+the current generated outputs; refresh them before rendering after a new
+forecast run.

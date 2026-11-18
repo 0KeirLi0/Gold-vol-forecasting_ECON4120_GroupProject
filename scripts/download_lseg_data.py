@@ -33,7 +33,7 @@ EXAMPLE_REQUESTS: dict[str, list[str]] = {
     "XAU1MBF=": ["MID_PRICE"],
 }
 
-# Candidate mappings for the project's selected Stage 2 variables. These RICs
+# Candidate mappings for the project's predictor variables. These RICs
 # and fields are not confirmed project decisions; verify availability and units
 # in Workspace. Change them here if your Workspace uses different instruments.
 PROJECT_PANEL_REQUESTS: dict[str, list[str]] = {
