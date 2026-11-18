@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-18 — Drafted four-part presentation and report copy
+- Author: Grok, at user request
+- Type: handoff
+- Context: The group asked for matching slide copy and report paragraphs on gold-forward volatility forecasting, structured as motivation/data, model exploration, candidate residual evaluation, and an AI-reflection placeholder. Numerical results were not to be invented.
+- Outcome: Rewrote `presentations/Group2_Slides.qmd` as a Beamer Metropolis deck with speaker notes, and created `report_group2/Group2_Report.qmd` in the course Typst format. Shortlist used in both files is GARCH, EGARCH, GARCH-X, EGARCH-X, HAR-X, and HGB. MAE/AIC/BIC cells, diagnostic statistics, and Part 4 remain placeholders. GARCH-X is identified once as the project's range-augmented specification. Existing residual and seasonality figures are included with captions that allow replacement if the panel set differs.
+- Artifacts: `presentations/Group2_Slides.qmd`, `report_group2/Group2_Report.qmd`.
+- Next: Team to insert saved numerical results, agree the contribution statement and AI reflection, and render the Beamer PDF and Typst report before submission.
+
 ## 2026-11-18 — Rebased the Normal versus Student-t comparison onto main
 - Author: Grok, continuing Copilot session b9a57800-66a5-422c-815d-de8428eb6cee
 - Type: handoff
