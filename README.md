@@ -48,9 +48,9 @@ and handoffs when work crosses stages.
 
 The current two-stage analysis uses LSEG Workspace `GCc1`, a generic COMEX gold
 futures series. It is not spot gold or a single fixed-expiry contract. Do not
-mix it with spot/fixing prices or with another futures series. The LSEG exports
-and processed analysis inputs are local data and are not committed; check
-applicable licenses before sharing or redistributing them.
+mix it with spot/fixing prices or with another futures series. LSEG source exports are local and are not committed; selected prepared targets
+and forecast artifacts are tracked for reproducibility. Check applicable
+licenses before sharing or redistributing source exports or derived data.
 
 This analysis is distinct from the original `main` workflow, which used Yahoo
 Finance `GC=F` and a five-observed-session realized-variance target. That
@@ -170,6 +170,31 @@ outputs include `stage2_yz_forecasts.csv`, `stage2_yz_summary.csv`,
 [`REPRODUCE.md`](REPRODUCE.md) for additional forecast-error, calibration,
 rolling-window, report, and figure procedures.
 
+#### Calendar-month volatility analysis
+
+Summarize the prepared `GCc1` daily-volatility target by month of year and by
+calendar year-month:
+
+```bash
+PYTHONPATH=src python scripts/analyze_yang_zhang_calendar.py
+```
+
+By default, the script reads
+`data/processed/stage2_yz_selected/GCc1_yang_zhang_volatility.csv` and writes
+`month_of_year_summary.csv`, `calendar_month_summary.csv`,
+`calendar_month_summaries.png`, and an input-hash `manifest.json` under
+`data/processed/stage2_yz_calendar/`. The month-of-year table reports each
+calendar month's count, year coverage, mean, median, standard deviation, and
+quartiles separately for all, training, and test targets. The year-month table
+shows the corresponding statistics over each individual calendar month.
+Incomplete OHLC targets are excluded. This is a descriptive view of the
+unannualized two-observation Yang-Zhang volatility proxy, not a formal
+seasonality test or a causal calendar effect; the chronological test sample
+was previously examined. In the tracked 2010-2026 target series, the
+full-sample mean was highest in March (0.00899) and lowest in July (0.00694).
+The difference is descriptive and may reflect changing volatility regimes,
+not a recurring calendar effect.
+
 ## Setup and commands
 
 Install the package and test dependencies; add interactive dependencies for
@@ -186,8 +211,8 @@ Run the test suite:
 python -m pytest
 ```
 
-The current merged test suite has 65 tests covering Yang-Zhang preparation,
-the significance screen, forecasting, predictor comparison, and diagnostics.
+The current merged test suite covers Yang-Zhang preparation, the significance
+screen, forecasting, predictor comparison, calendar summaries, and diagnostics.
 There is no configured linter.
 
 ### Reports and diagnostics
