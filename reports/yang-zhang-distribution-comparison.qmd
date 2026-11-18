@@ -1,0 +1,221 @@
+---
+title: "Normal and Student-t Yang–Zhang Forecasts"
+subtitle: "GCc1 one-step comparison under two innovation assumptions"
+author: "Applied Forecasting Methods Group"
+date: 2026-11-18
+format:
+  pdf:
+    pdf-engine: lualatex
+    documentclass: scrartcl
+    fontsize: 10pt
+    papersize: a4
+    geometry:
+      - margin=0.72in
+    toc: false
+    number-sections: true
+    colorlinks: true
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{python}
+#| output: asis
+import json
+from pathlib import Path
+
+import pandas as pd
+
+output_dir = Path("data/processed/stage2_yz_distributions")
+summary = pd.read_csv(output_dir / "distribution_summary.csv")
+quintiles = pd.read_csv(output_dir / "forecast_error_quintiles.csv")
+manifest = json.loads((output_dir / "distribution_manifest.json").read_text())
+
+
+def markdown_table(frame: pd.DataFrame) -> str:
+    columns = [str(column) for column in frame.columns]
+    lines = [
+        "| " + " | ".join(columns) + " |",
+        "| " + " | ".join("---" for _ in columns) + " |",
+    ]
+    for row in frame.itertuples(index=False):
+        lines.append("| " + " | ".join(str(value) for value in row) + " |")
+    return "\n".join(lines)
+
+labels = {
+    "garch": "GARCH",
+    "egarch": "EGARCH",
+    "garch_x": "GARCH-X",
+    "egarch_x": "EGARCH-X",
+    "har_x": "HAR-X",
+    "hgb": "HGB",
+}
+summary["model_label"] = summary["model"].map(labels)
+order = list(labels)
+summary["model"] = pd.Categorical(summary["model"], order, ordered=True)
+summary = summary.sort_values(["model", "distribution"])
+
+def paired(metric):
+    wide = summary.pivot(index="model", columns="distribution", values=metric)
+    wide["student_minus_normal"] = wide["student_t"] - wide["normal"]
+    return wide
+
+mae = paired("MAE")
+log_score = paired("mean_negative_log_score")
+n_common = int(summary["n_common"].iloc[0])
+failures = int(summary["failure_count"].sum())
+better_mae = int((mae["student_minus_normal"] < 0).sum())
+better_score = int((log_score["student_minus_normal"] < 0).sum())
+
+print("# Executive summary\n")
+print(
+    "This note compares one-step forecasts of unannualized two-observation "
+    "Yang–Zhang volatility for LSEG Workspace GCc1. Six candidates are "
+    f"re-estimated at each expanding origin from {manifest['test_start']} "
+    f"through {manifest['test_end']}. Metrics below use the "
+    f"{n_common} target dates on which every candidate and both "
+    "distributions converged. "
+    f"Recorded fit failures across all candidate-distribution rows: {failures}."
+)
+print()
+print(
+    f"Student-t lowers the level MAE for {better_mae} of 6 candidates and "
+    f"lowers the mean negative log score for {better_score} of 6. "
+    "These are descriptive scores on a holdout that earlier comparisons "
+    "already used. They are not a test that one distribution forecasts better, "
+    "and they do not select an operational model."
+)
+print()
+print("# Specification\n")
+print(
+    "GARCH and EGARCH are AR(1) models from the `arch` package, fit by "
+    "Normal or standardized Student-t maximum likelihood. GARCH-X uses the "
+    "same AR(1) mean with a GARCH recursion in lagged OHLC range and the "
+    "selected DXY, gold IV 1M, and gold IV 1Y predictors. Predictor "
+    "coefficients in GARCH-X stay nonnegative. EGARCH-X puts those lagged "
+    "inputs in a log-variance recursion. This GARCH-X Normal fit is the "
+    "Gaussian special case of that likelihood, not the earlier threshold-GARCH variant."
+)
+print()
+print(
+    "HAR-X regresses log volatility on the HAR lags and the same origin-dated "
+    "inputs. The Normal fit is least squares; the Student-t fit is maximum "
+    "likelihood. HistGradientBoosting is unchanged squared-error boosting on "
+    "log volatility, so its two point forecasts are identical. Its Normal and "
+    "Student-t scales are estimated from residuals on a chronological "
+    "training-only calibration slice."
+)
+print()
+print(
+    "Student-t innovations are scaled to unit variance and the degrees of "
+    "freedom are estimated above 2. Log-volatility models report the "
+    "conditional median, exp(log location), as the level forecast. Under a "
+    "log Student-t innovation the conditional mean of the level need not be "
+    "finite, so the median is the point forecast used for MAE, RMSE, and QLIKE. "
+    "The negative log score is the predictive density of the volatility level. "
+    "Log-volatility densities include the Jacobian."
+)
+print()
+print("# Common-date performance\n")
+
+display_columns = [
+    "model_label",
+    "distribution",
+    "failure_count",
+    "MAE",
+    "RMSE",
+    "QLIKE",
+    "mean_negative_log_score",
+    "coverage_90",
+    "mean_width_90",
+    "df_median",
+]
+table = summary[display_columns].copy()
+table["coverage_90"] = table["coverage_90"].map(lambda value: f"{100 * value:.1f}%")
+for column in ("MAE", "RMSE", "QLIKE", "mean_negative_log_score", "mean_width_90", "df_median"):
+    table[column] = table[column].map(lambda value: "" if pd.isna(value) else f"{value:.6g}")
+table = table.rename(columns={
+    "model_label": "Model",
+    "distribution": "Distribution",
+    "failure_count": "Failures",
+    "mean_negative_log_score": "Mean NLS",
+    "coverage_90": "90% coverage",
+    "mean_width_90": "Mean 90% width",
+    "df_median": "Median df",
+})
+print(markdown_table(table))
+print()
+print(
+    "QLIKE uses the squared forecast and squared outcome as variance proxies. "
+    "A lower mean negative log score is a better density forecast. Interval "
+    "coverage is the share of outcomes inside the model's 90% predictive "
+    "interval. Width is the mean upper-minus-lower bound on the volatility level."
+)
+print()
+print("# Forecast-level error dispersion\n")
+print(
+    "Earlier residual checks found that raw forecast-error variance rose with "
+    "the forecast level. The table below reports that dispersion for the "
+    "lowest and highest within-model forecast quintiles. A Student-t "
+    "innovation can fatten predictive intervals without removing this "
+    "conditional-variance pattern."
+)
+print()
+edges = quintiles.loc[quintiles["forecast_quintile"].isin([1, 5])].copy()
+edges["model_label"] = edges["model"].map(labels)
+edges["model"] = pd.Categorical(edges["model"], order, ordered=True)
+edges = edges.sort_values(["model", "distribution", "forecast_quintile"])
+edge_table = edges[
+    ["model_label", "distribution", "forecast_quintile", "n", "mean_forecast", "error_variance"]
+].copy()
+edge_table["mean_forecast"] = edge_table["mean_forecast"].map(lambda value: f"{value:.6g}")
+edge_table["error_variance"] = edge_table["error_variance"].map(lambda value: f"{value:.6g}")
+edge_table = edge_table.rename(columns={
+    "model_label": "Model",
+    "distribution": "Distribution",
+    "forecast_quintile": "Quintile",
+    "n": "N",
+    "mean_forecast": "Mean forecast",
+    "error_variance": "Error variance",
+})
+print(markdown_table(edge_table))
+print()
+
+def variance_ratio(model, distribution):
+    block = quintiles.loc[
+        quintiles["model"].eq(model) & quintiles["distribution"].eq(distribution)
+    ]
+    low_rows = block.loc[block["forecast_quintile"].eq(1), "error_variance"]
+    high_rows = block.loc[block["forecast_quintile"].eq(5), "error_variance"]
+    if low_rows.empty or high_rows.empty or float(low_rows.iloc[0]) <= 0:
+        return None
+    return float(high_rows.iloc[0]) / float(low_rows.iloc[0])
+
+ratios = [
+    variance_ratio(model, distribution)
+    for model in order
+    for distribution in ("normal", "student_t")
+]
+ratios = [ratio for ratio in ratios if ratio is not None]
+above = sum(ratio > 1 for ratio in ratios)
+print(
+    f"For {above} of {len(ratios)} model-distribution pairs with both edge "
+    "quintiles, the highest-quintile error variance exceeds the lowest. "
+    f"The ratios run from {min(ratios):.2f} to {max(ratios):.2f}. "
+    "A ratio above one means the larger forecasts still have more dispersed "
+    "realized errors under that distribution."
+)
+print()
+print("# Limits\n")
+print(
+    "Origins use only information available at the forecast origin, including "
+    "the next-weekday availability proxy for DXY and the two gold implied "
+    "volatilities. Adjacent Yang–Zhang targets overlap, so forecast errors are "
+    "dependent and the common-date scores are not independent replications. "
+    "No paired forecast-loss test or untouched later holdout is reported. "
+    "Optimizer convergence does not imply a unique global maximum. "
+    f"Training length at the first origin is {int(manifest['training_observations'])} "
+    "valid targets."
+)
+```
