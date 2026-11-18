@@ -202,6 +202,41 @@ one-step origin; check the saved target dates and manifest when interpreting
 results around missing source bars. This specification is a user-selected
 working analysis, not a team-approved model decision.
 
+## Normal versus Student-t distribution comparison
+
+The distribution experiment refits six candidates at every sequential holdout
+origin under a Normal likelihood and a variance-standardized Student-t
+likelihood. It reads `data/refinitiv/GCc1.csv` and the DXY, gold IV 1M, and
+gold IV 1Y exports in that directory.
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=src \
+  python scripts/compare_volatility_distributions.py --workers 6 \
+  --output-dir data/processed/stage2_yz_distributions
+quarto render reports/yang-zhang-distribution-comparison.qmd
+```
+
+GARCH and EGARCH use the existing AR(1) `arch` models. GARCH-X keeps the AR(1)
+mean, lagged OHLC range, and nonnegative coefficients on the three selected
+predictors; its Normal objective matches the earlier Gaussian GARCH-X
+likelihood, not the threshold-GARCH variant. EGARCH-X in this experiment adds
+those same lagged inputs to a log-variance recursion. It is separate from the
+`arch` EGARCH-X model documented in the selected-model residual section. HAR-X is estimated on log volatility, by
+least squares under Normal errors and by Student-t maximum likelihood
+otherwise. HistGradientBoosting remains a squared-error model. Its two
+densities are fit to residuals from a chronological training-only calibration
+slice, so its point forecasts match by construction.
+
+Student-t degrees of freedom are constrained above 2. Reported point forecasts
+for the log-volatility models are conditional medians. MAE, RMSE, and QLIKE
+are computed on the volatility level. The predictive log score is also on the
+level; log-volatility densities include the Jacobian. Local outputs are
+`distribution_forecasts.csv`, `distribution_summary.csv`,
+`forecast_error_quintiles.csv`, and `distribution_manifest.json`. This
+directory is gitignored. The holdout was examined in earlier comparisons, and
+a heavier-tailed innovation does not by itself make forecast-error variance
+constant across forecast levels.
+
 ## Yang-Zhang report and forecast figures
 
 The full formula and model-specification report is available as

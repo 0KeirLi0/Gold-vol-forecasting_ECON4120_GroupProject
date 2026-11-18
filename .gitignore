@@ -12,3 +12,4 @@ __pycache__/
 presentations/*_files/
 /data/processed/stage2_yz_diagnostics/
 /data/processed/stage2_yz_calendar/
+/data/processed/stage2_yz_distributions/

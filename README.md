@@ -191,6 +191,27 @@ The selected-model report now also includes training-origin AIC/BIC where a
 likelihood is defined; mixed target transformations and non-likelihood models
 are explicitly flagged.
 
+### Normal and Student-t forecast comparison
+
+Re-estimate six candidates under a Normal likelihood and a unit-variance
+Student-t likelihood, and compare level MAE, RMSE, QLIKE, predictive log
+score, and interval coverage on the same chronological holdout:
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=src \
+  python scripts/compare_volatility_distributions.py --workers 6 \
+  --output-dir data/processed/stage2_yz_distributions
+```
+
+The candidates are AR-GARCH, AR-EGARCH, range GARCH-X, EGARCH-X, log HAR-X,
+and HistGradientBoosting. This EGARCH-X is the likelihood comparison in
+`distribution_comparison.py`. It is separate from the `arch` EGARCH-X model
+already used in the selected-model residual report. HGB keeps one
+squared-error point forecast; Normal and Student-t enter only through a
+training-only residual density. The procedure is in
+[`REPRODUCE.md`](REPRODUCE.md). The holdout was already used for earlier
+model comparisons, so the scores are descriptive.
+
 ### Calendar-month summaries
 
 Summarize the prepared `GCc1` daily-volatility target by month of year and by

@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-18 — Rebased the Normal versus Student-t comparison onto main
+- Author: Grok, continuing Copilot session b9a57800-66a5-422c-815d-de8428eb6cee
+- Type: handoff
+- Context: The user asked to push the comparison after a groupmate had already merged `test` into `main`. Local `main` had one unpushed commit based on the older tip.
+- Outcome: Replayed that commit onto `origin/main`. Kept the groupmate's test-merge entries and files, and retained the comparison module, tests, runner, report source, and notes. README and session-log overlaps were combined. The sequential run was still computing at the earlier save and is not part of this commit.
+- Artifacts: `src/gold_vol_pipeline/distribution_comparison.py`, `scripts/compare_volatility_distributions.py`, `tests/test_distribution_comparison.py`, `reports/yang-zhang-distribution-comparison.qmd`, `README.md`, `REPRODUCE.md`, `.gitignore`.
+- Next: Render `reports/yang-zhang-distribution-comparison.qmd` after `data/processed/stage2_yz_distributions/distribution_summary.csv` exists.
+
 ## 2026-11-18 — Integrated latest test-branch updates into main
 - Author: User-directed implementation by Copilot
 - Type: handoff
