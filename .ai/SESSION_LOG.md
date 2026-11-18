@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-18 — Integrated latest test-branch updates into main
+- Author: User-directed implementation by Copilot
+- Type: handoff
+- Context: The user requested updating `main` from the latest `test` branch.
+- Outcome: Merged the three commits added to `test` since the prior integration: Yang-Zhang calendar/weekday seasonality, forecast-error quintile diagnostics, and EGARCH-X with selected-model diagnostics and training-origin information criteria. Preserved the separate descriptive calendar report already on `main`; updated README links and clarified exploratory inference.
+- Artifacts: `src/gold_vol_pipeline/seasonality.py`, forecast diagnostics and EGARCH-X updates, `scripts/analyze_yang_zhang_seasonality.py`, `scripts/calculate_selected_information_criteria.py`, reports and figures, `README.md`, `REPRODUCE.md`.
+- Next: Validate and push the merged update to `main`.
+
 ## 2026-11-18 — Added seasonality check for original GCc1 Yang-Zhang volatility
 - Author: User-directed implementation by Copilot
 - Type: finding

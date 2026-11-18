@@ -48,9 +48,10 @@ and handoffs when work crosses stages.
 
 The current two-stage analysis uses LSEG Workspace `GCc1`, a generic COMEX gold
 futures series. It is not spot gold or a single fixed-expiry contract. Do not
-mix it with spot/fixing prices or with another futures series. LSEG source exports are local and are not committed; selected prepared targets
-and forecast artifacts are tracked for reproducibility. Check applicable
-licenses before sharing or redistributing source exports or derived data.
+mix it with spot/fixing prices or with another futures series. LSEG source
+exports are local and are not committed; selected prepared targets and
+forecast artifacts are tracked for reproducibility. Check applicable licenses
+before sharing or redistributing source exports or derived data.
 
 This analysis is distinct from the original `main` workflow, which used Yahoo
 Finance `GC=F` and a five-observed-session realized-variance target. That
@@ -61,10 +62,11 @@ analysis. Do not mix the two instruments, targets, or evaluation outputs.
 
 For reproducibility, preserve each run's source inputs and generated manifests.
 The manifests record input file hashes, transformations, and model/evaluation
-settings. `data/` is Git-ignored. The analysis uses a one-weekday availability
-proxy for LSEG predictors; it does not reconstruct exact publication times or
-historical data vintages. Results are exploratory, not causal findings or a
-confirmed team-wide model decision.
+settings. Raw source exports and generated diagnostics are Git-ignored unless
+explicitly tracked as analysis artifacts. The analysis uses a one-weekday
+availability proxy for LSEG predictors; it does not reconstruct exact
+publication times or historical data vintages. Results are exploratory, not
+causal findings or a confirmed team-wide model decision.
 
 ### Optional LSEG Workspace export
 
@@ -157,16 +159,17 @@ These changes do not isolate individual predictor effects. The predictors
 were selected after earlier holdout results had been observed, so this is not
 a fully untouched holdout.
 
+The latest `test` updates add forecast-error quintile summaries, EGARCH-X
+forecasts, selected-model residual diagnostics, and training-origin AIC/BIC
+where a likelihood is applicable. The selected-model report adds GARCH(1,1),
+EGARCH(1,1), EGARCH-X, range GARCH-X, HAR-X, and HistGradientBoosting
+forecasts. These diagnostics are still out-of-sample forecast errors, not
+fitted or standardized GARCH innovations.
+
 See the [report](reports/yang-zhang-volatility.pdf) and its
 [editable source](reports/yang-zhang-volatility.qmd) for formulas, VIF and
 screen results, model specifications, metrics, and forecast graphs with the
 test period shaded. See [REPRODUCE.md](REPRODUCE.md) for reproduction steps.
-The modern [Group 2 Beamer presentation](presentations/Group2_Slides.pdf) and
-[editable slide source](presentations/Group2_Slides.qmd) summarize the same
-Yang-Zhang analysis.
-The [test-vs-main comparison](reports/test-vs-main-model-comparison.pdf)
-summarizes branch changes and explains why model scores from the two targets
-cannot be ranked directly.
 The [Yang-Zhang seasonality report](reports/yang-zhang-seasonality.pdf)
 checks month and weekday patterns in the original LSEG/Refinitiv GCc1
 two-observation volatility series. It finds a descriptive March/April/February
@@ -188,9 +191,7 @@ The selected-model report now also includes training-origin AIC/BIC where a
 likelihood is defined; mixed target transformations and non-likelihood models
 are explicitly flagged.
 
-## Collaboration
-
-#### Calendar-month volatility analysis
+### Calendar-month summaries
 
 Summarize the prepared `GCc1` daily-volatility target by month of year and by
 calendar year-month:
@@ -218,6 +219,13 @@ not a recurring calendar effect. The
 [editable Quarto source](reports/yang-zhang-calendar.qmd), and the
 [supporting summaries, chart, and manifest](reports/yang-zhang-calendar-data/)
 are tracked in the repository.
+
+The separate [seasonality analysis](reports/yang-zhang-seasonality.pdf)
+includes month and weekday summaries, a month-by-year heatmap, and HAC joint
+tests at multiple lag lengths. Month-only effects are suggestive at 5 lags but
+not at 10 or 20; weekday effects do not reject at 5%. Because adjacent target
+windows overlap and inference depends on HAC lag, these results do not establish
+stable seasonality.
 
 ## Setup and commands
 
@@ -247,6 +255,10 @@ The main report, editable Quarto source, and holdout forecast-error report are:
 - [`reports/yang-zhang-volatility.qmd`](reports/yang-zhang-volatility.qmd)
 - [`reports/yang-zhang-residual-diagnostics.pdf`](reports/yang-zhang-residual-diagnostics.pdf)
 - [`reports/yang-zhang-residual-diagnostics.qmd`](reports/yang-zhang-residual-diagnostics.qmd)
+- [`reports/yang-zhang-selected-residual-diagnostics.pdf`](reports/yang-zhang-selected-residual-diagnostics.pdf)
+- [`reports/yang-zhang-selected-residual-diagnostics.qmd`](reports/yang-zhang-selected-residual-diagnostics.qmd)
+- [`reports/yang-zhang-seasonality.pdf`](reports/yang-zhang-seasonality.pdf)
+- [`reports/yang-zhang-seasonality.qmd`](reports/yang-zhang-seasonality.qmd)
 - [`reports/yang-zhang-calendar.pdf`](reports/yang-zhang-calendar.pdf)
 - [`reports/yang-zhang-calendar.qmd`](reports/yang-zhang-calendar.qmd), with its
   [calendar summary data and figure](reports/yang-zhang-calendar-data/)
@@ -269,17 +281,20 @@ with the current LSEG `GCc1` Yang-Zhang analysis described above; commands and
 results from the archived workflow should not be assumed to run against this
 branch.
 
+## Collaboration
+
+Follow [`GIT_WORKFLOW.md`](GIT_WORKFLOW.md) for shared Git changes and the
+[AI handoff protocol](.ai/README.md). Historical context and dated decisions
+are recorded in the append-only [session log](.ai/SESSION_LOG.md).
+
 ## Repository status
 
 The active work now includes a training-only predictor-significance screen,
 an expanding one-step Yang-Zhang forecast comparison, a joint selected-
 predictor experiment, paired forecast plots, and descriptive forecast-error
-diagnostics. The holdout has already informed predictor selection and has
+diagnostics, calendar-seasonality checks, and selected-model EGARCH-X
+comparisons. The holdout has already informed predictor selection and has
 overlapping targets; reported rankings and diagnostics are therefore
 exploratory. The team has not made a final model-selection decision. Use the
 analysis limitations and evidence to agree on the next step before treating
 any candidate as the project recommendation.
-
-Follow [`GIT_WORKFLOW.md`](GIT_WORKFLOW.md) for shared Git changes and the
-[AI handoff protocol](.ai/README.md). Historical context and dated decisions
-are recorded in the append-only [session log](.ai/SESSION_LOG.md).
