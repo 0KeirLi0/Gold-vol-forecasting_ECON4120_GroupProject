@@ -1,0 +1,116 @@
+---
+title: "GCc1 Yang–Zhang Calendar-Month Analysis"
+subtitle: "Descriptive summaries of unannualized daily volatility"
+author: "Applied Forecasting Methods Group"
+date: 2026-11-18
+format:
+  pdf:
+    pdf-engine: lualatex
+    documentclass: scrartcl
+    fontsize: 10pt
+    papersize: a4
+    geometry:
+      - margin=0.72in
+    toc: false
+    number-sections: true
+    colorlinks: true
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+# Executive summary
+
+This report describes calendar-month patterns in the unannualized
+two-observation Yang–Zhang daily-volatility target for LSEG Workspace
+`GCc1`, a generic COMEX gold futures series. The tracked prepared dataset
+contains 3,801 valid targets from 2010-01-06 through 2026-11-10. We summarize
+the target by month of year across all available years and separately by
+individual calendar year-month. The tables also distinguish training and
+previously examined test samples.
+
+Across all valid observations, mean volatility is highest in March
+(0.00899) and lowest in July (0.00694). This is a descriptive difference,
+not evidence of a stable seasonal effect: the sample spans changing market
+regimes, the Yang–Zhang target windows overlap, and no seasonality hypothesis
+test is performed.
+
+# Data and method
+
+The input is
+`data/processed/stage2_yz_selected/GCc1_yang_zhang_volatility.csv`.
+It contains daily OHLC-derived Yang–Zhang variance and its square-root
+volatility target, plus the chronological `train`/`test` split. The target is
+not annualized. Rows with incomplete OHLC windows have missing targets and
+are excluded; no prices or target values are imputed.
+
+For the month-of-year summary, each valid target is grouped by its calendar
+month number, pooling years. For the calendar-month summary, observations are
+grouped by year and month. Both tables provide all-sample, training-only, and
+test-only rows. Statistics are target count, year coverage, mean, median,
+sample standard deviation, and the 25th, 75th, and 90th percentiles.
+
+The month-of-year summary is useful for describing the sample but does not
+adjust for the long-run evolution in volatility, other market conditions,
+missing bars, or repeated testing. A calendar pattern cannot be interpreted
+as a causal effect. The chronological test segment has already informed
+earlier model exploration and is not an untouched validation sample.
+
+# Month-of-year summaries
+
+The table below reports means, medians, counts, and 90th percentiles for the
+full sample. The complete statistics, including training and test subsets,
+are available in the linked machine-readable summary.
+
+```{r}
+months <- read.csv("yang-zhang-calendar-data/month_of_year_summary.csv")
+all_months <- subset(months, sample == "all")
+month_table <- data.frame(
+  Month = all_months$month_name,
+  Targets = all_months$n_targets,
+  Years = all_months$n_years,
+  Mean = sprintf("%.5f", all_months$mean_daily_volatility),
+  Median = sprintf("%.5f", all_months$median_daily_volatility),
+  `90th percentile` = sprintf("%.5f", all_months$q90_daily_volatility),
+  check.names = FALSE
+)
+knitr::kable(month_table, format = "pipe", align = c("l", "r", "r", "r", "r", "r"))
+```
+
+March has the largest full-sample mean, while July has the smallest. These
+monthly group means pool observations over many years; differences can be
+driven by a small number of high-volatility episodes or by shifts in the
+overall volatility distribution.
+
+![Mean and median by calendar month, and mean by individual calendar
+month.](yang-zhang-calendar-data/calendar_month_summaries.png)
+
+# Calendar year-month view
+
+The year-month series makes changes in the level of volatility over time
+visible alongside the month-of-year grouping. It is not a forecast and does
+not isolate a recurring month effect. The individual year-month statistics
+are provided in the
+[calendar-month CSV](yang-zhang-calendar-data/calendar_month_summary.csv);
+the month-of-year table, including training and test splits, is provided in
+the [month-of-year CSV](yang-zhang-calendar-data/month_of_year_summary.csv).
+
+# Reproducibility
+
+From the repository root, regenerate the summary tables, figure, and
+input-hash manifest, then render this report:
+
+```bash
+PYTHONPATH=src python scripts/analyze_yang_zhang_calendar.py \
+  --output-dir reports/yang-zhang-calendar-data
+quarto render reports/yang-zhang-calendar.qmd
+```
+
+The generator records the input SHA-256, sample dates, grouping definitions,
+and output paths in
+[`yang-zhang-calendar-data/manifest.json`](yang-zhang-calendar-data/manifest.json).
+The input source is the prepared target file above; data-source access and
+Yang–Zhang target construction are described in the project
+[`README`](../README.md) and
+[`reproduction guide`](../REPRODUCE.md).

@@ -10,6 +10,5 @@ __pycache__/
 /presentations/project-progress_files/
 /presentations/iteration-1-summary_files/
 presentations/*_files/
-/data/
-/notebooks/data/
-/Project_Guidance_2026/
+/data/processed/stage2_yz_diagnostics/
+/data/processed/stage2_yz_calendar/

@@ -1,0 +1,87 @@
+{
+  "first_test_target_date": "2023-06-02",
+  "training_target_count": 3040,
+  "candidate_training_pairs": 3039,
+  "complete_training_pairs": 3039,
+  "incomplete_training_pairs_dropped": 0,
+  "first_origin_date": "2010-01-06",
+  "last_origin_date": "2023-05-31",
+  "last_response_date": "2023-06-01",
+  "availability": "latest available at origin; observation date plus one weekday",
+  "response": "next valid Yang-Zhang daily volatility (unannualized)",
+  "control": "current Yang-Zhang daily volatility",
+  "model": "OLS with intercept; training-standardized predictors and control",
+  "hac_maxlags": 4,
+  "multiple_testing": "Holm across 8 retained predictor coefficients, excluding control",
+  "tested_predictors": [
+    "dxy_close",
+    "sp500_log_return",
+    "vix_close",
+    "treasury_10y_yield",
+    "gold_iv_1m",
+    "gold_iv_1y",
+    "gold_1m_risk_reversal",
+    "gold_1m_butterfly"
+  ],
+  "alpha": 0.05,
+  "training_r_squared": 0.45920896630060715,
+  "design_condition_number": 4.889329553092125,
+  "vif_threshold": 5.0,
+  "vif_selection": "remove highest-VIF candidate iteratively; always retain current-volatility control",
+  "vif_removed_predictors": [
+    "gold_iv_6m",
+    "gold_iv_3m",
+    "gold_iv_2m"
+  ],
+  "vif_final_max": 4.310164462380394,
+  "input_files": {
+    "GCc1.csv": {
+      "path": "data/refinitiv/GCc1.csv",
+      "sha256": "1a3bc07dd9778fe03b71cf1c6e3a9d500f0ff5b3627d81185c7d76d1b235ee88"
+    },
+    "DXY.csv": {
+      "path": "data/refinitiv/DXY.csv",
+      "sha256": "04ea5d83706d7a41271bd35414bf97a7291ed4f0f297ba2bec8c0733ee73df8f"
+    },
+    "SPX.csv": {
+      "path": "data/refinitiv/SPX.csv",
+      "sha256": "93e2e7b00bd21520e96f961e9a69dd68d1e22d48b82152d8b7f202b393d8c7bf"
+    },
+    "VIX.csv": {
+      "path": "data/refinitiv/VIX.csv",
+      "sha256": "df4349f69d32ee4cef3ce928084df4cb540dfa67a992b93eedba9fe1b87cf874"
+    },
+    "US10YT_RR.csv": {
+      "path": "data/refinitiv/US10YT_RR.csv",
+      "sha256": "b0cdaa529aeee331ef624b0e9a3cd796b56b80b9fb77b1cec1ae549a242ad50b"
+    },
+    "XAU1MO_R.csv": {
+      "path": "data/refinitiv/XAU1MO_R.csv",
+      "sha256": "94c422c332a449cba95f437b4a52304856d620abe2c3c86a7d5296e8c8884097"
+    },
+    "XAU2MO_R.csv": {
+      "path": "data/refinitiv/XAU2MO_R.csv",
+      "sha256": "04bf47245887f17090dfe24200067da686ff3514c7a465f4daab6bb5f1b404a2"
+    },
+    "XAU3MO_R.csv": {
+      "path": "data/refinitiv/XAU3MO_R.csv",
+      "sha256": "3a4bcaf378f0a7e38a8aa04042aa031cfb00eec4141490802278dddcb55ef83b"
+    },
+    "XAU6MO_R.csv": {
+      "path": "data/refinitiv/XAU6MO_R.csv",
+      "sha256": "01a6d1834ecc9eab51cf0b2e8496742446acbbf14ff65528270ad1fd4465bdf0"
+    },
+    "XAU1YO_R.csv": {
+      "path": "data/refinitiv/XAU1YO_R.csv",
+      "sha256": "84e231771af67d9f777a64b0ce29dbb01f158459f93dd4722b39201e09ee904a"
+    },
+    "XAU1MRR.csv": {
+      "path": "data/refinitiv/XAU1MRR.csv",
+      "sha256": "d2bab9a9ecce2cd85193129ff2a1fa5a1dc5e89e74450156288b8609d21301ad"
+    },
+    "XAU1MBF.csv": {
+      "path": "data/refinitiv/XAU1MBF.csv",
+      "sha256": "cdc2adbb224f44ac620b983cff9bebbc8e8655508e557f85faf745eb76be76b6"
+    }
+  }
+}

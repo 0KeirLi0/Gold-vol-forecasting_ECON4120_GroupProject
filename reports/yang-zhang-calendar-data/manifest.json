@@ -1,0 +1,29 @@
+{
+  "analysis": "descriptive GCc1 Yang-Zhang volatility calendar summaries",
+  "input_path": "data/processed/stage2_yz_selected/GCc1_yang_zhang_volatility.csv",
+  "input_sha256": "81694d00643078d64be349c2514b45febb7bd96960f8981b627d05b780584a01",
+  "target": "unannualized square root of the two-observation Yang-Zhang variance",
+  "month_of_year_method": "group valid target observations by month number, separately for all, train, and test samples",
+  "calendar_month_method": "group valid target observations by calendar year and month, separately for all, train, and test samples",
+  "statistics": [
+    "n_targets",
+    "n_years",
+    "mean_daily_volatility",
+    "median_daily_volatility",
+    "sd_daily_volatility",
+    "q25_daily_volatility",
+    "q75_daily_volatility",
+    "q90_daily_volatility"
+  ],
+  "sample": {
+    "n_targets": 3801,
+    "start_date": "2010-01-06",
+    "end_date": "2026-11-10"
+  },
+  "interpretation": "descriptive summaries only; not a seasonality hypothesis test or evidence of a causal calendar effect",
+  "outputs": {
+    "month_of_year_summary": "reports/yang-zhang-calendar-data/month_of_year_summary.csv",
+    "calendar_month_summary": "reports/yang-zhang-calendar-data/calendar_month_summary.csv",
+    "figure": "reports/yang-zhang-calendar-data/calendar_month_summaries.png"
+  }
+}
