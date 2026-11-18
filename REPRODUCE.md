@@ -56,7 +56,9 @@ After generating the prepared Yang-Zhang targets, summarize calendar-month
 variation with:
 
 ```bash
-PYTHONPATH=src python scripts/analyze_yang_zhang_calendar.py
+PYTHONPATH=src python scripts/analyze_yang_zhang_calendar.py \
+  --output-dir reports/yang-zhang-calendar-data
+quarto render reports/yang-zhang-calendar.qmd
 ```
 
 The script defaults to
@@ -65,8 +67,9 @@ all, train, and test summaries grouped both by month of year (January through
 December across years) and by individual calendar year-month. It records
 target counts, year coverage, mean, median, standard deviation, and quantiles,
 plus a plot and manifest with the input SHA-256. Override the source with
-`--input PATH` and the output location with `--output-dir PATH`. Missing
-targets from incomplete OHLC windows are excluded. The summaries are
+`--input PATH` and the output location with `--output-dir PATH`. The rendered
+report and supporting CSVs/figure are tracked under `reports/`.
+Missing targets from incomplete OHLC windows are excluded. The summaries are
 descriptive only; they do not adjust for time-varying volatility regimes or
 test a seasonal effect. Month-of-year comparisons across the full sample can
 mix different market regimes, and the test segment was previously examined.

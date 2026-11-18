@@ -193,7 +193,11 @@ seasonality test or a causal calendar effect; the chronological test sample
 was previously examined. In the tracked 2010-2026 target series, the
 full-sample mean was highest in March (0.00899) and lowest in July (0.00694).
 The difference is descriptive and may reflect changing volatility regimes,
-not a recurring calendar effect.
+not a recurring calendar effect. The
+[calendar analysis report](reports/yang-zhang-calendar.pdf), its
+[editable Quarto source](reports/yang-zhang-calendar.qmd), and the
+[supporting summaries, chart, and manifest](reports/yang-zhang-calendar-data/)
+are tracked in the repository.
 
 ## Setup and commands
 
@@ -223,6 +227,9 @@ The main report, editable Quarto source, and holdout forecast-error report are:
 - [`reports/yang-zhang-volatility.qmd`](reports/yang-zhang-volatility.qmd)
 - [`reports/yang-zhang-residual-diagnostics.pdf`](reports/yang-zhang-residual-diagnostics.pdf)
 - [`reports/yang-zhang-residual-diagnostics.qmd`](reports/yang-zhang-residual-diagnostics.qmd)
+- [`reports/yang-zhang-calendar.pdf`](reports/yang-zhang-calendar.pdf)
+- [`reports/yang-zhang-calendar.qmd`](reports/yang-zhang-calendar.qmd), with its
+  [calendar summary data and figure](reports/yang-zhang-calendar-data/)
 
 The residual diagnostics describe out-of-sample forecast errors, not fitted
 GARCH innovations. Holdout volatility-tercile labels are retrospective, and

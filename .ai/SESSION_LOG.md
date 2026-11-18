@@ -6,8 +6,8 @@ This is an append-only record of project context that may help future sessions. 
 - Author: User-directed implementation by Copilot
 - Type: finding
 - Context: The user requested the `GCc1` Yang-Zhang calendar analysis from `test`; no calendar-specific artifact existed at the current `origin/test` tip, so the user selected calendar-month/seasonal analysis.
-- Outcome: Added reproducible month-of-year and year-month summaries of the prepared unannualized two-observation target, split into all/train/test samples, plus a plot and SHA-256 manifest. Across 3,801 valid targets, full-sample mean daily volatility ranged from 0.00694 in July to 0.00899 in March. This is descriptive only, not a seasonality test; all sample periods include previously examined data.
-- Artifacts: `src/gold_vol_pipeline/yang_zhang_calendar.py`, `scripts/analyze_yang_zhang_calendar.py`, `tests/test_yang_zhang_calendar.py`, `README.md`, `REPRODUCE.md`; generated outputs in ignored `data/processed/stage2_yz_calendar/`.
+- Outcome: Added reproducible month-of-year and year-month summaries of the prepared unannualized two-observation target, split into all/train/test samples, plus a report, plot, CSVs, and SHA-256 manifest. Across 3,801 valid targets, full-sample mean daily volatility ranged from 0.00694 in July to 0.00899 in March. This is descriptive only, not a seasonality test; all sample periods include previously examined data.
+- Artifacts: `src/gold_vol_pipeline/yang_zhang_calendar.py`, `scripts/analyze_yang_zhang_calendar.py`, `tests/test_yang_zhang_calendar.py`, `README.md`, `REPRODUCE.md`, `reports/yang-zhang-calendar.qmd`, `reports/yang-zhang-calendar.pdf`, `reports/yang-zhang-calendar-data/`.
 - Next: Treat calendar-month differences as exploratory; use an appropriately pre-specified later sample and dependence-aware inference before claiming seasonality.
 
 ## 2026-11-18 — Reorganized README around original workflow and merged analysis
