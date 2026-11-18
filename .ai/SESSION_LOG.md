@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-18 — Reorganized README around original workflow and merged analysis
+- Author: User-directed documentation update by Copilot
+- Type: implementation
+- Context: The user requested README coverage of the original procedures and the work merged from `test`, using the original `main` README format.
+- Outcome: Restored the original workflow/team/repository-status organization, documented active LSEG Yang-Zhang analysis procedures and findings, and linked the archived Yahoo/FRED README as historical reference to avoid presenting superseded commands as current.
+- Artifacts: `README.md`; original README on `archive/main-before-test-merge`.
+- Next: Team to keep procedures and reported results synchronized with future analysis changes.
+
 ## 2026-11-18 — Integrated the test branch into main
 - Author: User-directed implementation by Copilot
 - Type: decision
