@@ -1,0 +1,29 @@
+{
+  "source_path": "data/refinitiv/GCc1.csv",
+  "source_sha256": "1a3bc07dd9778fe03b71cf1c6e3a9d500f0ff5b3627d81185c7d76d1b235ee88",
+  "instrument": "LSEG/Refinitiv GCc1 generic COMEX gold futures",
+  "target": "unannualized square root of two-observation Yang-Zhang variance",
+  "observation_count": 3801,
+  "start_date": "2010-01-06",
+  "end_date": "2026-11-10",
+  "missing_ohlc_target_count": 440,
+  "raw_source_rows": 4241,
+  "complete_ohlc_rows": 4064,
+  "hac_lags": [
+    5,
+    10,
+    20
+  ],
+  "method_note": "Month and weekday joint Wald tests use OLS fixed effects with HAC standard errors. Lag-adjusted models add the previous valid Yang-Zhang volatility target. Adjacent targets overlap and HAC inference is exploratory.",
+  "outputs": {
+    "observations": "data/processed/yang_zhang_seasonality/observations.csv",
+    "month_summary": "data/processed/yang_zhang_seasonality/month_summary.csv",
+    "weekday_summary": "data/processed/yang_zhang_seasonality/weekday_summary.csv",
+    "calendar_tests": "data/processed/yang_zhang_seasonality/calendar_tests.csv",
+    "figures": {
+      "month_means": "reports/figures/yang_zhang_seasonality/month_means.png",
+      "weekday_means": "reports/figures/yang_zhang_seasonality/weekday_means.png",
+      "month_year_heatmap": "reports/figures/yang_zhang_seasonality/month_year_heatmap.png"
+    }
+  }
+}

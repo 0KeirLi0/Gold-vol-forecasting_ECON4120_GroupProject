@@ -236,3 +236,40 @@ two-observation targets overlap, Ljung–Box p-values in the report are
 exploratory rather than confirmatory. The report tables are a snapshot of
 the current generated outputs; refresh them before rendering after a new
 forecast run.
+
+## Yang-Zhang calendar-seasonality check
+
+Recompute the original LSEG/Refinitiv GCc1 seasonality analysis with:
+
+```bash
+PYTHONPATH=src python scripts/analyze_yang_zhang_seasonality.py
+```
+
+The script reads `data/refinitiv/GCc1.csv`, recomputes the two-observation
+Yang-Zhang target, and writes summaries and HAC sensitivity tests under
+`data/processed/yang_zhang_seasonality/`. It produces month means, weekday
+means, and a month-by-year heatmap under
+`reports/figures/yang_zhang_seasonality/`. Month and weekday joint Wald tests
+use February-December and Tuesday-Friday fixed effects against January and
+Monday, respectively. Lag-adjusted specifications add the previous valid
+target. HAC inference is reported at 5, 10, and 20 valid-target lags because
+adjacent targets overlap. Kruskal-Wallis tests are descriptive and do not
+account for serial dependence.
+
+## Group 2 Beamer slides
+
+Render the modern 16:9 Metropolis deck from the saved forecast figures:
+
+```bash
+(cd presentations && quarto render Group2_Slides.qmd --to beamer --output Group2_Slides.pdf)
+```
+
+The deck is `presentations/Group2_Slides.pdf`; its Quarto source is
+`presentations/Group2_Slides.qmd`. It uses the same Yang-Zhang target,
+predictor screen, holdout metrics, and figures as the report.
+
+Render the branch-comparison report from its Quarto source with:
+
+```bash
+quarto render reports/test-vs-main-model-comparison.qmd --to pdf
+```

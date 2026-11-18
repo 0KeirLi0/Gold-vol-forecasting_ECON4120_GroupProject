@@ -83,6 +83,17 @@ See the [report](reports/yang-zhang-volatility.pdf) and its
 [editable source](reports/yang-zhang-volatility.qmd) for formulas, VIF and
 screen results, model specifications, metrics, and forecast graphs with the
 test period shaded. See [REPRODUCE.md](REPRODUCE.md) for reproduction steps.
+The modern [Group 2 Beamer presentation](presentations/Group2_Slides.pdf) and
+[editable slide source](presentations/Group2_Slides.qmd) summarize the same
+Yang-Zhang analysis.
+The [test-vs-main comparison](reports/test-vs-main-model-comparison.pdf)
+summarizes branch changes and explains why model scores from the two targets
+cannot be ranked directly.
+The [Yang-Zhang seasonality report](reports/yang-zhang-seasonality.pdf)
+checks month and weekday patterns in the original LSEG/Refinitiv GCc1
+two-observation volatility series. It finds a descriptive March/April/February
+elevation and no robust weekday effect, but HAC month-test p-values are
+lag-sensitive and do not support a stable monthly seasonality claim.
 The [Stage 2 forecast-error report](reports/yang-zhang-residual-diagnostics.pdf)
 summarizes holdout error bias, tails, serial dependence, extreme misses, and
 retrospective volatility-regime performance. It analyzes out-of-sample

@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-18 — Added seasonality check for original GCc1 Yang-Zhang volatility
+- Author: User-directed implementation by Copilot
+- Type: finding
+- Context: The user requested a calendar seasonality study on the original Refinitiv/LSEG-derived Yang-Zhang volatility.
+- Outcome: Recomputed 3,801 two-observation Yang-Zhang volatility targets from `data/refinitiv/GCc1.csv` for 2010-01-06 through 2026-11-10. Pooled means are highest in March (0.008987) and lowest in July (0.006944); February-April are elevated. Month HAC Wald p-values fall from 0.0122 at lag 5 to 0.1225 at lag 20 in the month-only model and from 0.0359 to 0.0876 with the previous-valid-target lag. Weekday tests do not reject at 5% in any reported lag specification. The month pattern is suggestive rather than robust after conservative overlap-aware HAC adjustment.
+- Artifacts: `src/gold_vol_pipeline/seasonality.py`, `scripts/analyze_yang_zhang_seasonality.py`, `tests/test_seasonality.py`, `data/processed/yang_zhang_seasonality/`, `reports/figures/yang_zhang_seasonality/`, `reports/yang-zhang-seasonality.qmd`, `README.md`, `REPRODUCE.md`.
+- Next: Test calendar effects only within a pre-specified train/validation/holdout design and use overlap-aware inference before any forecasting feature is adopted.
+
 ## 2026-11-16 — Added forecast-level quintile residual analysis
 - Author: User-directed implementation by Copilot
 - Type: implementation
