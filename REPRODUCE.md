@@ -242,15 +242,117 @@ quarto render reports/yang-zhang-residual-diagnostics.qmd --to pdf
 ```
 
 The script writes `forecast_errors.csv`, `forecast_error_diagnostics.csv`,
-`forecast_error_regimes.csv`, `forecast_error_extremes.csv`, and
-`forecast_error_manifest.json` beside the input forecasts. The figures are
-written under `reports/figures/residual_diagnostics/`. Regime labels are
-retrospective terciles of realized holdout volatility, not information
-available to the models at forecast time. The report summarizes
-out-of-sample forecast errors, not in-sample equation innovations;
+`forecast_error_regimes.csv`, `forecast_error_extremes.csv`,
+`forecast_error_forecast_quantiles.csv`, and `forecast_error_manifest.json`
+beside the input forecasts. `forecast_errors.csv` contains the out-of-sample
+residual (`actual - forecast`) for each successful common-date prediction and
+its within-model forecast-quintile label. The quintile summary reports each
+group's forecast range, mean/median error, error dispersion, MAE, RMSE,
+skewness, excess kurtosis, and tail quantiles. The figures are written under
+`reports/figures/residual_diagnostics/`, including forecast-error
+distributions across Q1–Q5. Forecast quintiles are ranked separately per
+model, with tied forecasts ordered by target date; full-holdout thresholds
+make them descriptive rather than fixed real-time cutoffs. The report
+analyzes out-of-sample forecast errors, not in-sample equation innovations;
 conditional-variance innovation diagnostics require saving fitted
 conditional variances and residuals during model estimation. Because the
 two-observation targets overlap, Ljung–Box p-values in the report are
 exploratory rather than confirmatory. The report tables are a snapshot of
 the current generated outputs; refresh them before rendering after a new
 forecast run.
+
+To generate diagnostics for the four selected no-external-predictor models
+(GARCH(1,1), EGARCH(1,1), HAR-X and histogram gradient boosting), the
+joint-predictor range GARCH-X, and EGARCH-X, first generate the EGARCH-X
+forecasts:
+
+```bash
+PYTHONPATH=src python scripts/evaluate_yang_zhang_volatility.py \
+  --input data/refinitiv/GCc1.csv \
+  --predictor-dir data/refinitiv \
+  --models egarchx \
+  --output-dir data/processed/stage2_yz_egarchx
+```
+
+Combine the baseline rows with the EGARCH-X and joint range GARCH-X rows:
+
+```bash
+PYTHONPATH=src python - <<'PY'
+from pathlib import Path
+import pandas as pd
+
+baseline = pd.read_csv("data/processed/stage2_yz_forecasts.csv")
+egarchx = pd.read_csv("data/processed/stage2_yz_egarchx/stage2_yz_forecasts.csv")
+joint = pd.read_csv("data/processed/stage2_yz_selected/stage2_yz_forecasts.csv")
+models = ["garch11", "egarch", "harx_ohlc", "hist_gradient_boosting_ohlc"]
+output = Path("data/processed/stage2_yz_diagnostics/model_residuals")
+output.mkdir(parents=True, exist_ok=True)
+pd.concat([
+    baseline.loc[baseline["model"].isin(models)],
+    egarchx.loc[egarchx["model"].eq("egarchx")],
+    joint.loc[joint["model"].eq("garchx_ohlc_range")],
+], ignore_index=True).to_csv(output / "stage2_yz_forecasts.csv", index=False)
+PY
+```
+
+Then generate the diagnostics and render the report:
+
+```bash
+PYTHONPATH=src python scripts/calculate_selected_information_criteria.py \
+  --range-input data/processed/stage2_yz_selected/GCc1_yang_zhang_volatility.csv
+PYTHONPATH=src python scripts/analyze_yang_zhang_forecast_errors.py \
+  --processed-dir data/processed/stage2_yz_diagnostics/model_residuals \
+  --output-dir data/processed/stage2_yz_diagnostics/model_residuals \
+  --models garch11 egarch egarchx garchx_ohlc_range harx_ohlc hist_gradient_boosting_ohlc \
+  --figure-dir reports/figures/model_residual_diagnostics
+quarto render reports/yang-zhang-selected-residual-diagnostics.qmd --to pdf
+```
+
+The selected-model diagnostic outputs are separate from the existing
+joint-predictor analysis. The report calls actual-minus-forecast
+out-of-sample errors forecast residuals; they are not fitted equation
+innovations or standardized GARCH residuals. The forecast file does not
+contain fitted conditional variances and per-origin innovations. The figures
+and report's numerical summary are snapshots of the generated run. The script
+also writes `forecast_error_mean_tests.csv`, containing two-sided one-sample
+t-tests against zero, Holm-adjusted across the six models, and Newey–West
+HAC mean tests (10 lags) with their separate Holm adjustments. The classical
+t-test assumes independent observations, which is doubtful here because
+residuals are serially dependent and adjacent targets overlap.
+
+## Yang-Zhang calendar-seasonality check
+
+Recompute the original LSEG/Refinitiv GCc1 seasonality analysis with:
+
+```bash
+PYTHONPATH=src python scripts/analyze_yang_zhang_seasonality.py
+```
+
+The script reads `data/refinitiv/GCc1.csv`, recomputes the two-observation
+Yang-Zhang target, and writes summaries and HAC sensitivity tests under
+`data/processed/yang_zhang_seasonality/`. It produces month means, weekday
+means, and a month-by-year heatmap under
+`reports/figures/yang_zhang_seasonality/`. Month and weekday joint Wald tests
+use February-December and Tuesday-Friday fixed effects against January and
+Monday, respectively. Lag-adjusted specifications add the previous valid
+target. HAC inference is reported at 5, 10, and 20 valid-target lags because
+adjacent targets overlap. Kruskal-Wallis tests are descriptive and do not
+account for serial dependence.
+
+## Group 2 Beamer slides
+
+Render the modern 16:9 Metropolis deck from the saved forecast figures:
+
+```bash
+(cd presentations && quarto render Group2_Slides.qmd --to beamer --output Group2_Slides.pdf)
+```
+
+The deck is `presentations/Group2_Slides.pdf`; its Quarto source is
+`presentations/Group2_Slides.qmd`. It uses the same Yang-Zhang target,
+predictor screen, holdout metrics, and figures as the report.
+
+Render the branch-comparison report from its Quarto source with:
+
+```bash
+quarto render reports/test-vs-main-model-comparison.qmd --to pdf
+```

@@ -34,6 +34,7 @@ MODEL_NAMES = (
     "egarch",
     "garch_t",
     "garchx_ohlc_range",
+    "egarchx",
     "quantile_garch",
     "har",
     "harx_ohlc",
@@ -54,7 +55,7 @@ EXOGENOUS_COLUMNS = (
 SELECTED_PREDICTORS = ("dxy_close", "gold_iv_1m", "gold_iv_1y")
 EXTERNAL_MODEL_NAMES = (
     "harx_ohlc", "ridge_ohlc", "lasso_ohlc", "hist_gradient_boosting_ohlc",
-    "garchx_ohlc_range", "var_ohlc",
+    "garchx_ohlc_range", "egarchx", "var_ohlc",
 )
 
 
@@ -64,6 +65,16 @@ class _ForecastSpec:
     model: str
     rolling_window: int | None = None
     hgb_variant: str = "log"
+
+
+@dataclass(frozen=True)
+class ConditionalVarianceFit:
+    """Fitted values exposed for custom conditional-variance diagnostics."""
+
+    prediction: float
+    log_likelihood: float
+    n_parameters: int
+    n_observations: int
 
 
 def _target(history: pd.DataFrame) -> np.ndarray:
@@ -240,11 +251,11 @@ def _variance_recursion(forcing: np.ndarray, beta: float, initial: float) -> np.
     return np.concatenate(([initial], filtered))
 
 
-def _conditional_variance_forecast(
+def fit_conditional_variance(
     history: pd.DataFrame, *, tail_threshold: float | None, include_vix: bool = False,
     external_predictors: tuple[str, ...] = (),
-) -> float:
-    """Fit an AR(1) volatility mean with GARCH or threshold-GARCH errors."""
+) -> ConditionalVarianceFit:
+    """Fit an AR(1) volatility mean with custom conditional-variance errors."""
     values = _target(history)
     if len(values) < 100:
         raise ValueError("GARCH-X and quantile GARCH require 100 target observations.")
@@ -355,7 +366,61 @@ def _conditional_variance_forecast(
         raise RuntimeError(f"Conditional-variance fit failed: {messages}")
     fit = min(valid, key=lambda item: item.fun)
     prediction = float(fit.x[0] + fit.x[1] * values[-1])
-    return prediction
+    n_observations = len(values) - 1
+    log_likelihood = -float(fit.fun) - 0.5 * n_observations * np.log(2 * np.pi)
+    return ConditionalVarianceFit(
+        prediction=prediction,
+        log_likelihood=log_likelihood,
+        n_parameters=len(fit.x),
+        n_observations=n_observations,
+    )
+
+
+def _conditional_variance_forecast(
+    history: pd.DataFrame, *, tail_threshold: float | None, include_vix: bool = False,
+    external_predictors: tuple[str, ...] = (),
+) -> float:
+    return fit_conditional_variance(
+        history,
+        tail_threshold=tail_threshold,
+        include_vix=include_vix,
+        external_predictors=external_predictors,
+    ).prediction
+
+
+def _egarchx_forecast(
+    history: pd.DataFrame, *, external_predictors: tuple[str, ...]
+) -> float:
+    """Fit an EGARCH model with origin-aligned external mean predictors."""
+    values = _target(history) * 100
+    if len(values) < 100:
+        raise ValueError("EGARCH-X requires 100 target observations.")
+    features = []
+    for column in external_predictors:
+        feature = pd.to_numeric(history[column], errors="raise").to_numpy(dtype=float)
+        if not np.isfinite(feature).all() or (feature <= 0).any():
+            raise ValueError(f"EGARCH-X requires finite positive {column} values.")
+        features.append(feature / float(np.mean(feature)))
+    if not features:
+        raise ValueError("EGARCH-X requires at least one external predictor.")
+    exogenous = np.column_stack(features)
+    lagged_exogenous = exogenous.copy()
+    lagged_exogenous[1:] = exogenous[:-1]
+    fit = arch_model(
+        values,
+        mean="ARX",
+        lags=1,
+        x=lagged_exogenous,
+        vol="EGARCH",
+        p=1,
+        o=1,
+        q=1,
+        rescale=False,
+    ).fit(disp="off", show_warning=False)
+    if int(getattr(fit, "convergence_flag", 1)) != 0:
+        raise RuntimeError("EGARCH-X fit did not converge.")
+    forecast_x = exogenous[-1].reshape(len(features), 1, 1)
+    return float(fit.forecast(horizon=1, x=forecast_x).mean.iloc[-1, 0]) / 100
 
 
 def forecast_daily_volatility(
@@ -400,6 +465,10 @@ def forecast_daily_volatility(
         )
     elif model == "garchx_ohlc_range":
         prediction = _conditional_variance_forecast(history, tail_threshold=None, include_vix=include_vix, external_predictors=external_predictors)
+    elif model == "egarchx":
+        prediction = _egarchx_forecast(
+            history, external_predictors=external_predictors
+        )
     elif model == "quantile_garch":
         prediction = _conditional_variance_forecast(history, tail_threshold=0.95)
     elif model == "har":

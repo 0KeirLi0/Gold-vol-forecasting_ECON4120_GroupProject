@@ -157,18 +157,38 @@ These changes do not isolate individual predictor effects. The predictors
 were selected after earlier holdout results had been observed, so this is not
 a fully untouched holdout.
 
-The original no-external-predictor run evaluated 20 candidates on the same
-761 test observations without recorded fit failures. HistGradientBoosting
-had the lowest MAE (0.00241765) and RMSE (0.00476724) in that run. Optimizer
-and convergence warnings occurred. This point ranking is descriptive and is
-not a final model-selection decision.
+See the [report](reports/yang-zhang-volatility.pdf) and its
+[editable source](reports/yang-zhang-volatility.qmd) for formulas, VIF and
+screen results, model specifications, metrics, and forecast graphs with the
+test period shaded. See [REPRODUCE.md](REPRODUCE.md) for reproduction steps.
+The modern [Group 2 Beamer presentation](presentations/Group2_Slides.pdf) and
+[editable slide source](presentations/Group2_Slides.qmd) summarize the same
+Yang-Zhang analysis.
+The [test-vs-main comparison](reports/test-vs-main-model-comparison.pdf)
+summarizes branch changes and explains why model scores from the two targets
+cannot be ranked directly.
+The [Yang-Zhang seasonality report](reports/yang-zhang-seasonality.pdf)
+checks month and weekday patterns in the original LSEG/Refinitiv GCc1
+two-observation volatility series. It finds a descriptive March/April/February
+elevation and no robust weekday effect, but HAC month-test p-values are
+lag-sensitive and do not support a stable monthly seasonality claim.
+The [Stage 2 forecast-error report](reports/yang-zhang-residual-diagnostics.pdf)
+summarizes holdout error bias, tails, serial dependence, extreme misses, and
+retrospective volatility-regime performance. It analyzes out-of-sample
+forecast errors, not fitted GARCH innovations.
 
-Prepared targets, forecast attempts, summaries, and manifests are saved under
-`data/processed/` or the selected `--output-dir`. The selected-predictor
-outputs include `stage2_yz_forecasts.csv`, `stage2_yz_summary.csv`,
-`stage2_yz_manifest.json`, and `joint_predictor_comparison.csv`. Refer to
-[`REPRODUCE.md`](REPRODUCE.md) for additional forecast-error, calibration,
-rolling-window, report, and figure procedures.
+The [selected-model residual report](reports/yang-zhang-selected-residual-diagnostics.pdf)
+adds GARCH(1,1), EGARCH(1,1), EGARCH-X, range GARCH-X, HAR-X and histogram
+gradient boosting. EGARCH-X uses the selected DXY and gold implied-volatility
+predictors; the other five models use the no-external-predictor run. These too
+are out-of-sample forecast errors, not fitted GARCH innovations; see
+[REPRODUCE.md](REPRODUCE.md) for the command to regenerate the tables and
+figures.
+The selected-model report now also includes training-origin AIC/BIC where a
+likelihood is defined; mixed target transformations and non-likelihood models
+are explicitly flagged.
+
+## Collaboration
 
 #### Calendar-month volatility analysis
 

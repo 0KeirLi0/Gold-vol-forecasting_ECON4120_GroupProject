@@ -34,6 +34,14 @@ model is statistically best. Adjacent Yang–Zhang targets overlap, so the
 error series is dependent by construction; the reported Ljung–Box values are
 exploratory flags, not confirmatory inference.
 
+Sorting forecasts separately within each model into five equal-count groups
+shows positive mean forecast errors in every quintile. For histogram
+gradient boosting, mean error rises from $0.637\times10^{-3}$ in Q1 to
+$2.025\times10^{-3}$ in Q5; Q5 errors are also strongly right-skewed
+(skewness 4.01) and heavy-tailed (excess kurtosis 22.68). This is consistent
+with under-response among the model's highest forecasts, but is descriptive
+and sensitive to a few extreme observations.
+
 # Test-branch assessment
 
 The two-observation Yang–Zhang target uses OHLC information and is relevant
@@ -149,6 +157,68 @@ conditional heteroskedasticity is absent.
 The ACFs below are descriptive sample correlations; conventional white-noise
 confidence bands are omitted because they would not account for dependence
 induced by the overlapping target windows.
+
+## Forecast-level quintiles (Q1–Q5)
+
+To check whether error behavior changes as expected volatility rises, each
+model's successful common-date forecasts are ranked separately from lowest
+to highest, then divided into five equal-count groups. Q1 is the lowest
+forecast group and Q5 the highest; groups contain 152 or 153 targets. When
+forecast values tie, target date determines their order. The boundaries
+therefore differ by model and are relative to this holdout, not fixed
+operational thresholds. The saved row-level errors include the group label,
+and `forecast_error_forecast_quantiles.csv` records forecast ranges and
+distribution summaries for all five groups.
+
+The tables show mean error in $10^{-3}$ daily volatility units and sample
+skewness of the forecast-error distribution. Positive errors indicate
+under-forecasting. Quintiles are formed from predictions, unlike the
+retrospective realized-volatility regimes below; however, using full-holdout
+rank boundaries is still descriptive and should not be treated as a
+pre-specified deployable classification rule.
+
+Mean forecast error ($10^{-3}$ daily volatility units):
+
+| Model | Q1 | Q2 | Q3 | Q4 | Q5 |
+|---|---:|---:|---:|---:|---:|
+| HARX | 0.485 | 0.595 | 0.609 | 0.726 | 0.702 |
+| Ridge | 0.598 | 0.412 | 0.741 | 0.672 | 1.740 |
+| Lasso | 0.397 | 0.453 | 0.859 | 0.923 | 1.861 |
+| Histogram gradient boosting | 0.637 | 0.322 | 0.697 | 0.426 | 2.025 |
+| Range GARCH-X | 0.802 | 0.425 | 0.445 | 0.521 | 1.388 |
+| VAR | 0.544 | 0.376 | 0.971 | 0.761 | 1.551 |
+
+Forecast-error skewness:
+
+| Model | Q1 | Q2 | Q3 | Q4 | Q5 |
+|---|---:|---:|---:|---:|---:|
+| HARX | 0.99 | 3.88 | 1.89 | 2.04 | -0.44 |
+| Ridge | 1.00 | 2.80 | 2.67 | 1.61 | 3.36 |
+| Lasso | 1.06 | 2.67 | 2.65 | 1.40 | 3.15 |
+| Histogram gradient boosting | 1.36 | 1.81 | 3.74 | 0.86 | 4.01 |
+| Range GARCH-X | 1.08 | 3.11 | 2.72 | 1.60 | 3.52 |
+| VAR | 1.04 | 2.82 | 2.65 | 1.43 | 3.24 |
+
+Mean error is positive in all 30 model-by-quantile cells, indicating
+under-forecasting throughout the forecast range. Five models have higher
+mean error in Q5 than Q1; HARX is the exception, with similar mean errors
+across its quintiles. Q5 mean errors increase notably for histogram gradient
+boosting, Ridge, Lasso, and VAR. The skewness pattern is not uniformly
+increasing across Q1–Q5, but Q5 is strongly right-skewed for five models;
+HARX Q5 has negative skewness despite positive mean error. For histogram
+gradient boosting, Q5's high mean error and skewness point to asymmetric
+misses at high predicted volatility, while its excess kurtosis indicates
+that a few large errors materially shape the group distribution. This
+supports a descriptive under-response concern, not a significance claim.
+
+![Forecast-error distributions within each model's forecast quintiles.](figures/residual_diagnostics/forecast_error_by_forecast_quantile.png)
+
+The boxplots suppress individual fliers for readability; the saved
+quantile-summary CSV retains forecast ranges, skewness, excess kurtosis, and
+error tail quantiles. Group means and skewness are not tests of
+conditional calibration, and no quintile-specific inference is reported.
+The same adjacent target windows overlap, and groups inherit dependence and
+extreme-event sensitivity from the holdout.
 
 ## Volatility regimes and extreme days
 

@@ -7,8 +7,9 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from scipy.stats import kurtosis, skew
+from scipy.stats import kurtosis, skew, t, ttest_1samp
 from statsmodels.stats.diagnostic import acorr_ljungbox
+from statsmodels.stats.multitest import multipletests
 from statsmodels.tsa.stattools import acf
 
 REQUIRED_FORECAST_COLUMNS = {
@@ -19,11 +20,64 @@ REQUIRED_FORECAST_COLUMNS = {
     "actual",
     "converged",
 }
+MODEL_DISPLAY_NAMES = {
+    "egarch": "EGARCH(1,1)",
+    "garch11": "GARCH(1,1)",
+    "garchx_ohlc_range": "Range GARCH-X",
+    "harx_ohlc": "HAR-X (OHLC)",
+    "hist_gradient_boosting_ohlc": "Histogram gradient boosting (OHLC)",
+}
+
+
+def _model_display_name(model: str) -> str:
+    return MODEL_DISPLAY_NAMES.get(model, model.replace("_", " "))
+
+
+def build_mean_error_t_tests(
+    errors: pd.DataFrame, *, alpha: float = 0.05
+) -> pd.DataFrame:
+    """Run two-sided one-sample t-tests of each model's mean error against zero."""
+    required = {"model", "forecast_error"}
+    if not required <= set(errors.columns):
+        raise ValueError(f"Error table is missing columns: {sorted(required - set(errors))}")
+    if errors.empty:
+        raise ValueError("Error table is empty.")
+    if not np.isfinite(alpha) or not 0 < alpha < 1:
+        raise ValueError("alpha must be strictly between zero and one.")
+
+    rows = []
+    for model, group in errors.groupby("model", sort=True):
+        values = pd.to_numeric(group["forecast_error"], errors="raise").to_numpy(
+            dtype=float
+        )
+        if len(values) < 2 or not np.isfinite(values).all():
+            raise ValueError(f"Model {model} must have at least two finite errors.")
+        test = ttest_1samp(values, popmean=0, alternative="two-sided")
+        standard_error = float(np.std(values, ddof=1) / np.sqrt(len(values)))
+        critical_value = float(t.ppf(1 - alpha / 2, df=len(values) - 1))
+        rows.append(
+            {
+                "model": str(model),
+                "n": len(values),
+                "mean_error": float(np.mean(values)),
+                "t_statistic": float(test.statistic),
+                "degrees_of_freedom": len(values) - 1,
+                "p_value": float(test.pvalue),
+                "ci_lower": float(np.mean(values) - critical_value * standard_error),
+                "ci_upper": float(np.mean(values) + critical_value * standard_error),
+            }
+        )
+
+    result = pd.DataFrame(rows)
+    result["holm_p_value"] = multipletests(result["p_value"], method="holm")[1]
+    result[f"reject_{alpha:g}"] = result["holm_p_value"] <= alpha
+    return result
 
 
 def build_forecast_error_diagnostics(
     forecasts: pd.DataFrame,
     *,
+    models: Sequence[str] | None = None,
     ljung_box_lags: Sequence[int] = (5, 10, 20),
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Return common-date forecast errors and per-model diagnostic summaries.
@@ -53,7 +107,19 @@ def build_forecast_error_diagnostics(
     if frame.duplicated(["target_date", "model"]).any():
         raise ValueError("Forecast table contains duplicate target/model rows.")
 
-    model_names = sorted(frame["model"].astype(str).unique())
+    frame["model"] = frame["model"].astype(str)
+    available_models = set(frame["model"].unique())
+    if models is None:
+        model_names = sorted(available_models)
+    else:
+        model_names = list(models)
+        if not model_names or len(set(model_names)) != len(model_names):
+            raise ValueError("models must contain unique model names.")
+        missing_models = sorted(set(model_names) - available_models)
+        if missing_models:
+            raise ValueError(f"Forecast table is missing models: {missing_models}")
+        frame = frame.loc[frame["model"].isin(model_names)].copy()
+        model_names = sorted(model_names)
     if len(model_names) < 1:
         raise ValueError("Forecast table contains no models.")
     successful = frame.loc[
@@ -210,12 +276,93 @@ def build_regime_and_extreme_diagnostics(
     )
 
 
+def build_forecast_quantile_diagnostics(
+    errors: pd.DataFrame,
+    *,
+    quantiles: int = 5,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Assign per-model forecast quantiles and summarize their error distributions."""
+    required = {"target_date", "model", "actual", "forecast", "forecast_error"}
+    if not required <= set(errors.columns):
+        raise ValueError(f"Error table is missing columns: {sorted(required - set(errors))}")
+    if errors.empty:
+        raise ValueError("Error table is empty.")
+    if isinstance(quantiles, bool) or not isinstance(quantiles, int) or quantiles < 2:
+        raise ValueError("quantiles must be an integer of at least two.")
+    if errors["model"].isna().any() or errors["target_date"].isna().any():
+        raise ValueError("Error rows must contain model and target-date values.")
+    if errors["model"].astype(str).str.strip().eq("").any():
+        raise ValueError("Model names must be nonempty.")
+    if errors.duplicated(["target_date", "model"]).any():
+        raise ValueError("Error table contains duplicate target/model rows.")
+    numeric = errors[["actual", "forecast", "forecast_error"]].to_numpy(dtype=float)
+    if not np.isfinite(numeric).all():
+        raise ValueError("Error table values must be finite.")
+
+    classified = errors.copy().reset_index(drop=True)
+    classified["forecast_quantile"] = pd.Series(index=classified.index, dtype="object")
+    labels = [f"Q{number}" for number in range(1, quantiles + 1)]
+    summaries: list[dict[str, float | int | str]] = []
+
+    for model, group in classified.groupby("model", sort=True):
+        ordered = group.sort_values(["forecast", "target_date"], kind="mergesort")
+        if len(ordered) < quantiles:
+            raise ValueError(
+                f"Model {model} has {len(ordered)} errors, fewer than "
+                f"{quantiles} requested forecast quantiles."
+            )
+        assigned = pd.qcut(
+            np.arange(len(ordered)),
+            q=quantiles,
+            labels=labels,
+        )
+        classified.loc[ordered.index, "forecast_quantile"] = assigned.astype(str)
+
+        for label in labels:
+            bucket = classified.loc[
+                classified["model"].eq(model)
+                & classified["forecast_quantile"].eq(label)
+            ]
+            values = bucket["forecast_error"].to_numpy(dtype=float)
+            if len(values) < 3:
+                raise ValueError(
+                    f"Model {model} {label} has too few errors to summarize skewness."
+                )
+            summaries.append(
+                {
+                    "model": str(model),
+                    "forecast_quantile": label,
+                    "n": len(bucket),
+                    "forecast_min": float(bucket["forecast"].min()),
+                    "forecast_max": float(bucket["forecast"].max()),
+                    "mean_forecast": float(bucket["forecast"].mean()),
+                    "mean_actual": float(bucket["actual"].mean()),
+                    "mean_error": float(np.mean(values)),
+                    "median_error": float(np.median(values)),
+                    "sd_error": float(np.std(values, ddof=1)),
+                    "MAE": float(np.mean(np.abs(values))),
+                    "RMSE": float(np.sqrt(np.mean(np.square(values)))),
+                    "skewness": float(skew(values, bias=False)),
+                    "excess_kurtosis": float(kurtosis(values, fisher=True, bias=False)),
+                    "error_q05": float(np.quantile(values, 0.05)),
+                    "error_q95": float(np.quantile(values, 0.95)),
+                }
+            )
+    classified["forecast_quantile"] = pd.Categorical(
+        classified["forecast_quantile"],
+        categories=labels,
+        ordered=True,
+    )
+    return classified, pd.DataFrame(summaries)
+
+
 def create_forecast_error_figures(
     errors: pd.DataFrame,
     output_dir: str,
     *,
     acf_lags: int = 20,
     regime_summary: pd.DataFrame | None = None,
+    forecast_quantile_summary: pd.DataFrame | None = None,
 ) -> list[str]:
     """Write time-series, forecast-vs-error, and error-ACF figures."""
     import matplotlib.dates as mdates
@@ -243,7 +390,7 @@ def create_forecast_error_figures(
         data = errors.loc[errors["model"].eq(model)].sort_values("target_date")
         axis.plot(data["target_date"], data["forecast_error"], linewidth=0.65)
         axis.axhline(0, color="black", linewidth=0.7)
-        axis.set_title(model.replace("_", " "))
+        axis.set_title(_model_display_name(model))
         axis.set_ylabel("Actual − forecast")
         axis.xaxis.set_major_locator(mdates.YearLocator())
         axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
@@ -263,7 +410,7 @@ def create_forecast_error_figures(
         data = errors.loc[errors["model"].eq(model)]
         axis.scatter(data["forecast"], data["forecast_error"], s=8, alpha=0.45)
         axis.axhline(0, color="black", linewidth=0.7)
-        axis.set_title(model.replace("_", " "))
+        axis.set_title(_model_display_name(model))
         axis.set_xlabel("Forecast volatility")
         axis.set_ylabel("Actual − forecast")
         axis.grid(alpha=0.2)
@@ -295,7 +442,7 @@ def create_forecast_error_figures(
             label="Squared error",
         )
         axis.axhline(0, color="black", linewidth=0.6)
-        axis.set_title(model.replace("_", " "))
+        axis.set_title(_model_display_name(model))
         axis.set_xlabel("Lag (valid target observations)")
         axis.set_ylabel("Sample ACF")
         axis.grid(alpha=0.2)
@@ -323,7 +470,7 @@ def create_forecast_error_figures(
                 data["MAE"].to_numpy(dtype=float) * 1000,
                 marker="o",
                 linewidth=1.2,
-                label=model.replace("_", " "),
+                label=_model_display_name(model),
             )
         axis.set(
             title="Holdout MAE by realized-volatility tercile",
@@ -335,5 +482,41 @@ def create_forecast_error_figures(
         path = directory / "forecast_error_mae_by_regime.png"
         regime_figure.savefig(path, dpi=180)
         plt.close(regime_figure)
+        paths.append(str(path))
+
+    if forecast_quantile_summary is not None:
+        if "forecast_quantile" not in errors:
+            raise ValueError("Forecast-quantile groups are missing from the error table.")
+        quantile_order = list(
+            forecast_quantile_summary["forecast_quantile"].drop_duplicates()
+        )
+        quantile_figure, quantile_axes = plt.subplots(
+            rows, columns, figsize=(12, max(3.0, rows * 2.8)), constrained_layout=True
+        )
+        for axis, model in zip(np.asarray(quantile_axes).reshape(-1), models):
+            data = errors.loc[errors["model"].eq(model)]
+            box_data = [
+                data.loc[
+                    data["forecast_quantile"].astype(str).eq(quantile),
+                    "forecast_error",
+                ].to_numpy(dtype=float)
+                for quantile in quantile_order
+            ]
+            axis.boxplot(box_data, showfliers=False)
+            axis.set_xticks(np.arange(1, len(quantile_order) + 1))
+            axis.set_xticklabels(quantile_order)
+            axis.axhline(0, color="black", linewidth=0.7)
+            axis.set_title(model.replace("_", " "))
+            axis.set_xlabel("Within-model forecast quantile")
+            axis.set_ylabel("Actual − forecast")
+            axis.grid(axis="y", alpha=0.2)
+        for axis in np.asarray(quantile_axes).reshape(-1)[len(models):]:
+            axis.set_visible(False)
+        quantile_figure.suptitle(
+            "Out-of-sample forecast-error distributions by forecast quintile"
+        )
+        path = directory / "forecast_error_by_forecast_quantile.png"
+        quantile_figure.savefig(path, dpi=180)
+        plt.close(quantile_figure)
         paths.append(str(path))
     return paths
