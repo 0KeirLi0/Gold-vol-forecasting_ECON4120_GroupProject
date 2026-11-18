@@ -1,9 +1,13 @@
+import numpy as np
 import pandas as pd
 import pytest
+from scipy.stats import ttest_1samp
+from statsmodels.stats.multitest import multipletests
 
 from gold_vol_pipeline.forecast_diagnostics import (
     build_forecast_error_diagnostics,
     build_forecast_quantile_diagnostics,
+    build_mean_error_t_tests,
     build_regime_and_extreme_diagnostics,
 )
 
@@ -54,6 +58,59 @@ def test_forecast_diagnostics_restrict_to_common_successful_dates():
     assert errors["target_date"].nunique() == 39
     assert summary["n_common"].eq(39).all()
     assert summary.set_index("model").loc["model_b", "failure_count"] == 1
+
+
+def test_forecast_diagnostics_can_select_models_before_common_date_matching():
+    forecasts = _forecasts()
+    extra_model = forecasts.loc[forecasts["model"].eq("model_a")].copy()
+    extra_model["model"] = "model_c"
+    forecasts = pd.concat([forecasts, extra_model], ignore_index=True)
+
+    errors, summary = build_forecast_error_diagnostics(
+        forecasts, models=("model_a", "model_b")
+    )
+
+    assert set(errors["model"]) == {"model_a", "model_b"}
+    assert set(summary["model"]) == {"model_a", "model_b"}
+    assert summary["n_common"].eq(40).all()
+
+
+def test_forecast_diagnostics_reject_missing_or_duplicate_selected_models():
+    forecasts = _forecasts()
+
+    with pytest.raises(ValueError, match="missing models"):
+        build_forecast_error_diagnostics(forecasts, models=("model_c",))
+    with pytest.raises(ValueError, match="unique model names"):
+        build_forecast_error_diagnostics(
+            forecasts, models=("model_a", "model_a")
+        )
+
+
+def test_mean_error_t_tests_match_scipy_and_holm_adjust_across_models():
+    errors, _ = build_forecast_error_diagnostics(_forecasts())
+
+    tests = build_mean_error_t_tests(errors)
+
+    expected = errors.loc[errors["model"].eq("model_a"), "forecast_error"]
+    row = tests.set_index("model").loc["model_a"]
+    result = ttest_1samp(expected, popmean=0, alternative="two-sided")
+    assert row["t_statistic"] == pytest.approx(result.statistic)
+    assert row["p_value"] == pytest.approx(result.pvalue)
+    np.testing.assert_allclose(
+        tests["holm_p_value"],
+        multipletests(tests["p_value"], method="holm")[1],
+    )
+    assert tests["n"].eq(40).all()
+
+
+def test_mean_error_t_tests_reject_invalid_samples_and_alpha():
+    with pytest.raises(ValueError, match="missing columns"):
+        build_mean_error_t_tests(pd.DataFrame({"model": ["a"]}))
+    with pytest.raises(ValueError, match="strictly between"):
+        build_mean_error_t_tests(
+            pd.DataFrame({"model": ["a", "a"], "forecast_error": [0.1, 0.2]}),
+            alpha=1,
+        )
 
 
 def test_forecast_diagnostics_reject_different_actuals_on_same_date():

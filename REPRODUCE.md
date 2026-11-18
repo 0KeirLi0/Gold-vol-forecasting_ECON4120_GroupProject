@@ -237,6 +237,65 @@ exploratory rather than confirmatory. The report tables are a snapshot of
 the current generated outputs; refresh them before rendering after a new
 forecast run.
 
+To generate diagnostics for the four selected no-external-predictor models
+(GARCH(1,1), EGARCH(1,1), HAR-X and histogram gradient boosting), the
+joint-predictor range GARCH-X, and EGARCH-X, first generate the EGARCH-X
+forecasts:
+
+```bash
+PYTHONPATH=src python scripts/evaluate_yang_zhang_volatility.py \
+  --input data/refinitiv/GCc1.csv \
+  --predictor-dir data/refinitiv \
+  --models egarchx \
+  --output-dir data/processed/stage2_yz_egarchx
+```
+
+Combine the baseline rows with the EGARCH-X and joint range GARCH-X rows:
+
+```bash
+PYTHONPATH=src python - <<'PY'
+from pathlib import Path
+import pandas as pd
+
+baseline = pd.read_csv("data/processed/stage2_yz_forecasts.csv")
+egarchx = pd.read_csv("data/processed/stage2_yz_egarchx/stage2_yz_forecasts.csv")
+joint = pd.read_csv("data/processed/stage2_yz_selected/stage2_yz_forecasts.csv")
+models = ["garch11", "egarch", "harx_ohlc", "hist_gradient_boosting_ohlc"]
+output = Path("data/processed/stage2_yz_diagnostics/model_residuals")
+output.mkdir(parents=True, exist_ok=True)
+pd.concat([
+    baseline.loc[baseline["model"].isin(models)],
+    egarchx.loc[egarchx["model"].eq("egarchx")],
+    joint.loc[joint["model"].eq("garchx_ohlc_range")],
+], ignore_index=True).to_csv(output / "stage2_yz_forecasts.csv", index=False)
+PY
+```
+
+Then generate the diagnostics and render the report:
+
+```bash
+PYTHONPATH=src python scripts/calculate_selected_information_criteria.py \
+  --range-input data/processed/stage2_yz_selected/GCc1_yang_zhang_volatility.csv
+PYTHONPATH=src python scripts/analyze_yang_zhang_forecast_errors.py \
+  --processed-dir data/processed/stage2_yz_diagnostics/model_residuals \
+  --output-dir data/processed/stage2_yz_diagnostics/model_residuals \
+  --models garch11 egarch egarchx garchx_ohlc_range harx_ohlc hist_gradient_boosting_ohlc \
+  --figure-dir reports/figures/model_residual_diagnostics
+quarto render reports/yang-zhang-selected-residual-diagnostics.qmd --to pdf
+```
+
+The selected-model diagnostic outputs are separate from the existing
+joint-predictor analysis. The report calls actual-minus-forecast
+out-of-sample errors forecast residuals; they are not fitted equation
+innovations or standardized GARCH residuals. The forecast file does not
+contain fitted conditional variances and per-origin innovations. The figures
+and report's numerical summary are snapshots of the generated run. The script
+also writes `forecast_error_mean_tests.csv`, containing two-sided one-sample
+t-tests against zero, Holm-adjusted across the six models, and Newey–West
+HAC mean tests (10 lags) with their separate Holm adjustments. The classical
+t-test assumes independent observations, which is doubtful here because
+residuals are serially dependent and adjacent targets overlap.
+
 ## Yang-Zhang calendar-seasonality check
 
 Recompute the original LSEG/Refinitiv GCc1 seasonality analysis with:

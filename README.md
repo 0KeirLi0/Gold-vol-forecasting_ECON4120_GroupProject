@@ -99,6 +99,17 @@ summarizes holdout error bias, tails, serial dependence, extreme misses, and
 retrospective volatility-regime performance. It analyzes out-of-sample
 forecast errors, not fitted GARCH innovations.
 
+The [selected-model residual report](reports/yang-zhang-selected-residual-diagnostics.pdf)
+adds GARCH(1,1), EGARCH(1,1), EGARCH-X, range GARCH-X, HAR-X and histogram
+gradient boosting. EGARCH-X uses the selected DXY and gold implied-volatility
+predictors; the other five models use the no-external-predictor run. These too
+are out-of-sample forecast errors, not fitted GARCH innovations; see
+[REPRODUCE.md](REPRODUCE.md) for the command to regenerate the tables and
+figures.
+The selected-model report now also includes training-origin AIC/BIC where a
+likelihood is defined; mixed target transformations and non-likelihood models
+are explicitly flagged.
+
 ## Collaboration
 
 Keir focuses on infrastructure and data, Enoch on model development and

@@ -13,6 +13,7 @@ from gold_vol_pipeline.lseg import (
 )
 from gold_vol_pipeline.volatility_forecasting import (
     EXTERNAL_MODEL_NAMES,
+    MODEL_NAMES,
     SELECTED_PREDICTORS,
     evaluate_daily_volatility,
     save_daily_volatility_evaluation,
@@ -84,7 +85,11 @@ def main() -> int:
     )
     parser.add_argument(
         "--external-models-only", action="store_true",
-        help="Evaluate only the six models that accept the selected predictors.",
+        help="Evaluate all models that accept the selected predictors.",
+    )
+    parser.add_argument(
+        "--models", nargs="+", choices=MODEL_NAMES,
+        help="Evaluate only these named models.",
     )
     parser.add_argument(
         "--rolling-windows",
@@ -107,6 +112,8 @@ def main() -> int:
         parser.error("--vix-input and --predictor-dir are separate experiments.")
     if args.external_models_only and args.predictor_dir is None:
         parser.error("--external-models-only requires --predictor-dir.")
+    if args.external_models_only and args.models:
+        parser.error("--external-models-only and --models are mutually exclusive.")
     if args.bias_window is not None and args.bias_window < 1:
         parser.error("--bias-window must be a positive integer.")
     prepared = prepare_yang_zhang_dataset(args.input, window=args.window)
@@ -136,7 +143,9 @@ def main() -> int:
         "bias_window": args.bias_window,
         "hgb_transform_experiments": args.hgb_transform_experiments,
     }
-    if args.external_models_only:
+    if args.models:
+        evaluation_options["model_names"] = tuple(args.models)
+    elif args.external_models_only:
         evaluation_options["model_names"] = EXTERNAL_MODEL_NAMES
     results, summary, manifest = evaluate_daily_volatility(
         prepared, train_fraction=0.8, workers=args.workers, progress=True,

@@ -245,9 +245,10 @@ def test_selected_predictor_alignment_uses_next_weekday(tmp_path):
     ("lasso_ohlc", "_linear_forecast"),
     ("hist_gradient_boosting_ohlc", "_linear_forecast"),
     ("garchx_ohlc_range", "_conditional_variance_forecast"),
+    ("egarchx", "_egarchx_forecast"),
     ("var_ohlc", "_var_forecast"),
 ])
-def test_selected_predictors_forwarded_to_all_six_models(monkeypatch, model, helper):
+def test_selected_predictors_forwarded_to_all_external_models(monkeypatch, model, helper):
     history = prepare_yang_zhang_dataset(_ohlc_data()).dropna(subset=["daily_volatility"])
     for column in SELECTED_PREDICTORS:
         history[column] = 10.
@@ -261,7 +262,8 @@ def test_selected_predictors_forwarded_to_all_six_models(monkeypatch, model, hel
         external_predictors=SELECTED_PREDICTORS,
     )
     assert seen[0]["external_predictors"] == SELECTED_PREDICTORS
-    assert not seen[0]["include_vix"]
+    if model != "egarchx":
+        assert not seen[0]["include_vix"]
     assert model in EXTERNAL_MODEL_NAMES
 
 

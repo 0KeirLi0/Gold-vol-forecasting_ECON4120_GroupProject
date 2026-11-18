@@ -17,6 +17,53 @@ This is an append-only record of project context that may help future sessions. 
 - Outcome: Extended the diagnostics pipeline to assign within-model equal-count Q1–Q5 labels, save per-row out-of-sample residuals and group distribution summaries, and plot the group error distributions. Across 761 common holdout dates, all 30 model/quintile mean errors are positive. For histogram gradient boosting, Q5 mean error is 2.025e-3 versus 0.637e-3 in Q1; its Q5 error skewness is 4.01 and excess kurtosis 22.68. These descriptive results are sensitive to extremes and overlapping targets; they are not significance tests or fixed deployable cutoffs.
 - Artifacts: `src/gold_vol_pipeline/forecast_diagnostics.py`, `scripts/analyze_yang_zhang_forecast_errors.py`, `tests/test_forecast_diagnostics.py`, `data/processed/stage2_yz_selected/forecast_errors.csv`, `data/processed/stage2_yz_selected/forecast_error_forecast_quantiles.csv`, `reports/yang-zhang-residual-diagnostics.qmd`, `reports/yang-zhang-residual-diagnostics.pdf`, `reports/figures/residual_diagnostics/forecast_error_by_forecast_quantile.png`, `REPRODUCE.md`.
 - Next: Validate forecast-level error patterns on a later pre-specified holdout with thresholds set using only prior data.
+## 2026-11-18 — Regenerated joint-predictor range GARCH-X diagnostics
+- Author: User-directed implementation by Copilot
+- Type: finding
+- Context: The user requested AIC/BIC for the saved range GARCH-X run using DXY, gold IV 1M and gold IV 1Y jointly, followed by regeneration of the selected residual diagnostics.
+- Outcome: Replaced baseline range GARCH-X rows with the saved joint-predictor run, which completed all 761 holdout dates. Its training-origin constrained Gaussian quasi-likelihood diagnostics are log likelihood -3702.770, 9 parameters, AIC 7423.540 and BIC 7477.713. The report now shows the corresponding joint-run residual statistics and identifies the predictor configuration.
+- Artifacts: `scripts/calculate_selected_information_criteria.py`, `REPRODUCE.md`, `reports/yang-zhang-selected-residual-diagnostics.qmd`, `reports/yang-zhang-selected-residual-diagnostics.pdf`, `data/processed/stage2_yz_diagnostics/model_residuals/`.
+- Next: Treat these criteria as constrained quasi-likelihood diagnostics and do not compare them directly with models using different target transformations or likelihood definitions.
+
+## 2026-11-18 — Exposed range GARCH-X fit criteria
+- Author: User-directed implementation by Copilot
+- Type: implementation
+- Context: The user requested AIC/BIC values for range GARCH-X after it was initially marked unavailable.
+- Outcome: Exposed the custom constrained fit's optimized log-likelihood, parameter count, and observation count through `fit_conditional_variance` and `ConditionalVarianceFit`. The information-criteria output now reports range GARCH-X AIC 7504.196 and BIC 7540.312 using its custom constrained Gaussian quasi-likelihood. HGB remains unreported because it has no specified likelihood.
+- Artifacts: `src/gold_vol_pipeline/volatility_forecasting.py`, `scripts/calculate_selected_information_criteria.py`, `data/processed/stage2_yz_diagnostics/model_residuals/information_criteria.csv`, `reports/yang-zhang-selected-residual-diagnostics.qmd`, `reports/yang-zhang-selected-residual-diagnostics.pdf`.
+- Next: Treat range GARCH-X criteria as quasi-likelihood diagnostics and do not compare them directly with models using different target transformations or likelihood definitions.
+
+## 2026-11-18 — Added selected-model AIC/BIC table
+- Author: User-directed implementation by Copilot
+- Type: implementation
+- Context: The user requested AIC and BIC in the selected residual report, using the initial training sample.
+- Outcome: Added training-origin information criteria for GARCH(1,1), EGARCH(1,1), EGARCH-X, and HAR-X. Range GARCH-X is marked not reported because its constrained custom likelihood is not exposed as a fitted result; HGB is marked not applicable because it has no specified likelihood. The report warns that criteria are not directly comparable across target transformations and likelihood definitions.
+- Artifacts: `scripts/calculate_selected_information_criteria.py`, `data/processed/stage2_yz_diagnostics/model_residuals/information_criteria.csv`, `reports/yang-zhang-selected-residual-diagnostics.qmd`, `reports/yang-zhang-selected-residual-diagnostics.pdf`, `REPRODUCE.md`.
+- Next: Use AIC/BIC as within-likelihood-family fit diagnostics, not as a standalone cross-model selection rule.
+
+## 2026-11-18 — Added EGARCH-X residual diagnostics
+- Author: User-directed implementation by Copilot
+- Type: implementation
+- Context: The user requested EGARCH-X and regeneration of the selected Yang–Zhang residual report.
+- Outcome: Added an origin-aligned EGARCH-X model using the selected DXY, gold IV 1M and gold IV 1Y predictors in the `arch` ARX mean with EGARCH(1,1) errors. It completed all 761 holdout origins without failures; its MAE was 0.002833 and RMSE was 0.004860. Its classical and HAC Holm-adjusted zero-mean tests did not reject at 5%.
+- Artifacts: `src/gold_vol_pipeline/volatility_forecasting.py`, `scripts/evaluate_yang_zhang_volatility.py`, `tests/test_yang_zhang.py`, `data/processed/stage2_yz_egarchx/`, `data/processed/stage2_yz_diagnostics/model_residuals/`, `reports/yang-zhang-selected-residual-diagnostics.qmd`, `reports/yang-zhang-selected-residual-diagnostics.pdf`, `REPRODUCE.md`.
+- Next: Treat the EGARCH-X comparison as descriptive because it uses a different predictor set from the five baseline forecasts and reuses the development holdout.
+
+## 2026-11-16 — Tested selected-model residual means
+- Author: User-directed implementation by Copilot
+- Type: finding
+- Context: The user requested tests of whether the five selected models' forecast-residual means equal zero.
+- Outcome: Added two-sided one-sample t-tests and separate Holm adjustments across the five models, plus Newey–West HAC mean tests with 10 lags and their own Holm adjustments. Both approaches reject zero mean for all five at 5%; residual means are positive. Classical t-test inference assumes independent errors, while serial dependence and overlapping targets make inference approximate.
+- Artifacts: `src/gold_vol_pipeline/forecast_diagnostics.py`, `scripts/analyze_yang_zhang_forecast_errors.py`, `tests/test_forecast_diagnostics.py`, `data/processed/stage2_yz_diagnostics/model_residuals/forecast_error_mean_tests.csv`, `reports/yang-zhang-selected-residual-diagnostics.qmd`, `reports/yang-zhang-selected-residual-diagnostics.pdf`, `REPRODUCE.md`.
+- Next: Interpret the mean bias as holdout evidence, not proof of future bias; check a later pre-specified holdout.
+
+## 2026-11-16 — Added selected-model forecast-residual report
+- Author: User-directed implementation by Copilot
+- Type: finding
+- Context: The user selected GARCH(1,1), EGARCH(1,1), range GARCH-X, HAR-X, and histogram gradient boosting for a residual report.
+- Outcome: Generated a separate report from the no-external-predictor Stage 2 forecasts. The five models have 761 common successful targets from 2023-06-02 through 2026-11-10; all have positive mean forecast error and strongly right-skewed, heavy-tailed errors. Histogram gradient boosting has the lowest descriptive MAE/RMSE; all lag-10 residual Ljung–Box tests flag autocorrelation. These are out-of-sample forecast errors, not fitted equation innovations or standardized GARCH residuals; overlapping targets make the p-values exploratory.
+- Artifacts: `reports/yang-zhang-selected-residual-diagnostics.qmd`, `reports/yang-zhang-selected-residual-diagnostics.pdf`, `reports/figures/model_residual_diagnostics/`, `src/gold_vol_pipeline/forecast_diagnostics.py`, `scripts/analyze_yang_zhang_forecast_errors.py`, `tests/test_forecast_diagnostics.py`, `REPRODUCE.md`.
+- Next: Treat rankings and residual-test results as descriptive; use a later pre-specified holdout and overlap-aware inference before model selection.
 
 ## 2026-11-16 — Added test-branch forecast-error diagnostics
 - Author: User-directed implementation by Copilot
