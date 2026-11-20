@@ -2,6 +2,15 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-20 — Samuel's Q5 forecast-error diagnosis
+- Author: Samuel analysis
+- Type: finding
+- Context: Samuel requested q5 diagnostics for the six-model LSEG `GCc1` Yang–Zhang shortlist, preserving current model definitions and actual-minus-forecast errors.
+- Outcome: On 761 common holdout targets, all six models had larger raw forecast-error variance in forecast Q5 than Q1 (Q5/Q1 ratios 9.2–15.1). Relative-error ratios were 0.96–1.33 and log-error ratios 0.48–0.85, while Q5 errors remained strongly skewed and heavy-tailed. Four-lag HAC regressions found positive raw squared-error/forecast slopes for all six models. Regenerated the sequential ARX-mean EGARCH-X forecasts at all 761 origins with no fit failures. The 2026-02-02 EGARCH-X miss (63.912 in 10^-3 units) falls within the report's published six-model miss range; no model-specific EGARCH-X value is provided there. HGB Q5 mean/skew differ from the report because the report's HGB uses joint predictors while this run uses the baseline no-external-predictor forecast.
+- Artifacts: `scripts/samuel_stage3_q5_diagnose.py`, `outputs/samuel/stage3_q5/`.
+- Limitations: Q5 uses full-holdout forecast ranks; realized-volatility bins are retrospective; the origin-volatility bins use training-sample cutoffs. The single holdout has prior model-development use.
+- Next: Samuel to review Step 1 results before any Student-t refit.
+
 ## 2026-11-16 — Added separate Yang-Zhang findings to the Group 2 report
 - Author: Copilot report update at Samuel's request
 - Type: implementation
