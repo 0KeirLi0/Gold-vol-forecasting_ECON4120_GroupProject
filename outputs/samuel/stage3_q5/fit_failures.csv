@@ -1,0 +1,7 @@
+model,attempts,failures,common_successful_targets
+garch11,761,0,761
+egarch,761,0,761
+garchx_ohlc_range,761,0,761
+egarchx,761,0,761
+harx_ohlc,761,0,761
+hist_gradient_boosting_ohlc,761,0,761

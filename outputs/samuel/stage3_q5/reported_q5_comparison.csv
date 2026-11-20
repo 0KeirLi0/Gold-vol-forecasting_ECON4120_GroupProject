@@ -1,0 +1,2 @@
+model,report_mean_error_1e3,baseline_mean_error_1e3,mean_error_difference_1e3,report_skewness,baseline_skewness,skewness_difference,comparability_note
+hist_gradient_boosting_ohlc,2.025,2.2135496738469103,0.18854967384691035,4.01,4.074978963608107,0.06497896360810707,Existing report uses its joint-predictor HGB run; baseline CSV uses the no-external-predictor HGB run.

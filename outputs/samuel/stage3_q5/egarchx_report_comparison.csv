@@ -1,0 +1,2 @@
+target_date,actual_1e3,regenerated_egarchx_forecast_1e3,regenerated_egarchx_absolute_error_1e3,published_cross_model_error_min_1e3,published_cross_model_error_max_1e3,within_published_range,note
+2026-02-02,77.52052076174431,13.608454371937686,63.91206638980662,62.989,65.588,True,"The report gives a range, not a model-specific EGARCH-X value."
