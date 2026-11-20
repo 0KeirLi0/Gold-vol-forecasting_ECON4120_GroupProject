@@ -14,6 +14,32 @@ python scripts/plot_group2_core_models.py
 
 The figure uses saved common-origin forecasts and does not refit models.
 
+# Reproducing segmented Yang-Zhang estimation
+
+The segmented experiment estimates separate normal/extreme parameter sets for
+GARCH, EGARCH, GARCH-X, EGARCH-X, HAR-X, and histogram gradient boosting. It
+uses the prepared LSEG `GCc1` Yang-Zhang input and selected DXY, gold 1M IV,
+and gold 1Y IV columns. The normal/extreme threshold is the expanding training
+history's 80th percentile of realized volatility. Run:
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 \
+  PYTHONPATH=src python scripts/evaluate_segmented_yang_zhang.py \
+  --input data/processed/stage2_yz_selected/GCc1_yang_zhang_volatility.csv \
+  --output-dir data/processed/stage2_yz_segmented --workers 8
+```
+
+The `forecast_trigger` experiment fits a preliminary full-history forecast and
+selects the extreme parameter set when that forecast exceeds the threshold.
+The `lagged_target_trigger` experiment selects the set using the latest
+observed target `y_(t-1)`. Each selected parameter set is estimated only from
+prior observations whose lagged target is in the selected normal/extreme
+regime. Outputs are `segmented_yz_forecasts.csv`,
+`segmented_yz_summary.csv`, and `segmented_yz_manifest.json`. These are
+exploratory holdout diagnostics, not a final model choice: the targets
+overlap, the holdout was used in earlier comparisons, and forecast-trigger
+regime selection is paired with lagged-target-defined estimation samples.
+
 # Reproducing the integrated Stage 3 evaluation
 
 Run the evaluation from the repository root. It refits seven candidates on all

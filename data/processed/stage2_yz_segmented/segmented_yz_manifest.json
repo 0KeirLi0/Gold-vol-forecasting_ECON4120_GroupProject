@@ -1,0 +1,68 @@
+{
+  "target": "daily_volatility",
+  "estimator": "Yang-Zhang",
+  "instrument": "COMEX Gold Futures Generic 1 (GCc1)",
+  "target_windows_overlap": true,
+  "train_fraction": 0.8,
+  "split_method": "chronological by valid target observations",
+  "test_forecast_method": "sequential one-step; each regime parameter set is refit on prior observations whose lagged target is in that regime",
+  "segmented_models": [
+    "garch11",
+    "egarch",
+    "garchx_ohlc_range",
+    "egarchx",
+    "harx_ohlc",
+    "hist_gradient_boosting_ohlc"
+  ],
+  "triggers": [
+    "forecast_trigger",
+    "lagged_target_trigger"
+  ],
+  "external_predictors": [
+    "dxy_close",
+    "gold_iv_1m",
+    "gold_iv_1y"
+  ],
+  "external_predictor_models": [
+    "egarchx",
+    "garchx_ohlc_range",
+    "harx_ohlc"
+  ],
+  "threshold_quantile": 0.8,
+  "workers": 8,
+  "extreme_rule": "signal > training-history quantile threshold",
+  "forecast_trigger_rule": "preliminary full-history model forecast selects normal/extreme set",
+  "lagged_target_trigger_rule": "latest observed y_(t-1) selects normal/extreme set",
+  "training_observations": 3040,
+  "test_observations": 761,
+  "common_test_observations": 761,
+  "test_start": "2023-06-02",
+  "test_end": "2026-11-10",
+  "ranking_metrics": [
+    "MAE",
+    "RMSE"
+  ],
+  "reported_metrics": [
+    "MAE",
+    "RMSE",
+    "bias",
+    "QLIKE"
+  ],
+  "statistical_significance_tests": false,
+  "failures": {
+    "garch11__forecast_trigger": 0,
+    "garch11__lagged_target_trigger": 0,
+    "egarch__forecast_trigger": 0,
+    "egarch__lagged_target_trigger": 0,
+    "garchx_ohlc_range__forecast_trigger": 0,
+    "garchx_ohlc_range__lagged_target_trigger": 0,
+    "egarchx__forecast_trigger": 0,
+    "egarchx__lagged_target_trigger": 0,
+    "harx_ohlc__forecast_trigger": 0,
+    "harx_ohlc__lagged_target_trigger": 0,
+    "hist_gradient_boosting_ohlc__forecast_trigger": 0,
+    "hist_gradient_boosting_ohlc__lagged_target_trigger": 0
+  },
+  "input_path": "data/processed/stage2_yz_selected/GCc1_yang_zhang_volatility.csv",
+  "input_sha256": "81694d00643078d64be349c2514b45febb7bd96960f8981b627d05b780584a01"
+}

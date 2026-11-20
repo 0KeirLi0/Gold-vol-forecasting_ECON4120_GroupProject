@@ -14,6 +14,12 @@ from gold_vol_pipeline.volatility_forecasting import (
     forecast_daily_volatility,
     save_daily_volatility_evaluation,
 )
+from gold_vol_pipeline.segmented_forecasting import (
+    SEGMENTED_MODELS,
+    TRIGGERS,
+    evaluate_segmented_daily_volatility,
+    segmented_forecast,
+)
 from gold_vol_pipeline.yang_zhang import (
     add_chronological_split,
     prepare_yang_zhang_dataset,
@@ -92,6 +98,51 @@ def test_experimental_forecasts_are_leakage_safe_and_report_qlike():
     assert regime_cutoffs["low_middle"] <= regime_cutoffs["middle_high"]
     assert regime_cutoffs["units"] == "unannualized daily volatility"
     assert "rank(method='first'" in manifest["regime_cutoffs"]["assignment"]
+
+
+def test_segmented_forecast_uses_separate_regime_sample_and_trigger(monkeypatch):
+    history = prepare_yang_zhang_dataset(_ohlc_data(size=180)).dropna(
+        subset=["daily_volatility"]
+    )
+    seen = []
+
+    def fake_forecast(model, data, **kwargs):
+        seen.append(len(data))
+        return 0.5
+
+    monkeypatch.setattr(
+        "gold_vol_pipeline.segmented_forecasting.forecast_daily_volatility",
+        fake_forecast,
+    )
+    forecast, metadata = segmented_forecast(
+        "garch11",
+        history,
+        trigger="forecast_trigger",
+    )
+
+    assert forecast == pytest.approx(0.5)
+    assert metadata["segment"] == "extreme"
+    assert metadata["pilot_forecast"] == pytest.approx(0.5)
+    assert metadata["parameter_sample_count"] == seen[-1]
+    assert seen[0] == len(history)
+    assert seen[-1] < len(history)
+
+
+def test_segmented_evaluation_runs_both_triggers_without_target_leakage():
+    prepared = prepare_yang_zhang_dataset(_ohlc_data(size=260))
+    results, summary, manifest = evaluate_segmented_daily_volatility(
+        prepared,
+        model_names=("hist_gradient_boosting_ohlc",),
+        triggers=TRIGGERS,
+        external_predictors=(),
+        progress=False,
+    )
+
+    assert set(results["trigger"]) == set(TRIGGERS)
+    assert set(summary["trigger"]) == set(TRIGGERS)
+    assert manifest["threshold_quantile"] == pytest.approx(0.8)
+    assert manifest["test_forecast_method"].startswith("sequential one-step")
+    assert results["target_date"].min() > results["origin_date"].min()
 
 
 def _ohlc_data(size: int = 120) -> pd.DataFrame:

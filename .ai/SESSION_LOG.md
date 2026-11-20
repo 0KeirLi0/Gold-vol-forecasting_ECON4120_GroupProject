@@ -2,6 +2,15 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-21 — Added segmented Yang-Zhang parameter estimation
+- Author: User-directed implementation by Copilot
+- Type: implementation | finding
+- Context: The user requested separate normal/extreme parameter sets for GARCH, EGARCH, GARCH-X, EGARCH-X, HAR-X, and histogram gradient boosting, selected either by an extreme preliminary forecast or by an extreme lagged target.
+- Outcome: Added `segmented_forecasting.py` and `evaluate_segmented_yang_zhang.py`. The two triggers use the training-history 80th percentile: `forecast_trigger` fits a pilot full-history forecast and selects the extreme parameter set when the pilot exceeds the threshold; `lagged_target_trigger` uses the latest observed target. Each selected set is refit on prior observations whose lagged realized volatility belongs to the corresponding normal/extreme regime. All 12 model/trigger combinations completed 761 holdout dates with no fit failures.
+- Artifacts: `src/gold_vol_pipeline/segmented_forecasting.py`, `scripts/evaluate_segmented_yang_zhang.py`, `data/processed/stage2_yz_segmented/`, `tests/test_yang_zhang.py`, `REPRODUCE.md`.
+- Limitations: The result is exploratory, uses the previously examined holdout, overlapping targets, and a training-history quantile threshold. The forecast-trigger design uses a preliminary forecast to select a regime, while its regime-specific parameter samples are defined by lagged observed volatility; it is not evidence of a final deployable model.
+- Next: Compare these segmented forecasts with the unsegmented six-model baselines on a later untouched holdout before recommending a model.
+
 ## 2026-11-20 — Published the log-transformation report
 - Author: Copilot at Samuel's request
 - Type: implementation
