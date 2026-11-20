@@ -1,0 +1,145 @@
+---
+title: "Log-Transformed Yang–Zhang Forecasts"
+subtitle: "Six-model comparison with lognormal mean correction | LSEG GCc1"
+author: "Applied Forecasting Methods Group"
+date: 2026-11-20
+format:
+  html:
+    toc: true
+    number-sections: true
+    theme: cosmo
+    embed-resources: true
+---
+
+# Executive summary
+
+This report evaluates Keir's proposed log-scale retransformation correction
+across the six shortlisted Yang–Zhang volatility models. For each model, the
+target is fit as $Z_t=\log(Y_t)$, then forecasts are returned to the volatility
+scale using
+
+$$
+\widehat{Y}_{t+1}
+= \exp\left(\widehat{\mu}_{t+1}
+  + \frac{1}{2}\widehat{\sigma}_{t+1}^{\,2}\right).
+$$
+
+The correction estimates the conditional mean if log-scale forecast errors are
+conditionally normal. By contrast, $\exp(\widehat{\mu}_{t+1})$ estimates the
+conditional median. The experiment used 761 sequential holdout targets from
+2023-06-02 through 2026-11-10, with zero failed fits across all six models.
+
+The transformation did **not** resolve the larger Q5 errors. On the exact
+baseline-Q5 dates, raw residual variance rose for five models and fell by only
+0.2% for HGB. None of the paired overall MAE or RMSE differences was
+significant at 5% after Holm adjustment. Treat the results as an exploratory
+comparison on a previously used holdout, not as evidence of a winning model.
+
+# Data and model implementation
+
+The target is the unannualized daily volatility, the square root of the
+two-observation Yang–Zhang variance estimate from LSEG's generic COMEX gold
+futures series `GCc1`. The chronological sample has 3,040 training targets and
+761 test targets. At each test origin, fitting used the initial training
+sample and only previously observed test targets; the target being forecast
+was excluded from its own history.
+
+The six models were:
+
+| Model | Log-scale specification and variance used for correction |
+|:--|:--|
+| GARCH(1,1) | AR(1) mean and GARCH(1,1) conditional variance, fit to log volatility |
+| EGARCH(1,1) | AR(1) mean and EGARCH(1,1) conditional variance, fit to log volatility |
+| Range GARCH-X | AR(1) log-volatility mean; OHLC range enters the conditional-variance equation; Gaussian quasi-likelihood |
+| EGARCH-X | Selected DXY and gold implied-volatility predictors remain in the ARX mean; EGARCH conditional variance |
+| HAR-X (OHLC) | Existing HAR lag and predictor regression on log volatility; training OLS residual variance |
+| HGB (OHLC) | Existing log-target boosting specification; training in-sample residual variance; random seed 42 |
+
+HAR-X and HGB already model log volatility in the existing pipeline. For
+these models, this experiment applies the variance correction; the other four
+models are refit on the log target. GARCH-family corrections use the fitted
+one-step conditional log variance. Regression-model corrections use
+training-sample log-residual variance. HGB's in-sample residual variance may
+understate its prediction error.
+
+# Overall holdout performance
+
+Errors are defined as **actual minus forecast**; positive mean error denotes
+under-forecasting. Metrics are shown in units of $10^{-3}$ volatility.
+
+| Model | MAE: baseline → corrected | RMSE: baseline → corrected | Mean error: baseline → corrected |
+|:--|--:|--:|--:|
+| GARCH(1,1) | 2.912 → 2.930 | 5.025 → 5.036 | 0.644 → 0.420 |
+| EGARCH(1,1) | 2.912 → 2.945 | 5.022 → 5.115 | 0.621 → 0.540 |
+| Range GARCH-X | 2.914 → 2.930 | 5.037 → 5.036 | 0.716 → 0.420 |
+| EGARCH-X | 2.833 → 2.855 | 4.860 → 4.902 | 0.321 → 0.086 |
+| HAR-X (OHLC) | 2.758 → 2.825 | 5.625 → 5.852 | 0.623 → −0.060 |
+| HGB (OHLC) | 2.423 → 2.437 | 4.736 → 4.657 | 0.821 → 0.386 |
+
+The mean bias moved closer to zero for all six models, but the point-loss
+changes were small and mixed. HGB's RMSE decreased slightly; its Holm-adjusted
+DM p-value was 0.058 with Newey–West bandwidth 1 and 0.142 with bandwidth 4.
+Neither is below 0.05. No model's overall paired MAE or RMSE difference was
+significant after adjustment.
+
+# Q5 residual variance
+
+The first variance comparison below holds Q5 membership fixed to the baseline
+model's highest forecast quintile, so both forecast versions are evaluated on
+the same 152 dates. Variances are in units of $10^{-5}$ volatility squared.
+The last column reports the corrected forecast's own Q5/Q1 error-variance
+ratio, with quintiles ranked within that model over the holdout.
+
+| Model | Baseline Q5 variance | Corrected variance on same dates | Variance change | Corrected model Q5/Q1 |
+|:--|--:|--:|--:|--:|
+| GARCH(1,1) | 7.433 | 7.543 | +1.5% | 9.65 |
+| EGARCH(1,1) | 7.437 | 7.839 | +5.4% | 9.90 |
+| Range GARCH-X | 7.441 | 7.543 | +1.4% | 9.65 |
+| EGARCH-X | 7.288 | 7.600 | +4.3% | 15.53 |
+| HAR-X (OHLC) | 11.413 | 12.881 | +12.9% | 20.93 |
+| HGB (OHLC) | 7.038 | 7.024 | −0.2% | 13.27 |
+
+Thus, the log transformation and mean correction did not make high-forecast
+errors less dispersed. The Q5/Q1 ratios remain substantially above one. The
+variance changes are descriptive; no separate statistical test of Q5 variance
+differences was performed.
+
+# Paired forecast-loss tests
+
+For each model, corrected forecasts were compared with that model's existing
+baseline on the same target dates. Tests use absolute and squared errors,
+Newey–West bandwidths 1 and 4, the Harvey–Leybourne–Newbold correction, and
+Holm adjustment across the six model comparisons within each loss/bandwidth
+family. Negative transformed-minus-baseline loss favors the corrected
+forecast.
+
+No overall comparison is statistically significant at the 5% level after
+Holm adjustment. The closest result is HGB squared error: adjusted p-values
+are 0.058 (bandwidth 1) and 0.142 (bandwidth 4). Full statistics are in the
+[DM results CSV](../outputs/samuel/stage3_q5/log_transform/log_transform_dm_tests.csv).
+
+# Limitations and interpretation
+
+- The retransformation formula is exact under a conditional normal
+  log-error model. Normality has not been established for HAR-X or HGB.
+- HAR-X uses training OLS residual variance; HGB uses in-sample residual
+  variance, which may be optimistic.
+- The holdout has been used in prior model analysis. Forecast-ranked Q5 is
+  retrospective, and adjacent two-observation Yang–Zhang targets overlap.
+- Paired tests concern overall loss, not Q5 variance. The same-holdout
+  comparisons are exploratory and do not establish causal effects or durable
+  superiority.
+- Lower mean error does not by itself establish full forecast calibration.
+
+# Reproducibility artifacts
+
+- [Sequential fitting and comparison script](../scripts/samuel_stage3_q5_log_transform.py)
+- [Detailed generated results](../outputs/samuel/stage3_q5/log_transform/log_transform_report.md)
+- [Forecasts and per-origin correction terms](../outputs/samuel/stage3_q5/log_transform/log_transform_forecasts.csv)
+- [Overall metrics](../outputs/samuel/stage3_q5/log_transform/log_transform_metrics.csv)
+- [Forecast-quintile metrics](../outputs/samuel/stage3_q5/log_transform/log_transform_quintile_metrics.csv)
+- [Q5 variance comparison](../outputs/samuel/stage3_q5/log_transform/log_transform_q5_variance.csv)
+- [Paired DM tests](../outputs/samuel/stage3_q5/log_transform/log_transform_dm_tests.csv)
+
+The experiment uses the existing prepared target/predictor panel and saved
+baseline forecasts; it does not copy or redistribute raw provider data.

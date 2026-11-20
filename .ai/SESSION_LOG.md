@@ -2,6 +2,23 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-20 — Published the log-transformation report
+- Author: Copilot at Samuel's request
+- Type: implementation
+- Context: Samuel asked to save the six-model log-target experiment as a report under `reports/`.
+- Outcome: Added a Quarto source report and rendered a self-contained HTML version. The report presents the bias-corrected retransformation, common-holdout metrics, Q5 variance comparisons, paired tests, and limitations; detailed per-origin outputs remain under `outputs/samuel/stage3_q5/log_transform/`.
+- Artifacts: `reports/yang-zhang-log-transformation.qmd`, `reports/yang-zhang-log-transformation.html`.
+- Next: Samuel to share/review the report with Keir and Enoch.
+
+## 2026-11-20 — Log-target bias correction across six Yang-Zhang models
+- Author: Copilot analysis at Samuel's request, based on suggestions from Keir and Enoch
+- Type: finding
+- Context: Samuel asked to fit all six shortlisted volatility models to log Yang-Zhang volatility and back-transform with `exp(mu_hat + 0.5 * sigma_hat^2)`.
+- Outcome: Ran 761 sequential one-step forecasts per model with no fit failures, using only observations available through each origin. After Holm-adjusted paired tests, no model's overall MAE or RMSE difference from its saved baseline was significant at 5%; HGB's squared-error test was closest (Holm p=0.058 at Newey-West bandwidth 1; p=0.142 at bandwidth 4). On identical baseline-Q5 dates, residual variance rose for five models and fell 0.2% for HGB. The log-target Q5/Q1 raw variance ratios remained 9.65–20.93.
+- Artifacts: `scripts/samuel_stage3_q5_log_transform.py`, `outputs/samuel/stage3_q5/log_transform/`.
+- Limitations: The correction assumes normal log errors; HAR-X/HGB use training residual variance, with HGB variance estimated in-sample; Q5 and the model comparison use the same retrospective holdout.
+- Next: Samuel to review with Keir and Enoch; no Student-t refit has been run.
+
 ## 2026-11-20 — Samuel's Q5 forecast-error diagnosis
 - Author: Samuel analysis
 - Type: finding
