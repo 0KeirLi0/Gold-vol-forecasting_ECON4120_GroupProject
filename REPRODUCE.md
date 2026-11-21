@@ -1,18 +1,19 @@
 # Group 2 report and presentation
 
-The active report focuses on GARCH-X with lagged VIX and seven basic
-benchmarks. It uses the saved integrated Stage 3 comparison; the historical
-full-model report is preserved under `archive/model_exploration_2026-11-15/`.
-Regenerate the focused forecast figure and render both formats from the same
-Quarto source:
+The submitted report and 20-minute Beamer are the LSEG `GCc1` next-session
+Yang–Zhang analysis. They do not use the Yahoo five-session GARCH-X comparison.
+Render the report and slides from separate Quarto sources:
 
 ```bash
-python scripts/plot_group2_core_models.py
-(cd report_group2 && quarto render Group2_Report.qmd --to pdf)
-(cd report_group2 && quarto render Group2_Report.qmd --to beamer --output Group2_Slides.pdf)
+quarto render report_group2/Group2_Report.qmd --to pdf
+quarto render presentations/Group2_Slides.qmd --to beamer
+cp presentations/Group2_Slides.pdf report_group2/Group2_Slides.pdf
 ```
 
-The figure uses saved common-origin forecasts and does not refit models.
+Figures already in `report_group2/figures/` are used as-is; the render does
+not refit models. The story outline is `report_group2/narrative-draft.md`.
+The earlier Yahoo/FRED GARCH-X report is preserved under
+`archive/model_exploration_2026-11-15/`.
 
 # Reproducing segmented Yang-Zhang estimation
 

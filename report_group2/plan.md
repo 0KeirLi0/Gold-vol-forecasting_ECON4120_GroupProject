@@ -221,21 +221,19 @@ Descriptive ranking we already have (no-external unless noted):
 
 Q5 is a *predicted*-volatility bin, available at the origin. High-vol point forecasts are the least reliable.
 
-**Three remedies we try** (same chronological holdout; cutoffs and extra parameters from training / past origins only):
+**Three remedies (git as of 2026-11-21, `17b2978`):**
 
-1. **Student-t MLE.** Re-estimate GARCH-family candidates with a fat-tailed likelihood instead of Gaussian quasi-MLE, to capture heavy residual tails. HGB has no MLE; Student-t can only enter a residual density around its point forecast. Code exists in `distribution_comparison.py`; the saved holdout summary is **not yet in the tree** (`data/processed/stage2_yz_distributions/` currently has the target CSV only). We run this before quoting “t vs Normal” numbers.
+1. **Student-t MLE.** Code exists; **holdout summary still missing**. Quote design only until `distribution_summary.csv` exists.
 
-2. **Q5-regime parameters.** If \(\hat y\) falls in the training (or expanding past) top 20% of fitted values, use the **same specification** with coefficients estimated only on extreme/high-vol origins. Calm-period origins keep the baseline fit. This is a two-regime, forecast-origin classifier — not a split on realised \(y_t\) after the fact. This experiment is **not yet a completed holdout table**; it needs an implementation pass.
+2. **Q5-regime / segmented parameters** (Enoch, 21 Nov). Training 80th percentile; `forecast_trigger` and `lagged_target_trigger`; 12 fits, 761 dates, 0 failures. Segmented MAE is **worse** than the unsegmented six (HGB 0.002680 / 0.002760 vs 0.002418). Failed patch, not a new winner.
 
-3. **Log target and reverse with \(\tfrac12\sigma^2\).** Model \(z_t=\log y_t\). If \(z_{t+1}\mid\mathcal F_t\sim N(\mu_t,\sigma_t^2)\), then \(\mathbb E[y_{t+1}\mid\mathcal F_t]=\exp(\mu_t+\tfrac12\sigma_t^2)\). Current HAR/ARIMA code uses \(\exp(\hat\mu)\) without the Jensen term. We add the \(\tfrac12\hat\sigma^2\) (or smearing) reverse and compare MAE/RMSE, especially in Q5. Naive exp is already in the pipeline; the calibrated reverse is the new comparison.
+3. **Log target + \(\exp(\hat\mu+\tfrac12\hat\sigma^2)\)** (Samuel, 20 Nov). Bias improved; MAE/RMSE not significant after Holm; Q5 variance rose for five models, −0.2% for HGB. Failed Q5 patch that did reduce mean under-forecasting.
 
-**How Part 3 must be written.** Report whether each remedy reduced Q5 residual variance or MAE. If it did not, say so. Do not claim the Q5 problem is solved unless the holdout numbers show it. The finding can remain: high predicted volatility is where point forecasts fail, and these three patches are partial.
+**Part 3 punchline.** High predicted volatility is where point forecasts fail. Two implemented fixes did not remove Q5 variance inflation. Student-t remains unevaluated. Do not claim any remedy solved it.
 
-**Part 3 claims we will not make until the new runs exist.** That Student-t, Q5-regime, or Jensen reverse “fixes” the models. Any number not in a saved CSV stays out of the report.
+**Limits (say them out loud).** Overlapping two-observation targets; one chronological holdout reused in development; 1M IV vs next-session vol; one-weekday LSEG availability proxy; `GCc1` is a generic continuous futures series, not spot.
 
-**Limits (say them out loud).** Overlapping two-observation targets; one chronological holdout reused in development; 1M IV vs next-session vol; one-weekday LSEG availability proxy; `GCc1` is a generic continuous futures series, not spot; Q5-regime and Jensen reverse still need holdout numbers.
-
-**What we will not claim.** That HGB is the true DGP. That VIX or gold IV “causes” gold-futures vol. That Student-t / Q5-regime / \(\tfrac12\sigma^2\) reverse solved the problem until the new CSVs exist. That the Yahoo five-session GARCH-X result still applies.
+**What we will not claim.** That HGB is the true DGP. That VIX or gold IV “causes” gold-futures vol. That Student-t / segmented / Jensen reverse solved Q5. That the Yahoo five-session GARCH-X result still applies.
 
 ---
 
@@ -249,7 +247,7 @@ Q5 is a *predicted*-volatility bin, available at the origin. High-vol point fore
 | 7–8 | 1 | Seasonality: Feb–Apr descriptive; no weekday; no seasonal dummies |
 | 8–12 | 2 | Ladder: AR/MA/ARIMA limits → GARCH/EGARCH → -X → HAR → HGB; MAE table; shortlist of six |
 | 12–16 | 3 | Residual fan; Q5 variance; 2026-02-02 |
-| 16–19 | 3 | Three remedies: Student-t; Q5-regime parameters; log \(Y\) + \(\tfrac12\sigma^2\) reverse — results only if the run exists |
+| 16–19 | 3 | Student-t (no CSV); segmented worse MAE; log correction bias only |
 | 19–20 | — | Limits; AI `[team to complete]`; recap |
 
 ## 15-page report map
@@ -257,7 +255,7 @@ Q5 is a *predicted*-volatility bin, available at the origin. High-vol point fore
 1. Executive summary.
 2. **Part 1 (~4 pages):** LSEG data; futures vs spot; HF RV vs close-to-close vs Yang–Zhang formulas; one-trading-day horizon and LSEG `Date`; seasonality diagnostics.
 3. **Part 2 (~4 pages):** AR/MA/ARIMA and their limits; ARCH/GARCH/EGARCH; predictors and -X; HAR; HGB; comparison table; shortlist.
-4. **Part 3 (~4 pages):** residual definition; Q5 finding; three remedies and (once run) whether they helped.
+4. **Part 3 (~4 pages):** residual definition; Q5 finding; segmented and log-transform as failed patches; Student-t design-only.
 5. Conclusion and limitations.
 6. AI `[team to complete]`; contributions `[team to complete]`; Yang and Zhang (2000) and other references.
 
@@ -265,13 +263,11 @@ Q5 is a *predicted*-volatility bin, available at the origin. High-vol point fore
 
 **Ready to quote:** `GCc1.csv` structure; spot/fixing download failures; YZ formulas in `yang_zhang.py`; 3040/761 split; seasonality tables and HAC tests; 20-model MAE/RMSE; DM tests; Q5 residual diagnostics; 2026-02-02 misses.
 
-**Must run before Part 3 can quote outcomes:**
+**Git as of 2026-11-21:** log-transform and segmented holdouts exist. Student-t summary CSV still missing.
 
-1. Finish Normal vs Student-t holdout (`scripts/compare_volatility_distributions.py`) and save the summary CSV.
-2. Implement Q5-regime refits (training/past-only Q5 cutoff; same spec, extreme-origin parameters) and evaluate MAE and Q5 residual variance.
-3. Implement log-target forecasts with reverse \(\exp(\hat\mu+\tfrac12\hat\sigma^2)\) (and maybe smearing) vs naive \(\exp(\hat\mu)\), especially in Q5.
-
-If a remedy is not finished before the page limit, the report describes the design and leaves the number as not yet evaluated — it does not invent a win.
+- Log-target: `outputs/samuel/stage3_q5/log_transform/`. Bias down; MAE/RMSE not significant; Q5 variance not fixed.
+- Segmented: `data/processed/stage2_yz_segmented/`. MAE worse than unsegmented shortlist.
+- Student-t: quote design only unless `distribution_summary.csv` is written.
 
 **Figures (already in `report_group2/figures/`):** target split; month means; top-five or actual-vs-forecast; residuals vs forecast; error-by-forecast-quantile.
 
@@ -296,16 +292,12 @@ Caption every figure for the specification it actually shows (no-external vs joi
 - Slides: `Group2_Slides.pdf`; 20 minutes + 5 Q&A; Wed 25 Nov 2026, 8:55–9:20.
 - Deadline: Tue 24 Nov 2026, 23:59.
 
-## Out of scope until you approve the story
+## Out of scope until the group reviews the PDFs
 
-- Rewriting the Quarto report or Beamer.
-- Rendering PDFs.
-- Filling AI or contribution text.
+- Filling AI or contribution text (`[team to complete]`).
+- Running the Student-t holdout.
 - Committing.
 
-## Next action after you approve this plan
+## Next action
 
-1. Write `report_group2/narrative-draft.md` with this three-part story (still Markdown, still for us to edit together).
-2. In parallel, agree whether to **run the three Part 3 experiments** before the QMD, so the report can quote outcomes rather than designs only.
-
-The QMD report and Beamer wait until you are happy with the narrative file.
+Report and Beamer sources rewritten from `narrative-draft.md` (2026-11-22). Remaining: team fills AI and contribution placeholders; optional Student-t holdout; commit when the group is ready.

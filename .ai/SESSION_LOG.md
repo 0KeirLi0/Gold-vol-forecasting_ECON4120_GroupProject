@@ -2,6 +2,30 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-22 — Expanded report bibliography after reviewer comment
+- Author: Copilot with Keir
+- Type: implementation
+- Context: Reviewer note that the report listed only three references and missed ARCH/GARCH originals, gold FIGARCH/asymmetric GARCH papers, and HAR on gold/commodities.
+- Outcome: In-text cites now cover Engle (1982), Bollerslev (1986), Nelson (1991), Tully and Lucey (2007), Baur (2012), Baillie–Bollerslev–Mikkelsen (1996), Bentes (2015), Chkili–Hammoudeh–Nguyen (2014), Corsi (2009), Todorova (2017), Diebold–Mariano (1995), Newey–West (1987), Harvey–Leybourne–Newbold (1997), Holm (1979), Hyndman–Khandakar (2008), Rogers–Satchell (1991), and Yang–Zhang (2000). The report states that FIGARCH/FIAPARCH are not estimated; the ladder stays with course EGARCH. References section has 17 entries. Rendered report is 15 pages (at the A4 12pt 1.5 limit). Beamer has a one-line literature note on the ladder slide (21 frames).
+- Artifacts: `report_group2/Group2_Report.qmd`, `report_group2/Group2_Report.pdf`, `presentations/Group2_Slides.qmd`, `presentations/Group2_Slides.pdf`, `report_group2/Group2_Slides.pdf`.
+- Next: Team review of the PDFs; fill AI and contribution text; optional Student-t holdout; commit when ready.
+
+## 2026-11-22 — Converted Yang–Zhang narrative into report and Beamer
+- Author: Copilot with Keir
+- Type: implementation | handoff
+- Context: After the three-part narrative in `report_group2/narrative-draft.md`, convert to the 15-page report and 20-minute slides. Yahoo five-session GARCH-X omitted. Student-t remains design-only (no `distribution_summary.csv`).
+- Outcome: Rewrote `report_group2/Group2_Report.qmd` (PDF-only) and `presentations/Group2_Slides.qmd`. Rendered both PDFs; copied slides into `report_group2/`. Report is A4 12pt 1.5 spacing, 14 pages. Headline is Q5 residual-variance inflation and two failed patches, not HGB as winner. AI and contribution sections left as `[team to complete]`.
+- Artifacts: `report_group2/Group2_Report.qmd`, `report_group2/Group2_Report.pdf`, `presentations/Group2_Slides.qmd`, `presentations/Group2_Slides.pdf`, `report_group2/Group2_Slides.pdf`, `report_group2/figures/variance_by_forecast_quintile.png`, `REPRODUCE.md`, `presentations/project-progress.qmd`.
+- Next: Team review of the PDFs; fill AI and contribution text; optional Student-t holdout; commit when ready. Do not mix Yahoo and LSEG targets.
+
+## 2026-11-21 — Narrative draft for LSEG Yang–Zhang report/Beamer
+- Author: Copilot with Keir, after team confirmed LSEG Yang–Zhang
+- Type: handoff
+- Context: Group 2 deliverable will use LSEG `GCc1` next-session Yang–Zhang, not Yahoo five-session GARCH-X. Story is three parts: object/data/YZ; model ladder; Q5 residuals and remedies.
+- Outcome: Wrote `report_group2/narrative-draft.md` and updated `report_group2/plan.md`. Git `17b2978` already has log-transform (bias down, Q5 not fixed) and segmented-regime forecasts (MAE worse than unsegmented). Student-t holdout summary CSV is still missing; the draft treats it as design-only.
+- Artifacts: `report_group2/narrative-draft.md`, `report_group2/plan.md`.
+- Next: Team edit/approve the narrative; then convert to `Group2_Report.qmd` and `presentations/Group2_Slides.qmd`. Optional Student-t run before quoting t-vs-Normal numbers. AI and contribution text remain `[team to complete]`.
+
 ## 2026-11-21 — Added segmented Yang-Zhang parameter estimation
 - Author: User-directed implementation by Copilot
 - Type: implementation | finding
