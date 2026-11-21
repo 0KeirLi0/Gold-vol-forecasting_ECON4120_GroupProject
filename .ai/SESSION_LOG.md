@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-21 — Refined the log-transformation report
+- Author: Copilot at Samuel's request
+- Type: implementation
+- Context: Samuel asked to complete and refine the log-transformation report without changing existing results or statistics.
+- Outcome: Expanded the report with the segmented-estimation proposal and results, exact baseline-versus-segmented MAE/RMSE comparison, segmented mean-error signs normalized to actual-minus-forecast, a residual timing/source-of-error diagnostic plan, and links to Student-t and residual reports. Existing experiment numbers and test statistics were preserved.
+- Artifacts: `reports/yang-zhang-log-transformation.qmd`, `reports/yang-zhang-log-transformation.html`.
+- Next: Complete residual plotting/source analysis and Normal-versus-Student-t review before a final model decision.
+
 ## 2026-11-21 — Added segmented Yang-Zhang parameter estimation
 - Author: User-directed implementation by Copilot
 - Type: implementation | finding

@@ -2,7 +2,7 @@
 title: "Log-Transformed Yang–Zhang Forecasts"
 subtitle: "Six-model comparison with lognormal mean correction | LSEG GCc1"
 author: "Applied Forecasting Methods Group"
-date: 2026-11-20
+date: 2026-11-21
 format:
   html:
     toc: true
@@ -34,6 +34,13 @@ baseline-Q5 dates, raw residual variance rose for five models and fell by only
 0.2% for HGB. None of the paired overall MAE or RMSE differences was
 significant at 5% after Holm adjustment. Treat the results as an exploratory
 comparison on a previously used holdout, not as evidence of a winning model.
+
+The team has also tested a subsequent Keir/Enoch proposal: segmented parameter
+estimation. The 80th-percentile extreme-state experiments gave worse
+point losses than the unsegmented baselines in the available
+761-target holdout. They therefore do not overturn the log-transformation
+finding; the next diagnostic step is to examine residual timing and identify
+the source of the remaining large misses before choosing a final model.
 
 # Data and model implementation
 
@@ -118,6 +125,116 @@ Holm adjustment. The closest result is HGB squared error: adjusted p-values
 are 0.058 (bandwidth 1) and 0.142 (bandwidth 4). Full statistics are in the
 [DM results CSV](../outputs/samuel/stage3_q5/log_transform/log_transform_dm_tests.csv).
 
+# Segmented parameter estimation
+
+Keir proposed a segmented approach when $y_t$ or $y_{t-1}$ is extreme:
+use a second set of parameters for that state rather than applying one
+universal parameter set. Two training-only 80th-percentile triggers were
+implemented:
+
+- **Forecast trigger:** fit a pilot model using the full history available
+  at the origin. Use the normal or extreme parameter set according to whether
+  the pilot forecast exceeds the training-history threshold.
+- **Lagged-target trigger:** use the latest observed $y_{t-1}$ to select the
+  normal or extreme parameter set.
+
+In both designs, the threshold is defined from the expanding training history
+only. The selected parameter set is refit on observations in the matching
+lagged-realized-volatility regime. The parameter sample excludes future
+targets, so this is a no-look-ahead implementation. GARCH, EGARCH, range
+GARCH-X, EGARCH-X, HAR-X, and HGB are each tested under both triggers.
+
+| Model | Baseline MAE/RMSE | Best segmented MAE/RMSE | Better trigger |
+|:--|--:|--:|:--|
+| GARCH(1,1) | 0.002912 / 0.005025 | 0.003238 / 0.005923 | Forecast |
+| EGARCH(1,1) | 0.002912 / 0.005022 | 0.003204 / 0.005758 | Forecast |
+| Range GARCH-X | 0.002914 / 0.005037 | 0.003238 / 0.005912 | Lagged target |
+| EGARCH-X | 0.002833 / 0.004860 | 0.003117 / 0.005536 | Forecast |
+| HAR-X (OHLC) | 0.002711 / 0.005091 | 0.002879 / 0.005169 | Lagged target |
+| HGB (OHLC) | 0.002418 / 0.004767 | 0.002680 / 0.005124 | Forecast |
+
+All 12 model-trigger combinations produced forecasts on all 761 holdout
+dates, with zero fit failures. Their MAE and RMSE are nevertheless above the
+reported unsegmented baselines, except for the range GARCH-X RMSE comparison:
+the lagged-target segmented RMSE is 0.0059126 versus the baseline 0.005037
+shown in the table. This is not an improvement in the table's MAE/RMSE
+pair and is not a model-superiority result.
+
+The segmented forecasts also changed the sign of average mean error. The
+reported segment biases are negative:
+
+| Model/trigger | Segmented mean error |
+|:--|--:|
+| GARCH, forecast trigger | +0.000960 |
+| GARCH, lagged-target trigger | +0.000780 |
+| EGARCH, forecast trigger | +0.000915 |
+| EGARCH, lagged-target trigger | +0.000779 |
+| Range GARCH-X, forecast trigger | +0.001027 |
+| Range GARCH-X, lagged-target trigger | +0.000841 |
+| EGARCH-X, forecast trigger | +0.000383 |
+| EGARCH-X, lagged-target trigger | +0.000338 |
+| HAR-X, forecast trigger | +0.000983 |
+| HAR-X, lagged-target trigger | +0.000936 |
+| HGB, forecast trigger | +0.000965 |
+| HGB, lagged-target trigger | +0.000829 |
+
+The saved segmented summary uses forecast-minus-actual bias. In this report,
+the values above are reversed to the project's actual-minus-forecast sign,
+so the positive values indicate average under-forecasting. This is a
+regime-estimation result that deserves attention, but it does not reverse
+the fact that the segmented solutions have larger MAE/RMSE than their
+baselines.
+
+# Residual timing and source of error
+
+The log transformation and segmentation experiments change target
+transformation or parameter membership; they do not identify why the largest
+misses occur. The next analysis should therefore plot forecast residuals
+against calendar date, forecast level, lagged volatility, and realized
+volatility, while retaining the largest individual misses.
+
+The existing residual-diagnostics artifacts already show the residual path
+over time and residual dispersion versus forecast level:
+
+- [Residuals over the test period](figures/model_residual_diagnostics/forecast_errors_over_time.png)
+- [Residuals versus forecast level](figures/model_residual_diagnostics/forecast_errors_vs_forecast.png)
+- [Joint-predictor residual-diagnostics report](yang-zhang-selected-residual-diagnostics.qmd)
+
+The source of error should be evaluated separately as:
+
+1. **A common target/recording episode:** check whether all models miss the
+   same dates, especially abrupt regime changes.
+2. **Model specification:** compare whether the model underpredicts a level
+   term, a predictor term, or a conditional-variance term.
+3. **Data timing:** verify target and predictor availability at each origin.
+4. **Dependence:** account for overlapping Yang–Zhang windows and serial
+   dependence before treating residual patterns as independent evidence.
+5. **Heavy tails and regime shifts:** separate an isolated-outlier explanation
+   from a persistent change in conditional volatility.
+
+This residual-source exercise should report dates and common miss episodes
+before drawing a limitation or model-selection conclusion. It should not
+use future target-window values or future thresholds.
+
+# Relation to the Student-t and residual-source work
+
+The team is also preparing Normal-versus-Student-t comparisons for the
+six candidates. That experiment addresses innovation-tail behavior; it does
+not replace the residual-source diagnostic above. A Student-t likelihood can
+change predictive intervals and estimated degrees of freedom, while a residual
+timing or regime analysis asks whether the point forecast systematically
+misses particular dates or regimes.
+
+The existing distribution-comparison report should be used as the formal
+Student-t companion:
+
+- [Normal and Student-t Yang–Zhang forecasts](yang-zhang-distribution-comparison.qmd)
+
+The final model discussion should combine, rather than merge, three distinct
+findings: point-loss performance, predictive density/calibration, and the
+source and timing of residual misses. No result in this log or segmentation
+experiment establishes a final model decision.
+
 # Limitations and interpretation
 
 - The retransformation formula is exact under a conditional normal
@@ -129,17 +246,26 @@ are 0.058 (bandwidth 1) and 0.142 (bandwidth 4). Full statistics are in the
 - Paired tests concern overall loss, not Q5 variance. The same-holdout
   comparisons are exploratory and do not establish causal effects or durable
   superiority.
+- Segmentation uses the previously examined holdout and a training-history
+  80th-percentile threshold. It has no paired significance tests and should
+  not be presented as a deployable rule or a superior model.
+- The segmented results have 761 successful observations for each of 12
+  model-trigger combinations, but this sample is not independent of the
+  model-development decisions already made on the holdout.
 - Lower mean error does not by itself establish full forecast calibration.
 
 # Reproducibility artifacts
 
 - [Sequential fitting and comparison script](../scripts/samuel_stage3_q5_log_transform.py)
+- [Segmented fitting implementation](../src/gold_vol_pipeline/segmented_forecasting.py)
+- [Segmented sequential evaluation script](../scripts/evaluate_segmented_yang_zhang.py)
 - [Detailed generated results](../outputs/samuel/stage3_q5/log_transform/log_transform_report.md)
 - [Forecasts and per-origin correction terms](../outputs/samuel/stage3_q5/log_transform/log_transform_forecasts.csv)
 - [Overall metrics](../outputs/samuel/stage3_q5/log_transform/log_transform_metrics.csv)
 - [Forecast-quintile metrics](../outputs/samuel/stage3_q5/log_transform/log_transform_quintile_metrics.csv)
 - [Q5 variance comparison](../outputs/samuel/stage3_q5/log_transform/log_transform_q5_variance.csv)
 - [Paired DM tests](../outputs/samuel/stage3_q5/log_transform/log_transform_dm_tests.csv)
+- [Segmented forecasts and summary](../data/processed/stage2_yz_segmented/)
 
 The experiment uses the existing prepared target/predictor panel and saved
 baseline forecasts; it does not copy or redistribute raw provider data.
