@@ -288,10 +288,33 @@ Dropping the largest Q5 misses, **keeping the original Q5 set**:
 Headline Q5/Q1 is **mostly a few crash dates**. A ratio near $3$–$6$ remains.
 
 ::: notes
-Reuters 2 February 2026. Round-number lows and the OI jump are
-continuation-series caveats; the crash itself is a real price move.
+Reuters 30 January and 2 February 2026. The Warsh nomination and margin
+hike provide descriptive event context, not a causal estimate. Round-number
+lows and the OI jump are continuation-series caveats; the crash itself is
+a real price move.
 The first valid YZ uses 30 Jan + 2 Feb because Jan 27–28 poison the
 overnight return.
+:::
+
+## 23 March: geopolitical context, not proven causality
+
+- $y_t=0.0613$, the **second-largest** target in the prepared sample
+- `GCc1` low $4{,}100.8$ during the later March drawdown
+- Contemporaneous Reuters coverage linked gold to US-Iran war uncertainty,
+  oil-market pressure, and risk-off trading
+- The market response was mixed: reports described gold trimming losses
+  after Trump postponed strikes on Iranian energy assets
+
+**Interpretation:** geopolitically associated with an extreme bar,
+but no unique causal effect can be identified from one OHLC observation.
+Low open interest ($630$) and continuation-series effects remain caveats.
+
+::: notes
+Do not call 23 March a "geopolitical shock" as fact. It is a residual
+outlier temporally associated with Iran-war news. The 23 March miss can
+only be described as associated with geopolitical uncertainty; a market
+event study would require an identified news time, intraday data, and
+counterfactual controls.
 :::
 
 ## How much Q5 variance the largest misses carry
@@ -442,5 +465,7 @@ estimator; the team used Yang and Zhang (2000).
 - Six candidates; HGB lowest MAE (descriptive)
 - **Shared finding:** residual variance rises with $\hat y$, especially Q5
 - 2026 crash dates carry most of the headline Q5/Q1; a ratio $\approx 3$–$6$ remains
+- 2 February combines Warsh/margin news with missing-bar and continuation effects;
+  23 March is associated with Iran-war risk-off news, not proven causally
 - Segmented MAE worse; Jensen bias only; Student-$t$ helps density, not Q5
 - High predicted volatility is the unreliable region

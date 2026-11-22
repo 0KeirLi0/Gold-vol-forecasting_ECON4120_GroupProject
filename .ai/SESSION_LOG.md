@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-22 — Updated Beamer with geopolitical event context
+- Author: Copilot at Samuel's request
+- Type: implementation
+- Context: The report now distinguishes 2026-02-02 and 2026-03-23 event associations from causal claims.
+- Outcome: Added a dedicated 23 March slide and expanded the 2 February slide with descriptive Warsh, CME-margin, missing-OHLC, and continuation-series context in `presentations/Group2_Slides.qmd`; strengthened the recap caveat.
+- Artifacts: `presentations/Group2_Slides.qmd`, `presentations/Group2_Slides.pdf` (pending re-render).
+- Next: Re-render the Beamer PDF and inspect it before any commit.
+
 ## 2026-11-22 — Added geopolitical context for the largest residual misses
 - Author: Copilot at Samuel's request
 - Type: finding
