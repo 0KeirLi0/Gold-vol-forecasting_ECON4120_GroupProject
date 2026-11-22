@@ -1,8 +1,8 @@
 ---
-title: "Forecasting Daily Volatility of Gold Forward Prices"
-subtitle: "A Yang–Zhang target on COMEX gold futures (GCc1)"
+title: "Forecasting Daily Volatility of Gold Futures"
+subtitle: "Next-session Yang–Zhang volatility of COMEX `GCc1`"
 author: "Group 2 · ECON4120 Applied Forecasting Methods"
-date: "2026-11-18"
+date: "2026-11-22"
 format:
   beamer:
     theme: metropolis
@@ -19,6 +19,7 @@ format:
       - \setbeamercolor{progress bar}{fg=goldaccent}
       - \setbeamercolor{alerted text}{fg=goldaccent}
       - \setbeamercolor{frametitle}{bg=black!88}
+      - \usepackage{tikz}
 execute:
   echo: false
   warning: false
@@ -32,105 +33,93 @@ execute:
 Luo Pui Ki Enoch (1155212655) · Li Hung Kui (1155212707) ·
 Siriasavakul Hok Sum (1155179729)
 
-*Working roles: Enoch—model development · Li Hung Kui—infrastructure ·
-Siriasavakul—model analysis*
+**Forecast object:** next trading-day unannualised Yang–Zhang volatility
+of continuous COMEX gold futures (`GCc1`). Not the gold price, not spot.
 
-**Forecast object:** next-valid-day unannualized volatility of continuous
-COMEX gold futures, not the gold price level and not spot gold.
-
-::: notes
-State the forecast object in one sentence: next-valid-day unannualized
-volatility of the continuous COMEX gold futures series. Outline the
-20-minute plan: motivation and data, candidate models, residual
-evaluation, then a brief AI note. Do not quote numerical results until
-the team has inserted them.
-:::
-
-## Why forecast gold *forward* volatility?
-
-- Target: daily volatility of gold **forward/futures** prices, not spot
-- Primary reason: continuous futures histories are **more readily accessible**
-- COMEX gold futures (GC): global benchmark contract, high liquidity
-- Continuous series (`GCc1`): long, consistent history without manual stitching
-- Futures prices embed the cost of carry (rates, storage, convenience yield)
-- Directly relevant for futures traders, hedgers, and options on futures
-- Less exposed to physical-market frictions (premia, delivery constraints)
+**Headline:** among six shortlisted models, forecast-error variance rises
+when $\hat y$ is in the top 20% (Q5). Two patches did not remove it.
 
 ::: notes
-Lead with accessibility, then the economic rationale. Futures and spot
-are different instruments. The cost-of-carry relation means futures
-volatility is the object faced by exchange-traded hedging and options on
-futures. Do not claim that futures volatility equals spot volatility.
+One sentence for the object, then the residual headline. Do not open with
+"HGB wins." Outline: why this object (data, futures, YZ, horizon,
+seasonality); ladder and shortlist; Q5; failed patches; limits.
 :::
 
-## Spot versus futures
+## Why forecast gold *futures* volatility?
 
-::: columns
-::: {.column width="48%"}
-**Spot gold**
-
-- OTC / locational quotes
-- Premia and delivery constraints
-- Harder to obtain as one long continuous series
-:::
-
-::: {.column width="48%"}
-**COMEX futures (`GCc1`)**
-
-- Exchange-traded benchmark (GC)
-- Cost of carry already in the price
-- Continuous generic contract; no manual roll stitching
-:::
-:::
-
-**Suggested visual:** side-by-side schematic, optionally with a `GCc1`
-price path and the evaluation window shaded.
+- Target: daily volatility of gold **futures**, not spot
+- Same LSEG run: `XAUFIX=` permission error; `XAU=` does not support `TRDPRC_1`
+- `GCc1` did download: continuous COMEX gold, no manual stitching
+- Futures embed carry (rates, storage, convenience yield)
+- Object faced by futures traders, hedgers, and options on futures
 
 ::: notes
-Use this slide as a pause. The research question is futures-vol, not a
-claim that spot is uninteresting. If asked about roll effects, say that
-`GCc1` is a generic continuous series and that we keep it distinct from
-spot and from a single fixed-expiry contract.
+Lead with availability, then economics. Futures and spot are different
+instruments. Do not claim futures vol equals spot vol.
 :::
 
-## Data: Refinitiv `GCc1`
+## Data: LSEG `GCc1`
 
-Source: Refinitiv / LSEG Workspace, continuous contract **`GCc1`**.
-Daily bars are OHLC **plus** open interest.
+Source: LSEG Workspace, `data/refinitiv/GCc1.csv`, 2010-01-01 to 2026-11-10.
 
 | Field | Label | Role |
 |---|---|---|
-| `TRDPRC_1` | LAST | Last trade; closing-price proxy |
-| `OPEN_PRC` | Open | Session open |
-| `HIGH_1`, `LOW_1` | High, low | Daily range |
-| `OPINT_1` | Open interest | Downloaded with the bar |
+| `Date` | Session date | Trading day of the daily interday bar |
+| `TRDPRC_1` | LAST | Close proxy $C_t$ (not settlement) |
+| `OPEN_PRC`, `HIGH_1`, `LOW_1` | OHLC | Yang–Zhang inputs |
+| `OPINT_1` | Open interest | Downloaded; unused in YZ |
 
-- Incomplete OHLC bars are **not imputed**
-- Windows with incomplete quotes have no Yang–Zhang target
-- Sample counts: `[N rows]` source rows; `[N complete OHLC]`; `[N valid targets]`
-
-::: notes
-LAST is a close proxy, not a settlement-price series. Open interest is
-part of the downloaded bar; the Yang–Zhang estimator uses OHLC only.
-Missingness is handled by dropping incomplete windows rather than
-filling prices. Insert the team's sample counts before the talk.
-:::
-
-## The target and chronological split
-
-![Yang–Zhang target with the test window shaded](../reports/figures/stage2_yz_selected/target_split.png){fig-alt="Yang–Zhang target with test window shaded" width=82%}
+- Volume `ACVOL_1` requested, not returned
+- 4,241 rows; **4,064** complete OHLC; incomplete bars dropped, never filled
 
 ::: notes
-Point out the chronological 80/20 split: later calendar time is the
-holdout. Incomplete OHLC windows have no target, so successive test
-dates can skip sessions. Replace the figure if the team changes the
-split display.
+LAST is a close proxy. Open interest is on the bar; YZ uses OHLC only.
+Date is the trading session, not a filled calendar (2010-01-08 then
+2010-01-11).
 :::
 
-## Why Yang–Zhang?
+## Horizon: one trading day
 
-Ideal daily variance uses high-frequency intraday returns. Only daily
-bars were available, so the **Yang–Zhang** estimator is used.
+- LSEG `Date` = exchange session of that daily bar
+- Weekends and holidays skipped; incomplete OHLC $\Rightarrow$ no target
+- Forecast $\hat y_{t+1\mid t}$: **next valid session**, unannualised
+- Not a five-session sum, not annualised, not next calendar day
+
+![Yang–Zhang target; chronological 80/20 holdout shaded](../report_group2/figures/target_split.png){width=78%}
+
+::: notes
+3,801 targets; 3,040 / 761; test 2023-06-02 to 2026-11-10. Sequential
+one-step; future $y$ never a predictor. Point at the 2026 spike in the
+shaded window — that is the later 2026-02-02 miss.
+:::
+
+## Why not close-to-close?
+
+Ideal daily variance uses high-frequency $RV_t=\sum_i r_{t,i}^2$.
+No tick or 5-minute bars here: one OHLC bar per `Date`.
+
+Close-to-close uses two points and ignores the range:
+
+$$
+r^{cc}_t=\log(C_t/C_{t-1}),\qquad \hat\sigma^{cc,2}_t=(r^{cc}_t)^2.
+$$
+
+**Same close-to-close return, two paths:**
+
+1. Price walks almost straight open $\to$ close (quiet range).
+2. Price swings; high–low is large; $C_t=C_{t-1}$ so $r^{cc}_t=0$.
+
+Close-to-close treats them as identical. Overnight gaps are missed too.
+
+::: notes
+Spend time on path 2. A zero close-to-close day can be a wild session.
+That is why we want an OHLC estimator.
+:::
+
+## Yang–Zhang (2000)
+
+DOI 10.1086/209650. AI suggested an OHLC estimator; the team used the paper.
+Window $n=2$, $k\approx 0.078341$.
 
 $$
 \hat\sigma^{2}_{\mathrm{YZ},t}
@@ -139,260 +128,224 @@ $$
 y_t=\sqrt{\max(0,\hat\sigma^{2}_{\mathrm{YZ},t})}.
 $$
 
-- Combines overnight variance, open-to-close variance, and Rogers–Satchell range variance
-- Weight $k$ minimises estimator variance
-- Drift-independent; accounts for overnight gaps
-- More efficient than close-to-close; suited to futures with overnight moves
-- Window and weight: $n=[n]$, $k=[k]$ (insert team defaults)
-
-**Suggested visual:** one-bar schematic $C_{t-1}\to O_t\to C_t$ with the
-three variance components labelled.
+- Overnight variance + open-to-close variance + Rogers–Satchell (1991) range
+- Drift-independent; handles opening jumps (Yang and Zhang 2000)
+- Unannualised; adjacent windows **overlap**
 
 ::: notes
-Close-to-close ignores the high–low range and the overnight gap.
-Rogers–Satchell is efficient for the open-to-close range but ignores
-overnight returns. Yang–Zhang restores the overnight term, keeps the
-range estimator, and chooses k to minimise the variance of the
-combination. Models forecast volatility y_t, unannualized. Adjacent
-windows overlap.
+$s_o^2$ is overnight, $s_c^2$ open-to-close, $\overline{RS}$ the range
+term. Incomplete windows have no target. $y_t$ is a proxy, not tick RV.
+Do not say AI invented the estimator, and do not say $n=2$ is optimal.
 :::
 
-## Pre-modelling diagnostics
-
-- Seasonality checks (calendar month / weekday)
-- Chronological **80/20** train–test split (no shuffling)
-- Volatility clustering (visual inspection of $y_t$ and squared returns)
-- Stationarity: ADF
-- Conditional heteroskedasticity: ARCH-LM
-- Normality: Jarque–Bera, QQ-plot, excess kurtosis
-- Serial dependence: Ljung–Box on returns and on squared returns
-- Cleaning: incomplete OHLC dropped; outliers documented, not silently filled
-
-Results: `[insert ADF / ARCH-LM / JB / LB]`.
-
-::: notes
-The 80/20 split is chronological, so the test sample is later in calendar
-time. Seasonality is a descriptive check, not automatically a forecasting
-feature. ARCH-LM and Ljung–Box on squares motivate GARCH-type models.
-Heavy tails caution against treating Gaussian residuals as more than a
-quasi-likelihood device. Insert the team's statistics before the talk.
-:::
-
-## Calendar profiles of the target
+## Seasonality (descriptive only)
 
 ::: columns
 ::: {.column width="50%"}
-![Month means](../reports/figures/yang_zhang_seasonality/month_means.png){width=95%}
+![Month means](../report_group2/figures/month_means.png){width=95%}
 :::
 ::: {.column width="50%"}
-![Weekday means](../reports/figures/yang_zhang_seasonality/weekday_means.png){width=95%}
+![Weekday means](../report_group2/figures/weekday_means.png){width=95%}
 :::
 :::
 
-**Suggested visual (additional):** 2×2 panel of target path, ACF of
-squares, QQ-plot, and these calendar means.
+- March 0.00899 highest; July 0.00694 lowest; Feb/Apr also high
+- Weekdays 0.00766–0.00819; no weekday HAC rejection
+- Month-only $p=0.012$ at 5 lags, $0.068$ at 10, $0.122$ at 20
+- **No seasonal dummy** in the forecasting models
 
 ::: notes
-These are descriptive calendar means, not a decision to add seasonal
-dummies. If asked whether month effects are significant, say the team
-will insert the overlap-aware tests and should not treat a visual
-February–April elevation as a forecasting feature until that is done.
+February–April elevation is descriptive. Overlapping $n=2$ windows make
+calendar tests lag-sensitive. We did not add month dummies.
 :::
 
-## Course-related models (ECON4120)
+## Course ladder
 
-- Linear time-series: AR, ARMA, and related specifications
-- GARCH family: ARCH, GARCH, EGARCH
-- Exogenous extensions: GARCH-X, EGARCH-X
+Each step is a response to the previous limit.
 
-| Mean / linear | Conditional variance | With exogenous information |
+| Step | Models | Limit that motivates the next step |
 |---|---|---|
-| AR, ARMA | ARCH | GARCH-X |
-| | GARCH | EGARCH-X |
-| | EGARCH | |
+| 1 | AR / MA / ARIMA on $\log y_t$ | Constant innovation variance; vol clusters |
+| 2 | ARCH / GARCH / EGARCH | Own shocks only |
+| 3 | Range GARCH-X, EGARCH-X | Need multi-horizon features |
+| 4 | HAR / HAR-X | Linear in features |
+| 5 | HGB | No likelihood; trees |
 
-GARCH-X in this project is the range-augmented GARCH-X recursion on the
-volatility target.
+Engle (1982), Bollerslev (1986), Nelson (1991); gold: Tully and Lucey (2007), Baur (2012), Bentes (2015, FIGARCH). HAR: Corsi (2009); Todorova (2017) on COMEX gold. We do **not** estimate FIGARCH.
 
 ::: notes
-AR/ARMA on returns or on a volatility proxy capture serial correlation
-in the mean but not changing conditional variance. ARCH/GARCH model that
-variance directly. EGARCH allows asymmetric news effects and keeps
-variance positive without inequality constraints. The -X versions add
-lagged exogenous information to the variance equation (GARCH-X) or to
-the mean and variance (EGARCH-X).
+Walk the ladder. Gold literature: inverted asymmetry (Baur) and long memory (FIGARCH, Bentes; FIAPARCH, Chkili et al.). We stay with course EGARCH. HAR here is Corsi-style on Yang–Zhang, not tick RV. ARIMA MAE $\approx 0.0030$–$0.0033$. Student-$t$ GARCH MAE 0.002921 vs Gaussian 0.002912 — overall MAE, not Q5.
 :::
 
-## Additional models and exogenous variables
+## Holdout MAE (761 common dates)
 
-- Realised-volatility regressions: HAR and HAR-X
-- Regularised regression: Ridge and Lasso
-- Machine learning: Histogram Gradient Boosting (HGB)
+| Model | Role | MAE |
+|---|---|---:|
+| **HGB** | Trees | **0.002418** |
+| HAR-X | Multi-horizon | 0.002711 |
+| EGARCH-X | -X in the mean | 0.002833 |
+| GARCH(1,1) | Persistent variance | 0.002912 |
+| EGARCH(1,1) | Asymmetry | 0.002912 |
+| Range GARCH-X | GARCH-X | 0.002914 |
+| Persistence | Naive | 0.003190 |
 
-After correlation / collinearity screening, the **-X** specifications use:
+HGB vs persistence / HAR / GARCH, absolute-loss Holm $p$:
+$7.95\times10^{-14}$, $1.15\times10^{-13}$, $1.78\times10^{-9}$.
 
-- **DXY** — U.S. Dollar Index
-- **Gold IV 1M** — one-month gold implied volatility
-- **Gold IV 1Y** — one-year gold implied volatility
-
-Screening statistics: `[insert correlation / VIF / HAC p-values]`.
-The three variables enter **jointly**; the design does not isolate each
-effect.
+**Shortlist:** GARCH, EGARCH, range GARCH-X, EGARCH-X, HAR-X, HGB.
 
 ::: notes
-HAR brings in daily, weekly, and monthly volatility components, which is
-natural for a persistent volatility target. Ridge and Lasso are linear
-benchmarks that penalise collinear predictors. HGB is a nonlinear tree
-ensemble. DXY is the dollar channel for gold. The two IV tenors summarise
-the options market at short and long horizons. Screening is association
-on the training sample, not proof of out-of-sample value.
+MAE is headline because $y$ is already volatility. Ranking is descriptive;
+overlapping targets; leader chosen on this holdout. HGB/HAR-X/GARCH/EGARCH
+here are no-external; EGARCH-X has selected predictors in the mean.
+Squared-loss: HGB does not significantly beat GARCH.
 :::
 
-## Shortlisted candidates
+## Forecasts versus actuals
 
-Retained on out-of-sample **MAE**, with **AIC** and **BIC** as supporting
-in-sample diagnostics (within comparable likelihood families):
-
-**GARCH · EGARCH · GARCH-X · EGARCH-X · HAR-X · HGB**
-
-| Model | MAE | AIC | BIC |
-|---|---:|---:|---:|
-| GARCH | [ ] | [ ] | [ ] |
-| EGARCH | [ ] | [ ] | [ ] |
-| GARCH-X | [ ] | [ ] | [ ] |
-| EGARCH-X | [ ] | [ ] | [ ] |
-| HAR-X | [ ] | [ ] | [ ] |
-| HGB | [ ] | — | — |
-
-Linear AR/ARMA, plain HAR, Ridge, and Lasso were explored and not
-retained. HGB has no likelihood, so AIC/BIC are undefined.
+![HGB against persistence, HAR, and GARCH (no-external run)](../report_group2/figures/yz_top_models_actual_vs_forecast.png){width=82%}
 
 ::: notes
-Shortlisting is descriptive. MAE is the headline out-of-sample loss
-because the target is already in volatility units. AIC/BIC summarise
-in-sample likelihood fit and are not comparable across different target
-transformations or between likelihood models and HGB. Overlapping
-Yang–Zhang windows mean adjacent losses are dependent. Do not claim a
-Diebold–Mariano test unless the team later inserts one.
+Scatter is for clustering and large misses, not for declaring a DGP.
+High actuals sit above the 45-degree line: average under-forecasting.
 :::
 
-## Evaluation design
+## Residuals: definition and fan
 
-- Common chronological holdout; sequential one-step forecasts
-- Residual here = forecast error $e_t = y_t - \hat{y}_{t\mid t-1}$
-- Positive $e_t$: under-forecasting
-- These are **predictive errors**, not GARCH standardised innovations
-- Diagnostics: $e_t$ versus $\hat{y}$; residual ACF; error distribution;
-  quantile split of $\hat{y}$
+Residual $e_t=y_t-\hat y_{t\mid t-1}$. Positive = under-forecast.
+These are **predictive errors**, not GARCH standardised innovations.
 
-Holdout metrics (insert): MAE `[ ]`, RMSE `[ ]`, mean error `[ ]`.
+- Positive mean error on all six
+- Fan: dispersion rises with $\hat y$
+- HAC slope of squared error on forecast level: positive for all six
 
 ::: notes
-Define the residual carefully. We are looking at out-of-sample forecast
-errors on the volatility scale, not fitted GARCH innovations. Overlapping
-two-observation targets induce serial dependence in e_t.
-:::
-
-## Forecasts on the shared holdout
-
-![Actual and model forecasts (replace if the panel set changes)](../reports/figures/stage2_yz_selected/top5_forecasts.png){width=88%}
-
-::: notes
-If the displayed figure still shows an earlier candidate set, say so and
-point to the shortlisted six. The visual is for clustering and common
-misses, not for declaring a winner.
-:::
-
-## Residual heteroskedasticity
-
-- Consistent pattern across all six shortlisted models
-- Residual **variance increases with the size of the fitted value** $\hat{y}$
-- Fan-shaped residual plot: errors more dispersed when predicted volatility is high
-- Reliability is weaker precisely when volatility risk is most material
-
-::: notes
-This is heteroskedasticity of forecast errors with respect to the
-forecast level, not a restatement of ARCH in returns. Even GARCH-family
-models leave a volatility-of-the-volatility problem on the y_t scale:
-high predicted volatility coincides with larger absolute misses. Walk
-through one panel on the next slide, then note that the same shape
-appears in the others.
+This is heteroskedasticity of forecast errors with respect to the forecast
+level. High predicted vol coincides with larger absolute misses.
 :::
 
 ## Residuals versus predicted volatility
 
-![Forecast residuals versus forecast level](../reports/figures/model_residual_diagnostics/forecast_errors_vs_forecast.png){width=82%}
+![Fan shape on the six shortlisted models](../report_group2/figures/forecast_errors_vs_forecast.png){width=86%}
 
 ::: notes
-The fan shape is the exhibit. When predicted volatility is low, misses
-are compressed; when it is high, the scatter opens up. That pattern is
-shared, so it is not an artefact of one specification.
+Walk one panel, then say the shape is shared. The isolated point near
+forecast 0.01 and error 0.06 is 2026-02-02.
 :::
 
-## When predicted volatility is in the top 20%
+## When $\hat y$ is in the top 20% (Q5)
 
-- Sort $\hat{y}$ within each model into quantiles
-- When predicted volatility is in the **top 20%** (Q5), residual variance
-  rises markedly
-- The worst-calibrated region is the high-volatility regime
-- Q5 is a *predicted*-volatility bin, so it is observable at the origin
+Q5 is a **predicted**-volatility bin, known at the origin.
 
-Quantile summaries: `[insert mean, variance, skewness by Q1–Q5]`.
+| Model | Raw Q5/Q1 variance |
+|---|---:|
+| GARCH / EGARCH / range GARCH-X | 9.2–9.3 |
+| HAR-X | 11.6 |
+| HGB | 12.3 |
+| EGARCH-X | 15.1 |
+
+Relative ratios 0.96–1.33; log-error ratios 0.48–0.85.
+Q5 errors stay right-skewed and heavy-tailed.
+
+**2026-02-02:** actual $0.0775$; forecasts $0.01$–$0.015$.
 
 ::: notes
-The top quintile is defined from the forecast, unlike a split on realised
-y_t. When the model itself says volatility is high, its error band should
-be treated as much wider. Do not over-claim a formal variance test unless
-the team inserts one.
+Much of the raw widening is scale. Q5 is still the unreliable region:
+skew, kurtosis, and the shared crash. Calm-period point forecasts are
+more trustworthy.
 :::
 
-## Residual distributions by forecast quintile
+## Error variance by forecast quintile
 
-![Q5 is the top 20% of predicted volatility](../reports/figures/residual_diagnostics/forecast_error_by_forecast_quantile.png){width=82%}
+![Raw variance inflates in Q5; relative and log errors do not](../report_group2/figures/variance_by_forecast_quintile.png){width=90%}
 
 ::: notes
-If this figure was built on a neighbouring candidate set, treat it as
-illustrative of the Q5 pattern and swap in the shortlisted six-model
-panel before the talk.
+Left panel is the exhibit. Middle and right show that rescaling removes
+most of the inflation. Keep the punchline: high predicted vol is where
+point forecasts fail.
 :::
 
-## Implications, remedies, and limits
+## Patch 1 — Student-$t$ MLE
 
-- Point forecasts in calm periods are more trustworthy than those in stress
-- Risk-management use (margin, option hedges) is weakest where it is most needed
-- Remedies considered:
-  - regime-wise or quantile-wise evaluation
-  - empirical calibration of bias and error scale using only past errors
-  - heavier-tailed or heteroskedastic observation equations
-- Limits: overlapping targets; holdout reused in development; no deployable cutoff
+Fat-tailed likelihood instead of Gaussian QMLE.
+
+- Code: `distribution_comparison.py`
+- **No saved six-model holdout CSV**
+- On the 20-model ladder, Student-$t$ GARCH MAE 0.002921 vs Gaussian 0.002912
+
+Quote design only. Do not invent a Q5 $t$-versus-Normal number.
 
 ::: notes
-Close Part 3 by lowering confidence, not by picking a winner. If asked
-which model is best, give the MAE ranking as descriptive, then qualify it
-with the high predicted-volatility residual-variance result, which is
-shared. Mention empirical error calibration only as a considered remedy,
-without quoting unconfirmed coverage numbers. Retrospective realised
-terciles are descriptive only and are not a deployable regime classifier.
+If asked, say the dedicated comparison was not written to
+`distribution_summary.csv`. The ladder $t$-GARCH is overall MAE, not Q5.
+:::
+
+## Patch 2 — segmented high-vol parameters
+
+Training-history 80th percentile. Two triggers: pilot forecast, or lagged $y$.
+12 fits, 761 dates, 0 failures.
+
+| | Unsegmented MAE | Forecast trigger | Lagged $y$ |
+|---|---:|---:|---:|
+| HGB | 0.002418 | 0.002680 | 0.002760 |
+| HAR-X | 0.002711 | 0.002883 | 0.002879 |
+| GARCH | 0.002912 | 0.003238 | 0.003249 |
+
+**Failed patch:** segmented MAE is worse. Same reused holdout.
+
+::: notes
+Forecast-trigger mixes a pilot forecast with lagged-vol estimation
+samples. Do not present this as a deployable regime model.
+:::
+
+## Patch 3 — log $Y$ and Jensen reverse
+
+Fit $\log y_t$; reverse with $\exp(\hat\mu + \hat\sigma^{2}/2)$.
+
+- Bias moved toward zero for all six
+- MAE/RMSE vs baseline: **not Holm-significant**
+- On baseline-Q5 dates, residual variance **rose** for five models;
+  HGB $-0.2\%$
+
+**Failed Q5 patch** that did reduce average under-forecasting.
+
+::: notes
+The Jensen term is a mean correction under normal log errors. It was not
+a Q5-variance fix. HGB/HAR-X baselines in this run are the joint-predictor
+saved forecasts.
+:::
+
+## Limits
+
+- Overlapping two-observation targets
+- One chronological holdout, reused in development and patches
+- 1M gold IV vs next-session realised vol
+- Next-weekday LSEG availability proxy
+- `GCc1` is a generic continuous futures series; `TRDPRC_1` is last trade
+
+We do **not** claim HGB is the DGP, that IV causes futures vol, or that
+any patch solved Q5.
+
+::: notes
+If asked which model to use: give MAE as descriptive, then qualify with
+Q5. Point forecasts in calm periods are more trustworthy.
 :::
 
 ## Use of AI
 
-- Course requirement: AI tools were used in the project
-- The report will reflect how they were used, and whether responses were
-  constructive or misleading
+- Course requirement: AI tools were used
 - **Content to be added by the group**
 
 ::: notes
-Do not improvise a reflection until the group has agreed the text. If
-questions arise, say that the written section will document prompts,
-checks against saved outputs, and the group's remaining responsibility
-for every claim.
+Do not improvise the reflection. Yang–Zhang: AI suggested an OHLC
+estimator; the team used Yang and Zhang (2000).
 :::
 
 ## Recap
 
-- Futures (`GCc1`), not spot; Yang–Zhang because only daily bars were available
-- Six candidates: GARCH, EGARCH, GARCH-X, EGARCH-X, HAR-X, HGB
-- Shared finding: residual variance rises with $\hat{y}$, especially in the top 20%
-- High-volatility forecasts are the least reliable — insert metrics before submission
-- AI reflection: to be completed
+- Futures (`GCc1`), not spot; Yang–Zhang because only daily bars
+- Horizon = next trading session, unannualised
+- Six candidates; HGB lowest MAE (descriptive)
+- **Shared finding:** residual variance rises with $\hat y$, especially Q5
+- Segmented MAE worse; log correction bias only; Student-$t$ unevaluated
+- High predicted volatility is the unreliable region

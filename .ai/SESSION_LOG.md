@@ -2,6 +2,7 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+<<<<<<< HEAD
 ## 2026-11-21 — Refined the log-transformation report
 - Author: Copilot at Samuel's request
 - Type: implementation
@@ -9,6 +10,47 @@ This is an append-only record of project context that may help future sessions. 
 - Outcome: Expanded the report with the segmented-estimation proposal and results, exact baseline-versus-segmented MAE/RMSE comparison, segmented mean-error signs normalized to actual-minus-forecast, a residual timing/source-of-error diagnostic plan, and links to Student-t and residual reports. Existing experiment numbers and test statistics were preserved.
 - Artifacts: `reports/yang-zhang-log-transformation.qmd`, `reports/yang-zhang-log-transformation.html`.
 - Next: Complete residual plotting/source analysis and Normal-versus-Student-t review before a final model decision.
+=======
+## 2026-11-22 — Ran Student-t Q5 holdout and remaining robustness checks
+- Author: Grok with Keir
+- Type: implementation | finding
+- Context: Reviewer notes that Student-t was coded but unscored, the 761-day holdout was reused, 2026-02-02 lacked a quantitative influence/event write-up, n=2 and month effects were untested, and AI/contributions/economic MAE text were placeholders.
+- Outcome: Completed the six-model Normal vs Student-t sequential holdout (761 origins, 0 failures). Student-t df medians are about 4.1–4.4 (HGB residual df 3.51). Density scores improve; GARCH-family MAE is slightly worse; HGB point MAE is unchanged; Q5/Q1 stays about 9.2–9.5 for GARCH, 15.76 for HAR-X (from 18.55), 13.39 for HGB. Dropping 2026-02-02 cuts Q5 variance by about one third; top five misses cut 59–72%; remaining Q5/Q1 is about 3.2–6.2. Reuters 2026-02-02: Warsh nomination, Friday crash, CME gold margins 6% to 8%; GCc1 27–28 Jan incomplete OHLC delay the first valid YZ to 2 Feb (y=0.077521). Confirmatory 2023–24 vs 2025–26 split: HGB then HAR-X remain ranks 1–2; Q5 is much weaker in 2023–24. Window n=5/10 raises lag-1 ACF to 0.90/0.96 and makes persistence the MAE winner; Q5/Q1 explodes. HAR-X month dummies slightly worsen MAE (0.002711 to 0.002739) and Q5/Q1. Economic illustration: HGB vs persistence MAE gap 0.000772 ≈ 1.23 annualised vol points ≈ $400 per 100 oz at mean holdout price. AI and contribution sections filled. Report PDF re-rendered. This is not a pristine unused holdout.
+- Artifacts: `scripts/report_feedback_robustness.py`, `scripts/copy_distribution_report_tables.py`, `report_group2/diagnostics/` (q5_error_influence, holdout_subperiod_metrics, window_*, harx_month_dummy_*, distribution_*), `report_group2/figures/q5_error_influence.png`, `holdout_subperiod_mae.png`, `window_acf.png`, `report_group2/Group2_Report.qmd`, `report_group2/Group2_Report.pdf`.
+- Next: Team review and page cut; optional Beamer update; commit when asked. Do not invent a later unused holdout.
+
+## 2026-11-22 — Added report diagnostics pipeline (ADF, ACF/PACF, forecasts, residuals)
+- Author: Copilot with Keir
+- Type: implementation | finding
+- Context: Report needed Yang–Zhang and gold-price time plots, ACF/PACF, residual-time plots, sequential one-step forecasts, Dickey–Fuller with the stationary alternative and default AIC lags, and an explicit parameter-selection write-up (AIC/BIC/Ljung–Box). Page limit deferred until after review.
+- Outcome: Added `src/gold_vol_pipeline/report_diagnostics.py` and `scripts/report_yz_diagnostics.py`. Saved artifacts under `report_group2/diagnostics/` and new figures. ADF rejects a unit root in $y_t$ and $\log y_t$ (train $p\approx 3\times10^{-12}$ and $6\times10^{-11}$) and does not reject for the GCc1 last price (train $p=0.59$, full $p=0.97$). HK still selects ARIMA(1,1,3) because KPSS on $\log y_t$ rejects stationarity. Training $y_t$ ACF is 0.65 at lag 1 and remains about 0.14 at lag 30. Holdout Ljung–Box rejects white-noise forecast errors for all six shortlisted models. GARCH vs EGARCH training AIC is 1291.8 vs 1286.6; orders remain course defaults. Report now includes these plots, tables, interpretation, and next-step recommendations. Student-t holdout is still missing.
+- Artifacts: `scripts/report_yz_diagnostics.py`, `src/gold_vol_pipeline/report_diagnostics.py`, `tests/test_report_diagnostics.py`, `report_group2/diagnostics/`, `report_group2/figures/gcc1_price_date.png`, `yz_volatility_date.png`, `yz_acf_pacf.png`, `log_yz_acf_pacf.png`, `shortlist_sequential_forecasts.png`, `shortlist_residuals_time.png`, `report_group2/Group2_Report.qmd`.
+- Next: Team review of the expanded report (page count will exceed 15 until content is cut); optional Student-t holdout.
+
+## 2026-11-22 — Expanded report bibliography after reviewer comment
+- Author: Copilot with Keir
+- Type: implementation
+- Context: Reviewer note that the report listed only three references and missed ARCH/GARCH originals, gold FIGARCH/asymmetric GARCH papers, and HAR on gold/commodities.
+- Outcome: In-text cites now cover Engle (1982), Bollerslev (1986), Nelson (1991), Tully and Lucey (2007), Baur (2012), Baillie–Bollerslev–Mikkelsen (1996), Bentes (2015), Chkili–Hammoudeh–Nguyen (2014), Corsi (2009), Todorova (2017), Diebold–Mariano (1995), Newey–West (1987), Harvey–Leybourne–Newbold (1997), Holm (1979), Hyndman–Khandakar (2008), Rogers–Satchell (1991), and Yang–Zhang (2000). The report states that FIGARCH/FIAPARCH are not estimated; the ladder stays with course EGARCH. References section has 17 entries. Rendered report is 15 pages (at the A4 12pt 1.5 limit). Beamer has a one-line literature note on the ladder slide (21 frames).
+- Artifacts: `report_group2/Group2_Report.qmd`, `report_group2/Group2_Report.pdf`, `presentations/Group2_Slides.qmd`, `presentations/Group2_Slides.pdf`, `report_group2/Group2_Slides.pdf`.
+- Next: Team review of the PDFs; fill AI and contribution text; optional Student-t holdout; commit when ready.
+
+## 2026-11-22 — Converted Yang–Zhang narrative into report and Beamer
+- Author: Copilot with Keir
+- Type: implementation | handoff
+- Context: After the three-part narrative in `report_group2/narrative-draft.md`, convert to the 15-page report and 20-minute slides. Yahoo five-session GARCH-X omitted. Student-t remains design-only (no `distribution_summary.csv`).
+- Outcome: Rewrote `report_group2/Group2_Report.qmd` (PDF-only) and `presentations/Group2_Slides.qmd`. Rendered both PDFs; copied slides into `report_group2/`. Report is A4 12pt 1.5 spacing, 14 pages. Headline is Q5 residual-variance inflation and two failed patches, not HGB as winner. AI and contribution sections left as `[team to complete]`.
+- Artifacts: `report_group2/Group2_Report.qmd`, `report_group2/Group2_Report.pdf`, `presentations/Group2_Slides.qmd`, `presentations/Group2_Slides.pdf`, `report_group2/Group2_Slides.pdf`, `report_group2/figures/variance_by_forecast_quintile.png`, `REPRODUCE.md`, `presentations/project-progress.qmd`.
+- Next: Team review of the PDFs; fill AI and contribution text; optional Student-t holdout; commit when ready. Do not mix Yahoo and LSEG targets.
+
+## 2026-11-21 — Narrative draft for LSEG Yang–Zhang report/Beamer
+- Author: Copilot with Keir, after team confirmed LSEG Yang–Zhang
+- Type: handoff
+- Context: Group 2 deliverable will use LSEG `GCc1` next-session Yang–Zhang, not Yahoo five-session GARCH-X. Story is three parts: object/data/YZ; model ladder; Q5 residuals and remedies.
+- Outcome: Wrote `report_group2/narrative-draft.md` and updated `report_group2/plan.md`. Git `17b2978` already has log-transform (bias down, Q5 not fixed) and segmented-regime forecasts (MAE worse than unsegmented). Student-t holdout summary CSV is still missing; the draft treats it as design-only.
+- Artifacts: `report_group2/narrative-draft.md`, `report_group2/plan.md`.
+- Next: Team edit/approve the narrative; then convert to `Group2_Report.qmd` and `presentations/Group2_Slides.qmd`. Optional Student-t run before quoting t-vs-Normal numbers. AI and contribution text remain `[team to complete]`.
+>>>>>>> 63b360f62ef0b9828d811b4c6b98ddc1dace952b
 
 ## 2026-11-21 — Added segmented Yang-Zhang parameter estimation
 - Author: User-directed implementation by Copilot

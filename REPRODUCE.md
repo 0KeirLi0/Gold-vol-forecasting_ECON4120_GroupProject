@@ -1,18 +1,55 @@
 # Group 2 report and presentation
 
-The active report focuses on GARCH-X with lagged VIX and seven basic
-benchmarks. It uses the saved integrated Stage 3 comparison; the historical
-full-model report is preserved under `archive/model_exploration_2026-11-15/`.
-Regenerate the focused forecast figure and render both formats from the same
-Quarto source:
+The submitted report and 20-minute Beamer are the LSEG `GCc1` next-session
+Yang–Zhang analysis. They do not use the Yahoo five-session GARCH-X comparison.
+Render the report and slides from separate Quarto sources:
 
 ```bash
-python scripts/plot_group2_core_models.py
-(cd report_group2 && quarto render Group2_Report.qmd --to pdf)
-(cd report_group2 && quarto render Group2_Report.qmd --to beamer --output Group2_Slides.pdf)
+quarto render report_group2/Group2_Report.qmd --to pdf
+quarto render presentations/Group2_Slides.qmd --to beamer
+cp presentations/Group2_Slides.pdf report_group2/Group2_Slides.pdf
 ```
 
-The figure uses saved common-origin forecasts and does not refit models.
+Figures already in `report_group2/figures/` are used as-is; the render does
+not refit models. The story outline is `report_group2/narrative-draft.md`.
+The earlier Yahoo/FRED GARCH-X report is preserved under
+`archive/model_exploration_2026-11-15/`.
+
+Rebuild the report diagnostics (ADF, ACF/PACF, price/vol plots, sequential
+forecast panels, residual-time plots, training AIC/BIC, Hyndman–Khandakar
+re-run) from saved Stage 2 forecasts without refitting the holdout:
+
+```bash
+python scripts/report_yz_diagnostics.py
+```
+
+Outputs go to `report_group2/diagnostics/` and `report_group2/figures/`.
+
+Rebuild the reviewer-feedback robustness tables (Q5 error influence,
+2023–24 / 2025–26 split, $n=5$ and $n=10$ windows, HAR-X month dummies)
+from the saved shortlist errors plus sequential refits:
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 \
+  PYTHONPATH=src python3 scripts/report_feedback_robustness.py --workers 2
+```
+
+Cheap tables only (no sequential window or month-dummy refits):
+
+```bash
+PYTHONPATH=src python3 scripts/report_feedback_robustness.py --skip-sequential
+```
+
+Six-model Normal versus Student-$t$ sequential holdout (slow; GARCH-X/EGARCH-X
+use a custom likelihood). Copy the summary and quintile CSVs into
+`report_group2/diagnostics/` after the run because
+`data/processed/stage2_yz_distributions/` is gitignored:
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 \
+  PYTHONPATH=src python3 scripts/compare_volatility_distributions.py \
+  --workers 6 --output-dir data/processed/stage2_yz_distributions
+```
 
 # Reproducing segmented Yang-Zhang estimation
 

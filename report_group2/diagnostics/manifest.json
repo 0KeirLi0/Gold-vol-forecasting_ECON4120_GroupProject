@@ -1,0 +1,40 @@
+{
+  "target": "data/processed/GCc1_yang_zhang_volatility.csv",
+  "n_valid_yang_zhang": 3801,
+  "n_train": 3040,
+  "n_test": 761,
+  "adf_alternative": "stationary",
+  "adf_autolag": "AIC",
+  "adf_regression": "c",
+  "acf_lags": 30,
+  "shortlist_models": [
+    "garch11",
+    "egarch",
+    "garchx_ohlc_range",
+    "egarchx",
+    "harx_ohlc",
+    "hist_gradient_boosting_ohlc"
+  ],
+  "hyndman_khandakar": {
+    "selected_order": [
+      1,
+      1,
+      3
+    ],
+    "selected_aicc": 3352.5238333680063,
+    "differencing_kpss_p_values": [
+      0.01,
+      0.1
+    ],
+    "selection_rule": "Hyndman-Khandakar: repeated KPSS chooses d; stepwise AICc chooses p,q with max_p=max_q=3, max_d=2, max_order=4 on training log y_t"
+  },
+  "figures": [
+    "report_group2/figures/gcc1_price_date.png",
+    "report_group2/figures/yz_volatility_date.png",
+    "report_group2/figures/yz_acf_pacf.png",
+    "report_group2/figures/log_yz_acf_pacf.png",
+    "report_group2/figures/shortlist_sequential_forecasts.png",
+    "report_group2/figures/shortlist_residuals_time.png"
+  ],
+  "note": "ADF uses statsmodels adfuller with the stationary alternative and default AIC lag selection. Sequential forecasts are the saved Stage 2 one-step refits; models are not re-estimated here."
+}
