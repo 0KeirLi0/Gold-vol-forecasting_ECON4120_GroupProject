@@ -2,15 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
-<<<<<<< HEAD
-## 2026-11-21 — Refined the log-transformation report
-- Author: Copilot at Samuel's request
+## 2026-11-22 — Updated 20-minute Beamer to match Student-t / robustness report
+- Author: Grok with Keir
 - Type: implementation
-- Context: Samuel asked to complete and refine the log-transformation report without changing existing results or statistics.
-- Outcome: Expanded the report with the segmented-estimation proposal and results, exact baseline-versus-segmented MAE/RMSE comparison, segmented mean-error signs normalized to actual-minus-forecast, a residual timing/source-of-error diagnostic plan, and links to Student-t and residual reports. Existing experiment numbers and test statistics were preserved.
-- Artifacts: `reports/yang-zhang-log-transformation.qmd`, `reports/yang-zhang-log-transformation.html`.
-- Next: Complete residual plotting/source analysis and Normal-versus-Student-t review before a final model decision.
-=======
+- Context: Report already had Student-t Q5, spike influence, 2025–26 split, n-window, month dummies, economic MAE, and filled AI/contributions. Slides were still the earlier 21-frame story.
+- Outcome: Rewrote `presentations/Group2_Slides.qmd` (Metropolis 16:9, 27 frames). Headline is residual-first with three failed patches. New frames: GCc1 price regime, YZ series, spike influence, Student-t results, confirmatory split, window ACF. Copied PDF to `report_group2/Group2_Slides.pdf`.
+- Artifacts: `presentations/Group2_Slides.qmd`, `presentations/Group2_Slides.pdf`, `report_group2/Group2_Slides.pdf`.
+- Next: Team timing pass if 27 frames is tight for 20 minutes.
+
 ## 2026-11-22 — Ran Student-t Q5 holdout and remaining robustness checks
 - Author: Grok with Keir
 - Type: implementation | finding
@@ -50,7 +49,14 @@ This is an append-only record of project context that may help future sessions. 
 - Outcome: Wrote `report_group2/narrative-draft.md` and updated `report_group2/plan.md`. Git `17b2978` already has log-transform (bias down, Q5 not fixed) and segmented-regime forecasts (MAE worse than unsegmented). Student-t holdout summary CSV is still missing; the draft treats it as design-only.
 - Artifacts: `report_group2/narrative-draft.md`, `report_group2/plan.md`.
 - Next: Team edit/approve the narrative; then convert to `Group2_Report.qmd` and `presentations/Group2_Slides.qmd`. Optional Student-t run before quoting t-vs-Normal numbers. AI and contribution text remain `[team to complete]`.
->>>>>>> 63b360f62ef0b9828d811b4c6b98ddc1dace952b
+
+## 2026-11-21 — Refined the log-transformation report
+- Author: Copilot at Samuel's request
+- Type: implementation
+- Context: Samuel asked to complete and refine the log-transformation report without changing existing results or statistics.
+- Outcome: Expanded the report with the segmented-estimation proposal and results, exact baseline-versus-segmented MAE/RMSE comparison, segmented mean-error signs normalized to actual-minus-forecast, a residual timing/source-of-error diagnostic plan, and links to Student-t and residual reports. Existing experiment numbers and test statistics were preserved.
+- Artifacts: `reports/yang-zhang-log-transformation.qmd`, `reports/yang-zhang-log-transformation.html`.
+- Next: Complete residual plotting/source analysis and Normal-versus-Student-t review before a final model decision.
 
 ## 2026-11-21 — Added segmented Yang-Zhang parameter estimation
 - Author: User-directed implementation by Copilot

@@ -37,12 +37,13 @@ Siriasavakul Hok Sum (1155179729)
 of continuous COMEX gold futures (`GCc1`). Not the gold price, not spot.
 
 **Headline:** among six shortlisted models, forecast-error variance rises
-when $\hat y$ is in the top 20% (Q5). Two patches did not remove it.
+when $\hat y$ is in the top 20% (Q5). Three patches did not remove it.
+Most of the headline Q5/Q1 ratio is a handful of 2026 crash dates.
 
 ::: notes
 One sentence for the object, then the residual headline. Do not open with
-"HGB wins." Outline: why this object (data, futures, YZ, horizon,
-seasonality); ladder and shortlist; Q5; failed patches; limits.
+"HGB wins." Outline: data and YZ; ladder; Q5, spike, three failed patches;
+confirmatory split and window check.
 :::
 
 ## Why forecast gold *futures* volatility?
@@ -75,7 +76,17 @@ Source: LSEG Workspace, `data/refinitiv/GCc1.csv`, 2010-01-01 to 2026-11-10.
 ::: notes
 LAST is a close proxy. Open interest is on the bar; YZ uses OHLC only.
 Date is the trading session, not a filled calendar (2010-01-08 then
-2010-01-11).
+2010-01-11). Incomplete 27–28 January 2026 bars matter later for the spike.
+:::
+
+## A different price regime in the holdout
+
+![GCc1 last-trade continuation. Shaded window is the chronological holdout.](../report_group2/figures/gcc1_price_date.png){width=86%}
+
+::: notes
+Training is roughly 1,050–2,000 USD/oz. The holdout runs from about 2,000
+to above 5,000. That is why later-sample MAE is higher, and why 2026 is a
+stress test rather than a replay of training.
 :::
 
 ## Horizon: one trading day
@@ -83,14 +94,20 @@ Date is the trading session, not a filled calendar (2010-01-08 then
 - LSEG `Date` = exchange session of that daily bar
 - Weekends and holidays skipped; incomplete OHLC $\Rightarrow$ no target
 - Forecast $\hat y_{t+1\mid t}$: **next valid session**, unannualised
-- Not a five-session sum, not annualised, not next calendar day
-
-![Yang–Zhang target; chronological 80/20 holdout shaded](../report_group2/figures/target_split.png){width=78%}
+- 3,801 targets; 3,040 / 761; test 2023-06-02 to 2026-11-10
+- Sequential one-step; future $y$ is never a predictor
 
 ::: notes
-3,801 targets; 3,040 / 761; test 2023-06-02 to 2026-11-10. Sequential
-one-step; future $y$ never a predictor. Point at the 2026 spike in the
-shaded window — that is the later 2026-02-02 miss.
+Not a five-session sum, not annualised, not next calendar day.
+:::
+
+## The Yang–Zhang series
+
+![Yang–Zhang $y_t$; holdout shaded. The 2026-02-02 spike is $0.0775$.](../report_group2/figures/yz_volatility_date.png){width=86%}
+
+::: notes
+Point at the 2026 spike in the shaded window — that is the later shared
+miss. Quiet stretches sit near 0.003–0.01.
 :::
 
 ## Why not close-to-close?
@@ -133,12 +150,12 @@ $$
 - Unannualised; adjacent windows **overlap**
 
 ::: notes
-$s_o^2$ is overnight, $s_c^2$ open-to-close, $\overline{RS}$ the range
-term. Incomplete windows have no target. $y_t$ is a proxy, not tick RV.
-Do not say AI invented the estimator, and do not say $n=2$ is optimal.
+Incomplete windows have no target. $y_t$ is a proxy, not tick RV.
+Do not say $n=2$ is optimal; the later window check shows longer $n$
+makes overlap worse.
 :::
 
-## Seasonality (descriptive only)
+## Seasonality (descriptive, then a check)
 
 ::: columns
 ::: {.column width="50%"}
@@ -149,14 +166,14 @@ Do not say AI invented the estimator, and do not say $n=2$ is optimal.
 :::
 :::
 
-- March 0.00899 highest; July 0.00694 lowest; Feb/Apr also high
-- Weekdays 0.00766–0.00819; no weekday HAC rejection
-- Month-only $p=0.012$ at 5 lags, $0.068$ at 10, $0.122$ at 20
-- **No seasonal dummy** in the forecasting models
+- February–April elevation; March highest, July lowest
+- HAR-X month dummies: MAE $0.002711\to 0.002739$ (Q5/Q1 $11.55\to 11.92$)
+- Calendar dummies known at the origin do **not** fix Q5
 
 ::: notes
-February–April elevation is descriptive. Overlapping $n=2$ windows make
-calendar tests lag-sensitive. We did not add month dummies.
+Month pattern is real descriptively. Overlapping $n=2$ windows make
+calendar tests lag-sensitive. The robustness check is a failed forecasting
+fix, not a reason to ignore the plot.
 :::
 
 ## Course ladder
@@ -174,7 +191,9 @@ Each step is a response to the previous limit.
 Engle (1982), Bollerslev (1986), Nelson (1991); gold: Tully and Lucey (2007), Baur (2012), Bentes (2015, FIGARCH). HAR: Corsi (2009); Todorova (2017) on COMEX gold. We do **not** estimate FIGARCH.
 
 ::: notes
-Walk the ladder. Gold literature: inverted asymmetry (Baur) and long memory (FIGARCH, Bentes; FIAPARCH, Chkili et al.). We stay with course EGARCH. HAR here is Corsi-style on Yang–Zhang, not tick RV. ARIMA MAE $\approx 0.0030$–$0.0033$. Student-$t$ GARCH MAE 0.002921 vs Gaussian 0.002912 — overall MAE, not Q5.
+Walk the ladder. Stay with course EGARCH. HAR here is Corsi-style on
+Yang–Zhang, not tick RV. Student-$t$ is scored later as a Q5 patch, not
+as a reason to pick $t$-GARCH on MAE.
 :::
 
 ## Holdout MAE (761 common dates)
@@ -185,20 +204,20 @@ Walk the ladder. Gold literature: inverted asymmetry (Baur) and long memory (FIG
 | HAR-X | Multi-horizon | 0.002711 |
 | EGARCH-X | -X in the mean | 0.002833 |
 | GARCH(1,1) | Persistent variance | 0.002912 |
-| EGARCH(1,1) | Asymmetry | 0.002912 |
-| Range GARCH-X | GARCH-X | 0.002914 |
 | Persistence | Naive | 0.003190 |
 
-HGB vs persistence / HAR / GARCH, absolute-loss Holm $p$:
-$7.95\times10^{-14}$, $1.15\times10^{-13}$, $1.78\times10^{-9}$.
+HGB vs persistence MAE gap $0.000772$ ($24\%$).
+$\times\sqrt{252}\approx 1.23$ annualised vol points.
+At mean holdout price $\approx 3{,}136$ USD/oz, $1.65\sigma$ of that gap
+is about $\$4$/oz, or about $\$400$ on a 100 oz COMEX contract.
 
 **Shortlist:** GARCH, EGARCH, range GARCH-X, EGARCH-X, HAR-X, HGB.
 
 ::: notes
-MAE is headline because $y$ is already volatility. Ranking is descriptive;
-overlapping targets; leader chosen on this holdout. HGB/HAR-X/GARCH/EGARCH
-here are no-external; EGARCH-X has selected predictors in the mean.
-Squared-loss: HGB does not significantly beat GARCH.
+Illustration, not option pricing or regulatory VaR. Ranking is descriptive;
+overlapping targets; leader chosen on this holdout. Squared-loss: HGB does
+not significantly beat GARCH. Absolute-loss Holm $p$ vs persistence / HAR /
+GARCH: $7.95\times10^{-14}$, $1.15\times10^{-13}$, $1.78\times10^{-9}$.
 :::
 
 ## Forecasts versus actuals
@@ -210,27 +229,14 @@ Scatter is for clustering and large misses, not for declaring a DGP.
 High actuals sit above the 45-degree line: average under-forecasting.
 :::
 
-## Residuals: definition and fan
-
-Residual $e_t=y_t-\hat y_{t\mid t-1}$. Positive = under-forecast.
-These are **predictive errors**, not GARCH standardised innovations.
-
-- Positive mean error on all six
-- Fan: dispersion rises with $\hat y$
-- HAC slope of squared error on forecast level: positive for all six
-
-::: notes
-This is heteroskedasticity of forecast errors with respect to the forecast
-level. High predicted vol coincides with larger absolute misses.
-:::
-
 ## Residuals versus predicted volatility
 
-![Fan shape on the six shortlisted models](../report_group2/figures/forecast_errors_vs_forecast.png){width=86%}
+![Fan shape: $e_t=y_t-\hat y_{t\mid t-1}$; the isolated miss is 2026-02-02](../report_group2/figures/forecast_errors_vs_forecast.png){width=90%}
 
 ::: notes
-Walk one panel, then say the shape is shared. The isolated point near
-forecast 0.01 and error 0.06 is 2026-02-02.
+These are predictive errors, not GARCH standardised innovations.
+Positive = under-forecast. Walk one panel, then say the shape is shared.
+HAC slope of squared error on forecast level is positive for all six.
 :::
 
 ## When $\hat y$ is in the top 20% (Q5)
@@ -265,19 +271,57 @@ most of the inflation. Keep the punchline: high predicted vol is where
 point forecasts fail.
 :::
 
-## Patch 1 — Student-$t$ MLE
+## The 2026-02-02 cluster
 
-Fat-tailed likelihood instead of Gaussian QMLE.
+Dropping the largest Q5 misses, **keeping the original Q5 set**:
 
-- Code: `distribution_comparison.py`
-- **No saved six-model holdout CSV**
-- On the 20-model ladder, Student-$t$ GARCH MAE 0.002921 vs Gaussian 0.002912
+| | Drop 1 | Drop 5 | Q5/Q1 after drop 5 |
+|---|---:|---:|---:|
+| GARCH family | $\approx 37\%$ | $\approx 59\%$ | $\approx 3.7$ |
+| HAR-X / HGB | $\approx 35\%$ | $70$–$72\%$ | $\approx 3.2$–$3.6$ |
 
-Quote design only. Do not invent a Q5 $t$-versus-Normal number.
+- 27–28 Jan: missing OHLC, so $n=2$ YZ is delayed
+- 29 Jan: record near $5{,}595$; OI jumps $171\to 30{,}082$
+- 30 Jan: steepest gold drop since 1983 (Warsh nomination)
+- 2 Feb: first valid $y=0.0775$; CME gold margins $6\%\to 8\%$
+
+Headline Q5/Q1 is **mostly a few crash dates**. A ratio near $3$–$6$ remains.
 
 ::: notes
-If asked, say the dedicated comparison was not written to
-`distribution_summary.csv`. The ladder $t$-GARCH is overall MAE, not Q5.
+Reuters 2 February 2026. Round-number lows and the OI jump are
+continuation-series caveats; the crash itself is a real price move.
+The first valid YZ uses 30 Jan + 2 Feb because Jan 27–28 poison the
+overnight return.
+:::
+
+## How much Q5 variance the largest misses carry
+
+![Q5 residual-variance decline after dropping the top 1, 3, or 5 absolute errors](../report_group2/figures/q5_error_influence.png){width=88%}
+
+::: notes
+Every model’s largest miss is 2026-02-02. Next is 2026-03-23. After the
+top five, Q5 is still noisier than Q1. Crash cluster first, milder
+high-vol problem second.
+:::
+
+## Patch 1 — Student-$t$ MLE (ran)
+
+761 origins $\times$ 6 models $\times$ 2 distributions; **0 failures**.
+$df\approx 4.1$–$4.4$ (HGB residual $df=3.51$).
+
+| Model | Normal MAE | $t$ MAE | Normal Q5/Q1 | $t$ Q5/Q1 |
+|---|---:|---:|---:|---:|
+| GARCH family | 0.002912 | 0.002916–0.002925 | 9.19–9.21 | 9.47–9.49 |
+| HAR-X | 0.002758 | 0.002726 | 18.55 | 15.76 |
+| HGB | 0.002421 | 0.002421 | 13.39 | 13.39 |
+
+Density scores improve. Point-forecast Q5 does **not** go away.
+HGB point forecast is unchanged by construction.
+
+::: notes
+This experiment’s HAR-X/HGB include selected DXY and gold IV. GARCH-X and
+EGARCH-X are the custom likelihoods, not the shortlist `arch` EGARCH-X.
+A heavier tail is a better density, not a Q5 point-forecast fix.
 :::
 
 ## Patch 2 — segmented high-vol parameters
@@ -315,29 +359,79 @@ a Q5-variance fix. HGB/HAR-X baselines in this run are the joint-predictor
 saved forecasts.
 :::
 
+## Confirmatory later-holdout split
+
+Same 761 days, split at 2024-12-31. **Not** an untouched holdout:
+2026-02-02 was already inspected.
+
+| | 2023–24 MAE | Rank | Q5/Q1 | 2025–26 MAE | Rank | Q5/Q1 |
+|---|---:|---:|---:|---:|---:|---:|
+| HGB | 0.001739 | 1 | 1.28 | 0.002987 | 1 | 9.29 |
+| HAR-X | 0.002010 | 2 | 1.36 | 0.003299 | 2 | 5.54 |
+
+HGB then HAR-X in both slices. Q5 is weak in 2023–24 and returns in 2025–26.
+
+::: notes
+347 vs 414 dates. Quintiles recomputed inside each window. EGARCH-X Q5/Q1
+in 2025–26 is 23 because Q1 variance is tiny. Absolute MAE is higher later
+because it is a higher-vol regime.
+:::
+
+## MAE on 2023–24 versus 2025–26
+
+![HGB remains first; every model is worse in the later, higher-vol window](../report_group2/figures/holdout_subperiod_mae.png){width=88%}
+
+::: notes
+Green is the full 761-day holdout. Orange is the later slice that contains
+the crash. The ranking is stable; the Q5 problem is not an early-holdout
+artefact.
+:::
+
+## Window $n=2,5,10$
+
+Lag-1 ACF **rises** with $n$: $0.65$, $0.90$, $0.96$.
+At $n=5$ and $n=10$, persistence wins; Q5/Q1 rises to $30$–$63$.
+
+![Longer windows share more bars, so overlap gets worse](../report_group2/figures/window_acf.png){width=72%}
+
+::: notes
+Date-aligned last training date 2023-06-01. Test size shrinks to 677 and
+558. Q1 variance collapses on the smoother target while the crash still
+sits in Q5. Lengthening $n$ is not the Q5 fix.
+:::
+
 ## Limits
 
-- Overlapping two-observation targets
-- One chronological holdout, reused in development and patches
-- 1M gold IV vs next-session realised vol
-- Next-weekday LSEG availability proxy
-- `GCc1` is a generic continuous futures series; `TRDPRC_1` is last trade
+- Overlapping Yang–Zhang windows; $n=5$ and $n=10$ make that worse
+- One chronological holdout, reused; 2025–26 is confirmatory, not unused
+- 1M gold IV vs next-session realised vol; next-weekday LSEG proxy
+- `GCc1` is a generic continuation; `TRDPRC_1` is last trade
+- MAE-to-dollar figures are illustrations, not pricing results
 
 We do **not** claim HGB is the DGP, that IV causes futures vol, or that
 any patch solved Q5.
 
 ::: notes
 If asked which model to use: give MAE as descriptive, then qualify with
-Q5. Point forecasts in calm periods are more trustworthy.
+Q5. Point forecasts in calm periods are more trustworthy. Next step is
+an event/jump treatment of 2026, not a larger GARCH grid.
 :::
 
-## Use of AI
+## Use of AI and contributions
 
-- Course requirement: AI tools were used
-- **Content to be added by the group**
+**AI.** Copilot and Grok wrote pipeline code, diagnostics, and drafts.
+The team chose `GCc1` Yang–Zhang, the three-part story, and the shortlist.
+Quoted numbers come from saved CSVs. AI did not invent holdout scores
+and did not estimate FIGARCH.
+
+**Focus, not exclusive ownership**
+
+- Enoch (1155212655): model development, ladder, predictor screen
+- Keir (1155212707): infrastructure, LSEG/YZ pipeline, report and slides
+- Samuel (1155179729): Q5 diagnosis, log reverse, segmented experiment
 
 ::: notes
-Do not improvise the reflection. Yang–Zhang: AI suggested an OHLC
+Do not improvise extra AI claims. Yang–Zhang: AI suggested an OHLC
 estimator; the team used Yang and Zhang (2000).
 :::
 
@@ -347,5 +441,6 @@ estimator; the team used Yang and Zhang (2000).
 - Horizon = next trading session, unannualised
 - Six candidates; HGB lowest MAE (descriptive)
 - **Shared finding:** residual variance rises with $\hat y$, especially Q5
-- Segmented MAE worse; log correction bias only; Student-$t$ unevaluated
+- 2026 crash dates carry most of the headline Q5/Q1; a ratio $\approx 3$–$6$ remains
+- Segmented MAE worse; Jensen bias only; Student-$t$ helps density, not Q5
 - High predicted volatility is the unreliable region
