@@ -1,0 +1,69 @@
+{
+  "instrument": "LSEG/Refinitiv GCc1 generic COMEX gold futures",
+  "target": "unannualized square root of two-observation Yang-Zhang variance",
+  "train_fraction": 0.8,
+  "training_observations": 3040,
+  "test_observations": 761,
+  "test_start": "2023-06-02",
+  "test_end": "2026-11-10",
+  "models": [
+    "garch",
+    "egarch",
+    "garch_x",
+    "egarch_x",
+    "har_x",
+    "hgb"
+  ],
+  "distributions": [
+    "normal",
+    "student_t"
+  ],
+  "predictors": {
+    "GARCH-X and EGARCH-X": [
+      "lagged high_low_log_range",
+      "dxy_close",
+      "gold_iv_1m",
+      "gold_iv_1y"
+    ],
+    "HAR-X and HGB": [
+      "close_return",
+      "overnight_log_return",
+      "open_close_log_return",
+      "high_low_log_range",
+      "dxy_close",
+      "gold_iv_1m",
+      "gold_iv_1y"
+    ]
+  },
+  "hgb_distribution_note": "HGB point model remains squared-error gradient boosting under both assumptions; Normal and Student-t predictive densities use errors from a chronological training-only calibration slice.",
+  "student_t_note": "Student-t innovations are standardized to unit variance and degrees of freedom are estimated by maximum likelihood with df > 2.",
+  "garch_x_note": "GARCH-X and EGARCH-X are re-estimated in this experiment under each likelihood. GARCH-X keeps the existing AR(1) mean, lagged OHLC range, nonnegative selected-predictor coefficients, and Gaussian special case. It is not the earlier threshold-GARCH variant. EGARCH-X is new.",
+  "conditional_variance_note": "A heavier-tailed innovation does not impose constant variance of forecast errors across forecast levels. Quintile error dispersion remains a descriptive check of that pattern.",
+  "outputs": {
+    "forecasts": "data/processed/stage2_yz_distributions/distribution_forecasts.csv",
+    "summary": "data/processed/stage2_yz_distributions/distribution_summary.csv",
+    "quintiles": "data/processed/stage2_yz_distributions/forecast_error_quintiles.csv",
+    "manifest": "data/processed/stage2_yz_distributions/distribution_manifest.json"
+  },
+  "source": "LSEG Workspace",
+  "input_path": "data/refinitiv/GCc1.csv",
+  "prepared_target_path": "data/processed/stage2_yz_distributions/GCc1_yang_zhang_volatility.csv",
+  "estimation_window_observations": 2,
+  "annualized": false,
+  "holdout_caveat": "The chronological holdout was examined in earlier forecast comparisons. Scores are descriptive, not a model-selection test.",
+  "predictor_inputs": {
+    "dxy_close": {
+      "path": "data/refinitiv/DXY.csv",
+      "sha256": "04ea5d83706d7a41271bd35414bf97a7291ed4f0f297ba2bec8c0733ee73df8f"
+    },
+    "gold_iv_1m": {
+      "path": "data/refinitiv/XAU1MO_R.csv",
+      "sha256": "94c422c332a449cba95f437b4a52304856d620abe2c3c86a7d5296e8c8884097"
+    },
+    "gold_iv_1y": {
+      "path": "data/refinitiv/XAU1YO_R.csv",
+      "sha256": "84e231771af67d9f777a64b0ce29dbb01f158459f93dd4722b39201e09ee904a"
+    }
+  },
+  "input_sha256": "1a3bc07dd9778fe03b71cf1c6e3a9d500f0ff5b3627d81185c7d76d1b235ee88"
+}

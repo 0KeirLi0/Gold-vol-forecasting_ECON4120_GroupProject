@@ -1,0 +1,7 @@
+model,n_training_observations,n_parameters,log_likelihood,AIC,BIC,method,selection_rule
+garch11,3040.0,5.0,-640.8779481388776,1291.7558962777553,1321.8523152423393,arch native likelihood at the training origin,"course default GARCH(1,1)/EGARCH(1,1); AIC/BIC reported, not used to pick p,q"
+egarch,3040.0,6.0,-637.3139540366216,1286.6279080732431,1322.7436108307438,arch native likelihood at the training origin,"course default GARCH(1,1)/EGARCH(1,1); AIC/BIC reported, not used to pick p,q"
+egarchx,3040.0,9.0,-487.05193432146734,992.1038686429347,1046.2774227791858,arch native likelihood at the training origin,"course default GARCH(1,1)/EGARCH(1,1); AIC/BIC reported, not used to pick p,q"
+harx_ohlc,3018.0,9.0,-1503.4204710861434,3024.8409421722868,3078.9520889262367,Gaussian OLS likelihood on log volatility,Corsi HAR lags 1/5/22 plus origin-known OHLC; not AIC-selected
+garchx_ohlc_range,3039.0,6.0,-3746.09796127955,7504.1959225591,7540.311625316601,custom constrained Gaussian quasi-likelihood,course GARCH-X with OHLC range; p=q=1 not AIC-selected
+hist_gradient_boosting_ohlc,,,,,,not applicable: no specified likelihood,"configured learning_rate=0.05, max_iter=100, max_leaf_nodes=15, seed=42"

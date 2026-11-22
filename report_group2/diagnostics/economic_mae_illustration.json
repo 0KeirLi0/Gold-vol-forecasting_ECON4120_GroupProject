@@ -1,0 +1,13 @@
+{
+  "hgb_mae": 0.002417646182158219,
+  "persistence_mae": 0.00319,
+  "mae_gap": 0.0007723538178417812,
+  "mae_gap_pct_of_persistence": 0.24211718427642043,
+  "annualised_vol_point_gap": 0.012260736756963809,
+  "holdout_mean_price": 3135.893692509855,
+  "holdout_last_price": 4032.0,
+  "var_1d_1p65_usd_per_oz_at_mean_price": 3.9963321184973126,
+  "comex_100oz_usd_at_mean_price": 399.63321184973125,
+  "var_1d_1p65_usd_per_oz_at_last_price": 5.138315479337802,
+  "comex_100oz_usd_at_last_price": 513.8315479337801
+}

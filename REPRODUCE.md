@@ -15,6 +15,42 @@ not refit models. The story outline is `report_group2/narrative-draft.md`.
 The earlier Yahoo/FRED GARCH-X report is preserved under
 `archive/model_exploration_2026-11-15/`.
 
+Rebuild the report diagnostics (ADF, ACF/PACF, price/vol plots, sequential
+forecast panels, residual-time plots, training AIC/BIC, Hyndman–Khandakar
+re-run) from saved Stage 2 forecasts without refitting the holdout:
+
+```bash
+python scripts/report_yz_diagnostics.py
+```
+
+Outputs go to `report_group2/diagnostics/` and `report_group2/figures/`.
+
+Rebuild the reviewer-feedback robustness tables (Q5 error influence,
+2023–24 / 2025–26 split, $n=5$ and $n=10$ windows, HAR-X month dummies)
+from the saved shortlist errors plus sequential refits:
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 \
+  PYTHONPATH=src python3 scripts/report_feedback_robustness.py --workers 2
+```
+
+Cheap tables only (no sequential window or month-dummy refits):
+
+```bash
+PYTHONPATH=src python3 scripts/report_feedback_robustness.py --skip-sequential
+```
+
+Six-model Normal versus Student-$t$ sequential holdout (slow; GARCH-X/EGARCH-X
+use a custom likelihood). Copy the summary and quintile CSVs into
+`report_group2/diagnostics/` after the run because
+`data/processed/stage2_yz_distributions/` is gitignored:
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 \
+  PYTHONPATH=src python3 scripts/compare_volatility_distributions.py \
+  --workers 6 --output-dir data/processed/stage2_yz_distributions
+```
+
 # Reproducing segmented Yang-Zhang estimation
 
 The segmented experiment estimates separate normal/extreme parameter sets for
