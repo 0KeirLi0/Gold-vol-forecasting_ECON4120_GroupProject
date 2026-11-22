@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-22 — Added geopolitical context for the largest residual misses
+- Author: Copilot at Samuel's request
+- Type: finding
+- Context: The report identified 2026-02-02 and 2026-03-23 as extreme residual dates but needed contemporaneous market-event context and a clear limit on causal interpretation.
+- Outcome: Updated `report_group2/Group2_Report.qmd` and `report_group2/diagnostics/spike_market_events.csv`. Reuters reporting connects 2026-01-30/02-02 to the Kevin Warsh nomination and a CME gold-margin increase from 6% to 8%; the report retains the missing-OHLC and continuation-roll explanation. For 2026-03-23, Reuters coverage associates the move with US-Iran war uncertainty and risk-off trading, without claiming a proven unique causal effect.
+- Artifacts: `report_group2/Group2_Report.qmd`, `report_group2/diagnostics/spike_market_events.csv`.
+- Next: Re-render the report and inspect the PDF before any commit.
+
 ## 2026-11-22 — Updated 20-minute Beamer to match Student-t / robustness report
 - Author: Grok with Keir
 - Type: implementation

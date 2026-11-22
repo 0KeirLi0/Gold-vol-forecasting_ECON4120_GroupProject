@@ -353,7 +353,13 @@ Q5 has 152 dates per model. Dropping the largest absolute Q5 errors, *keeping th
 
 The single date 2026-02-02 is the largest miss for every shortlisted model. It accounts for about $35$–$37\%$ of that model's Q5 sum of squared errors and cuts Q5 variance by about one third. The next two dates are 2026-03-23 for every model, then 2026-03-26 in the GARCH family, 2026-03-24 for EGARCH-X, and 2026-02-03 for HAR-X and HGB. After the top five misses, Q5/Q1 falls from $9$–$15$ to about $3.2$–$6.2$. The headline ratio is therefore *mostly a few crash dates*. A ratio near $3$–$6$ remains, so high predicted volatility is still noisier than Q1 after those dates are removed.
 
-Those dates are a market event, with a data-construction delay on top. In `GCc1`, 27–28 January 2026 have missing OHLC (open interest $36$ and $11$). 29 January is complete: high $5{,}586.2$, low $5{,}097.5$, close $5{,}364.7$, and open interest jumps from $171$ on 26 January to $30{,}082$ (the generic continuation rolling onto the liquid contract). 30 January is the crash bar (high $5{,}440.5$, low $4{,}700.0$, close $4{,}879.6$), but $y_t$ is still missing because the $n=2$ window still includes a NaN overnight return from the incomplete bars. The first valid Yang–Zhang after the crash is 2026-02-02: $y=0.077521$, the sample maximum, using 30 January and 2 February (low exactly $4{,}400.0$). Reuters (2 February 2026) reports the same week as a record near $5{,}594.82$ on 29 January, the steepest daily gold drop since 1983 on 30 January after the nomination of Kevin Warsh as Federal Reserve chair, and a CME gold margin increase from $6\%$ to $8\%$ effective after the 2 February close. 23 March 2026 is the second-largest $y_t$ in the prepared sample ($0.061318$; low $4{,}100.8$), during the later drawdown. Round-number lows and the open-interest jump are continuation-series caveats; the crash itself is a real price move.
+Those dates combine market events with a data-construction delay. In `GCc1`, 27–28 January 2026 have missing OHLC bars (open interest $36$ and $11$). 29 January is complete: high $5{,}586.2$, low $5{,}097.5$, close $5{,}364.7$, and open interest jumps from $171$ on 26 January to $30{,}082$, consistent with the generic continuation rolling onto a more liquid contract. 30 January is the crash bar (high $5{,}440.5$, low $4{,}700.0$, close $4{,}879.6$), but $y_t$ is still missing because the $n=2$ window contains a NaN overnight return from the incomplete bars. The first valid Yang–Zhang estimate after the crash is 2026-02-02: $y=0.077521$, the sample maximum, using 30 January and 2 February (low exactly $4{,}400.0$).
+
+The 30 January–2 February event is well connected to market developments. Contemporaneous Reuters reporting described the 30 January gold fall as the steepest daily decline since 1983, following President Trump's nomination of Kevin Warsh as Federal Reserve chair. The 2 February report attributed the continuing precious-metals selloff to higher CME gold maintenance margins (raised from $6\%$ to $8\%$) and a broader commodities reversal. These reports support a **descriptive** event explanation: nomination and margin-shock news coincided with the unusually large move. They do not prove that those events alone caused the 0.077521 target, which is also amplified and delayed by missing OHLC observations and the rolling continuation series.
+
+23 March 2026 is the second-largest $y_t$ in the prepared sample ($0.061318$; low $4{,}100.8$). Contemporaneous Reuters coverage links that week to the US–Iran war, risk-off trading, oil-market pressures, and a volatile gold reaction: one report described gold trimming losses after Trump postponed strikes on Iranian energy assets, while another described the market as risk-off amid Iran-war uncertainty. Gold did not move uniformly in the safe-haven direction on this date, so the evidence supports an association with geopolitical stress rather than a clean safe-haven jump. This is also a relatively low-liquidity continuation observation (open interest $630$); the exact OHLC bar and round-number low may reflect trading and contract-roll conditions in addition to the news. The report therefore does not interpret 23 March as a proven geopolitical shock.
+
+The event dates should remain in the residual diagnosis because they reveal where daily volatility estimators are most exposed. The 2 February miss combines an abrupt price move, missing predecessor bars, and a contract-continuation effect; the 23 March miss is a second, smaller but still extreme, price jump during geopolitical uncertainty. Neither a calendar dummy nor a retrospective event label is a valid out-of-sample predictor.
 
 The 38-session window 30 January–31 March 2026 has MAE about $0.0082$–$0.0089$ against about $0.0019$–$0.0023$ on the 596 pre-spike holdout dates. Q5 inflation is therefore a crash-cluster problem first, and a milder systematic high-vol problem second.
 
@@ -513,6 +519,14 @@ Nelson, D. B. (1991). Conditional heteroskedasticity in asset returns: A new app
 Newey, W. K., and West, K. D. (1987). A simple, positive semi-definite, heteroskedasticity and autocorrelation consistent covariance matrix. *Econometrica*, 55(3), 703–708.
 
 Rogers, L. C. G., and Satchell, S. E. (1991). Estimating variance from high, low and closing prices. *Annals of Applied Probability*, 1(4), 504–512.
+
+Reuters. (2026, January 30). Gold set for steepest daily drop since 1983; silver eyes worst day ever.
+
+Reuters. (2026, February 2). Gold, silver extend fall as CME margin hikes compound sharp selloff.
+
+Reuters. (2026, March 23). Gold trims losses as Trump postpones strikes on Iran's energy assets.
+
+Reuters. (2026, March 23). Risk-off trade keeps gold volatile as Iran war spooks investors.
 
 Todorova, N. (2017). The asymmetric volatility in the gold market revisited. *Economics Letters*, 150, 138–141.
 
