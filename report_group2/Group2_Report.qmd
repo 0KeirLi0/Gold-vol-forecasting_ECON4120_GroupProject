@@ -69,17 +69,14 @@ The series is COMEX gold futures with daily OHLCV from LSEG Workspace (Refinitiv
 | `TRDPRC_1` | LAST | Close proxy $C_t$ (last trade, not settlement) |
 | `OPEN_PRC` | Open | Session open $O_t$ |
 | `HIGH_1`, `LOW_1` | High, low | Daily range $H_t$, $L_t$ |
-| `OPINT_1` | Open interest | Downloaded; unused in Yang–Zhang |
 
-Volume `ACVOL_1` was requested and not returned. The file has 4,241 dated rows and 4,064 complete OHLC bars. Incomplete bars are dropped; prices are never filled. The chronological 80/20 split is 3,040 train and 761 test dates (test: 2023-06-02 to 2026-11-10). Forecasts are sequential one-step refits. The future target is never a predictor at the origin. The origin $t$ produces $\hat y_{t+1\mid t}$: next-day unannualised Yang–Zhang volatility. LSEG stores interday session bars, so weekends and holidays are already skipped.
+The dataset has 4,241 dated rows and 4,064 complete OHLC bars. Incomplete bars are dropped. The chronological 80/20 split is 3,040 train and 761 test dates (test: 2023-06-02 to 2026-11-10). Forecasts are sequential one-step refits. The future target is never a predictor at the origin. The origin $t$ produces $\hat y_{t+1\mid t}$: next-day unannualised Yang–Zhang volatility. Weekends and holidays are already skipped in original dataset.
 
 @fig-price plots the last-trade continuation price. From 2010 through 2019 the contract mostly traded between about 1,050 and 1,900 USD/oz. The test period is a different price regime: the last trade rises from about 2,000 USD/oz to a peak above 5,000 USD/oz in 2026.
 
 ![GCc1 last-trade futures price, 2010–2026. The shaded window is the chronological test period (2023-06-02 to 2026-11-10).](figures/gcc1_price_date.png){#fig-price width=70% fig-align="center" fig-pos="H"}
 
 ## Why futures, not spot
-
-- The same LSEG run requested spot and fixing gold. `XAUFIX=` returned a permission error; `XAU=` does not support `TRDPRC_1`. A long continuous spot OHLC series was not available. `GCc1` was.
 - Spot gold and COMEX futures are different instruments. Spot is OTC; COMEX GC is the exchange-traded benchmark; futures prices embed carry.
 - The object is the volatility of that futures price, the series faced by futures traders, hedgers, and options on futures. Spot and futures are never mixed.
 

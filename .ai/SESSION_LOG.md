@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-24 — Trim report data section and refresh Beamer
+- Author: Grok with Keir
+- Type: implementation
+- Context: User trimmed `Group2_Report.qmd` (dropped OPINT, volume, XAUFIX permission-error; shortened data-source paragraph; weekends/holidays already skipped) and edited `presentations/Group2_Slides.qmd`.
+- Outcome: Report PDF is 15 pages A4. Beamer is 24 frames (Metropolis 16:9), including clustering/overlap, calendar, GARCH-X/EGARCH-X, DM tests, and the selected-forecast panel. Copies: `presentations/Group2_Slides.pdf` and `report_group2/Group2_Slides.pdf`.
+- Artifacts: `report_group2/Group2_Report.qmd`, `report_group2/Group2_Report.pdf`, `presentations/Group2_Slides.qmd`, `presentations/Group2_Slides.pdf`, `report_group2/Group2_Slides.pdf`.
+- Next: Team sign-off on AI/contributions.
+
 ## 2026-11-23 — Cut Group 2 report to 15 pages from comment.md
 - Author: Grok with Keir
 - Type: implementation
