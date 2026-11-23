@@ -28,20 +28,26 @@ execute:
   message: false
 ---
 
-## Study at a glance
+## What we are trying to estimate
 
-**Forecast object:** next-day unannualised Yang–Zhang volatility of COMEX gold futures (`GCc1`).
+**Object:** next-day daily volatility of COMEX gold futures.
 
-**Ladder:** ARIMA $\to$ ARCH/GARCH/EGARCH $\to$ -X models $\to$ HAR-X and HGB.
+- Not the gold price level.
+- One trading day; not annualised.
 
-**Test:** 761 sequential one-step dates, 2023-06-02 to 2026-11-10.
+**Why this object**
 
-- HGB has the lowest MAE (**0.002418**); gap versus persistence $\approx$ **24%**.
-- Shared residual pattern: when predicted volatility is extreme, forecast-error variance is high.
-- All six miss 2026-02-02 (actual $\approx 0.0775$; forecasts $\approx 0.01$–$0.015$).
+- COMEX gold is the liquid exchange-traded gold contract.
+- Daily volatility is the one-day risk of holding, hedging, or pricing options on that futures price.
+
+**Who uses a forecast like this**
+
+- Futures traders and hedgers
+- Options-on-futures desks
+- Risk and margin managers
 
 ::: notes
-Do not open with HGB as a winner. Residual pattern is the headline.
+Do not name Yang–Zhang yet. The next slides say what data we have; then why YZ is the daily estimator.
 :::
 
 ## Data: LSEG `GCc1`
@@ -68,21 +74,44 @@ COMEX gold futures, daily OHLC from LSEG Workspace, 2010-01-01 to 2026-11-10.
 Training mostly 1,050–1,900 USD/oz. Test runs from about 2,000 to above 5,000.
 :::
 
-## Why Yang–Zhang
+## First idea: tick-by-tick realised volatility
 
-Daily realised volatility of the futures price.
+Our first thought: use the **full tick path**.
 
-| Estimator | Data | In this project |
-|---|---|---|
-| Intraday RV | High-frequency returns | Not in the LSEG file |
-| Close-to-close | Two closes | Ignores range and open jump |
-| Yang–Zhang | Daily OHLC | The $y_t$ we forecast |
+- Sum of squared tick returns = daily realised volatility
+- That uses every price in the day
 
-Close-to-close treats a quiet path and a wide-range day as identical if $C_t=C_{t-1}$.
+**We do not have tick-level data.** The LSEG file is one OHLC bar per date. Tick realised volatility is not feasible.
 
-Yang and Zhang (2000): drift-independent, opening jumps, more efficient than close-to-close.
+::: notes
+Do not name Yang–Zhang yet. The story is: ticks first, then close-to-close, then YZ.
+:::
+
+## Next idea: close-to-close
+
+With only daily bars, the naive estimator uses two closes:
+
+$$
+r^{cc}_t=\log(C_t/C_{t-1}).
+$$
+
+**Limitation:** the high, the low, and the overnight jump are thrown away. Path A is quiet; Path B swings but $C_t=C_{t-1}$.
+
+![Same close-to-close return, different paths. Path B has $C_t=C_{t-1}$ and a wide high–low range.](../report_group2/figures/close_to_close_two_path.png){width=72%}
+
+## Then Yang–Zhang
+
+We asked AI for an estimator that uses the daily OHLC bar we do have. It pointed us to Yang and Zhang (2000).
+
+- Uses **open, high, low, and close**
+- Keeps the overnight jump and the high–low range
+- Drift-independent; more efficient than close-to-close
+
+That is the $y_t$ we forecast.
 
 ## Yang–Zhang formula
+
+Overnight jump, session move, and **Rogers–Satchell (RS)** range (Rogers and Satchell, 1991):
 
 $$
 r_{o,t}=\log(O_t/C_{t-1}),\qquad
@@ -93,7 +122,7 @@ $$
 RS_t=\log(H_t/O_t)\log(H_t/C_t)+\log(L_t/O_t)\log(L_t/C_t).
 $$
 
-Window $n=2$, $k\approx 0.078341$:
+RS uses high and low inside the session. It does not include the overnight jump.
 
 $$
 \hat\sigma^{2}_{\mathrm{YZ},t}
@@ -102,7 +131,10 @@ $$
 y_t=\sqrt{\max(0,\hat\sigma^{2}_{\mathrm{YZ},t})}.
 $$
 
-$y_t$ is a proxy for latent daily volatility. Incomplete OHLC windows have no target.
+- **$n$:** rolling window of complete OHLC bars. Sample variances need $n\ge 2$. We use **$n=2$**.
+- **$k$:** weight on the open-to-close variance. Yang and Zhang set
+  $k=0.34/(1.34+(n+1)/(n-1))$ so the estimator does not depend on drift.
+  At $n=2$, $k\approx 0.078$; most session weight $(1-k)$ sits on RS.
 
 ## The Yang–Zhang series
 

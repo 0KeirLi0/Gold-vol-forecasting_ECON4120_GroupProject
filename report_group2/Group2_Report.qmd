@@ -74,7 +74,7 @@ The dataset has 4,241 dated rows and 4,064 complete OHLC bars. Incomplete bars a
 
 @fig-price plots the last-trade continuation price. From 2010 through 2019 the contract mostly traded between about 1,050 and 1,900 USD/oz. The test period is a different price regime: the last trade rises from about 2,000 USD/oz to a peak above 5,000 USD/oz in 2026.
 
-![GCc1 last-trade futures price, 2010–2026. The shaded window is the chronological test period (2023-06-02 to 2026-11-10).](figures/gcc1_price_date.png){#fig-price width=70% fig-align="center" fig-pos="H"}
+![GCc1 last-trade futures price, 2010–2026. The shaded window is the chronological test period (2023-06-02 to 2026-11-10).](figures/gcc1_price_date.png){#fig-price width=62% fig-align="center" fig-pos="H"}
 
 ## Why futures, not spot
 - Spot gold and COMEX futures are different instruments. Spot is OTC; COMEX GC is the exchange-traded benchmark; futures prices embed carry.
@@ -92,7 +92,11 @@ The object is daily realised volatility of the futures price. @tbl-vol-est compa
 
 : Daily volatility estimators compared. {#tbl-vol-est}
 
-Close-to-close can record a quiet day and a wide-range day as identical if $C_t=C_{t-1}$. Yang and Zhang (2000) is drift-independent, accounts for opening jumps, and is more efficient than close-to-close. Let $O_t,H_t,L_t,C_t$ be open, high, low, and last. Overnight and open-to-close log returns and the Rogers–Satchell (1991) range term are
+Two sessions can share the same close-to-close return and have very different volatility (@fig-two-path). Path A walks almost straight from open to close. Path B swings, but $C_t=C_{t-1}$ so $r^{cc}_t=0$. Close-to-close treats them as identical. Gold futures also gap overnight; close-to-close misses that jump.
+
+![Same close-to-close return, different paths. Path B has $C_t=C_{t-1}$ and a wide high–low range.](figures/close_to_close_two_path.png){#fig-two-path width=60% fig-align="center" fig-pos="H"}
+
+Yang and Zhang (2000) is drift-independent, accounts for opening jumps, and is more efficient than close-to-close. Let $O_t,H_t,L_t,C_t$ be open, high, low, and last. Overnight and open-to-close log returns and the Rogers–Satchell (RS) range term (Rogers & Satchell, 1991) are
 
 $$
 r_{o,t}=\log(O_t/C_{t-1}),\qquad
@@ -105,7 +109,7 @@ RS_t=
 +\log(L_t/O_t)\log(L_t/C_t).
 $$
 
-Over a trailing window of $n=2$ complete bars, with $k=0.34/(1.34+(n+1)/(n-1))\approx 0.078341$,
+Rogers–Satchell (RS) is a drift-independent range estimator for the open-to-close session: high and low still count if the close is near the open. RS does not include the overnight jump $r_{o,t}$. The window $n$ is the number of complete OHLC bars used for the overnight and open-to-close sample variances and the RS average; those variances need $n\ge 2$, so we use $n=2$. The weight $k$ is the share of the open-to-close variance versus RS. Yang and Zhang (2000) set $k=0.34/(1.34+(n+1)/(n-1))$ so the estimator is independent of drift. At $n=2$, $k\approx 0.078341$, so most session weight $(1-k)$ sits on RS:
 
 $$
 \hat\sigma^{2}_{\mathrm{YZ},t}
@@ -115,7 +119,7 @@ $$
 
 $y_t$ is a proxy for latent daily volatility. Incomplete OHLC windows have no target.
 
-![Yang–Zhang daily volatility of GCc1, 2010–2026. The shaded window is the chronological test period.](figures/yz_volatility_date.png){#fig-yz width=70% fig-align="center" fig-pos="H"}
+![Yang–Zhang daily volatility of GCc1, 2010–2026. The shaded window is the chronological test period.](figures/yz_volatility_date.png){#fig-yz width=62% fig-align="center" fig-pos="H"}
 
 # Model training
 

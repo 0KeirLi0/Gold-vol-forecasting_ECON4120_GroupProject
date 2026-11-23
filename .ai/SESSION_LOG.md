@@ -2,6 +2,30 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-24 — Explain RS, n, and k on the Yang–Zhang formula
+- Author: Grok with Keir
+- Type: implementation
+- Context: Keir asked the formula slide to name Rogers–Satchell (RS) and to explain n and k in the report, slides, and script.
+- Outcome: Slide 8 names RS and states n (window of complete OHLC bars; n=2) and k (weight on open-to-close variance; k=0.34/(1.34+(n+1)/(n-1))≈0.078 at n=2 so most session weight is on RS). Report §2.3 has the same explanation. Report PDF is 15 pages. Script formula section updated; still gitignored.
+- Artifacts: `presentations/Group2_Slides.qmd`/`.pdf`, `report_group2/Group2_Report.qmd`/`.pdf`, `report_group2/Group2_Slides.pdf`, `presentations/script_slides_1-7.md`.
+- Next: Commit when asked.
+
+## 2026-11-24 — Why Yang–Zhang slides told as a story
+- Author: Grok with Keir
+- Type: implementation
+- Context: Keir wanted the Why Yang–Zhang part to start from the first intuitive estimator (tick-by-tick RV), then close-to-close and its two-path limit, then Yang–Zhang as the AI suggestion.
+- Outcome: Replaced the three-estimator table with three story frames: “First idea: tick-by-tick”, “Next idea: close-to-close” (two-path figure), “Then Yang–Zhang” (AI → Yang and Zhang 2000). Local script updated; still gitignored. Beamer is 26 frames.
+- Artifacts: `presentations/Group2_Slides.qmd`/`.pdf`, `report_group2/Group2_Slides.pdf`, `presentations/script_slides_1-7.md`.
+- Next: Commit when asked. Do not push the speaker script.
+
+## 2026-11-24 — Glance slide to forecast object; restore two-path figure
+- Author: Grok with Keir
+- Type: implementation
+- Context: Keir asked to replace the glance slide with what we estimate (gold futures daily volatility, why, who), without naming Yang–Zhang yet, and to restore the two-path close-to-close cartoon in the report and slides.
+- Outcome: New Beamer frame “What we are trying to estimate.” New figure `report_group2/figures/close_to_close_two_path.png` in report §2.3 and a dedicated slide. Report remains 15 pages. Slides are 25 frames. Local script `presentations/script_slides_1-7.md` now covers frames 1–8 and stays gitignored.
+- Artifacts: `presentations/Group2_Slides.qmd`/`.pdf`, `report_group2/Group2_Report.qmd`/`.pdf`, `report_group2/Group2_Slides.pdf`, `report_group2/figures/close_to_close_two_path.png`.
+- Next: Commit when asked. Do not push the speaker script.
+
 ## 2026-11-24 — Trim report data section and refresh Beamer
 - Author: Grok with Keir
 - Type: implementation
