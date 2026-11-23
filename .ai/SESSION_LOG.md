@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-23 — Cut Group 2 report to 15 pages from comment.md
+- Author: Grok with Keir
+- Type: implementation
+- Context: `report_group2/comment.md` asked for A4 12pt 1.5 spacing 2.5 cm, a 15-page cap, next-day/train/test wording, APA in-text cites, and section cuts (literature, parameter-selection, confirmatory split, VaR illustration, overlap caveats).
+- Outcome: Rewrote `report_group2/Group2_Report.qmd`. Regenerated Figure 9 as raw Q5/Q1 bars for Original / Drop top 1 / 2 / 5. Rendered PDF is 15 pages. Default `q5_influence_table` k-values are now (1, 2, 5). `tests/test_report_diagnostics.py` 11 passed.
+- Artifacts: `report_group2/Group2_Report.qmd`, `report_group2/Group2_Report.pdf`, `report_group2/figures/q5_error_influence.png`, `report_group2/diagnostics/q5_error_influence.csv`.
+- Next: Team review of the 15-page cut; commit when asked.
+
 ## 2026-11-23 — Regenerated the Beamer sequence after page 9
 - Author: Copilot at Samuel's request
 - Type: implementation

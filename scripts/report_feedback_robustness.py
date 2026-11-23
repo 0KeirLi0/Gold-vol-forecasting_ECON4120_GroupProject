@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 
 from gold_vol_pipeline.report_diagnostics import (
+    SHORTLIST_MODELS,
     acf_pacf_table,
     assign_forecast_quintiles,
     dickey_fuller_stationary_alternative,
@@ -149,23 +150,43 @@ def economic_mae_illustration(errors: pd.DataFrame, target: pd.DataFrame) -> dic
 
 
 def plot_q5_influence(table: pd.DataFrame, path: Path) -> Path:
-    figure, axis = plt.subplots(figsize=(10.6, 4.6), constrained_layout=True)
-    models = list(dict.fromkeys(table["model"]))
+    figure, axis = plt.subplots(figsize=(9.4, 3.6), constrained_layout=True)
+    present = list(dict.fromkeys(table["model"]))
+    models = [model for model in SHORTLIST_MODELS if model in present]
+    if not models:
+        models = present
     x = np.arange(len(models))
-    width = 0.24
-    for offset, k in enumerate((1, 3, 5)):
-        block = table.loc[table["k_dropped"].eq(k)].set_index("model").loc[models]
-        axis.bar(
-            x + (offset - 1) * width,
-            100 * block["q5_variance_decline"].to_numpy(dtype=float),
-            width=width,
-            label=f"Drop top {k}",
+    width = 0.18
+    original = (
+        table.drop_duplicates("model")
+        .set_index("model")
+        .loc[models, "q5_q1_ratio"]
+        .to_numpy(dtype=float)
+    )
+    series = [("Original", original)]
+    for k in (1, 2, 5):
+        block = table.loc[table["k_dropped"].eq(k)]
+        if block.empty:
+            raise ValueError(f"Q5 influence table is missing k_dropped={k}.")
+        series.append(
+            (
+                f"Drop top {k}",
+                block.set_index("model")
+                .loc[models, "q5_q1_ratio_after_drop"]
+                .to_numpy(dtype=float),
+            )
         )
+    offsets = np.linspace(-1.5, 1.5, num=len(series))
+    colors = ("#4c4c4c", "#b58a3a", "#7a5c28", "#3f3a32")
+    for offset, (label, values), color in zip(offsets, series, colors):
+        axis.bar(x + offset * width, values, width=width, label=label, color=color)
     axis.set_xticks(x)
-    axis.set_xticklabels([shortlist_display_name(model) for model in models], rotation=20)
-    axis.set_ylabel("Q5 residual-variance decline (%)")
-    axis.set_title("How much forecast-Q5 variance is carried by the largest misses")
-    axis.legend(frameon=False)
+    axis.set_xticklabels(
+        [shortlist_display_name(model) for model in models], rotation=18
+    )
+    axis.set_ylabel("Raw Q5/Q1")
+    axis.set_title("Raw Q5/Q1 after dropping the largest absolute misses")
+    axis.legend(frameon=False, ncol=4, fontsize=8)
     axis.grid(axis="y", alpha=0.25)
     return _save_figure(figure, path)
 

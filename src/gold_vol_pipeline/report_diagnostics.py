@@ -220,7 +220,7 @@ def assign_forecast_quintiles(forecasts: pd.Series, *, quantiles: int = 5) -> pd
 def q5_influence_table(
     errors: pd.DataFrame,
     *,
-    k_values: Sequence[int] = (1, 3, 5),
+    k_values: Sequence[int] = (1, 2, 5),
 ) -> pd.DataFrame:
     """Measure how much forecast-Q5 variance is carried by the largest misses.
 
