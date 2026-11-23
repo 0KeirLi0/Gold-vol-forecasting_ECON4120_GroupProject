@@ -128,8 +128,12 @@ def plot_acf_pacf(series: pd.Series, title: str, path: Path, nlags: int = ACF_LA
 def plot_sequential_forecasts(
     forecasts: pd.DataFrame, path: Path, models: Sequence[str] = SHORTLIST_MODELS
 ) -> Path:
-    figure, axes = plt.subplots(3, 2, figsize=(11.2, 9.4), sharex=True, constrained_layout=True)
-    for axis, model in zip(axes.flat, models):
+    rows = int(np.ceil(len(models) / 2))
+    figure, axes = plt.subplots(
+        rows, 2, figsize=(11.2, 3.15 * rows), sharex=True, constrained_layout=True
+    )
+    flat_axes = np.atleast_1d(axes).flat
+    for axis, model in zip(flat_axes, models):
         frame = forecasts.loc[forecasts["model"].astype(str).eq(model)].sort_values(
             "target_date"
         )
@@ -153,9 +157,9 @@ def plot_sequential_forecasts(
         axis.set_ylabel("Volatility")
         axis.grid(axis="y", alpha=0.2)
         _format_dates(axis)
-    axes[0, 0].legend(loc="upper left", frameon=False, fontsize=8)
-    axes[-1, 0].set_xlabel("Target date")
-    axes[-1, 1].set_xlabel("Target date")
+    axes.flat[0].legend(loc="upper left", frameon=False, fontsize=8)
+    axes.flat[-2].set_xlabel("Target date")
+    axes.flat[-1].set_xlabel("Target date")
     figure.suptitle(
         "Sequential one-step holdout forecasts, 2023-06-02 to 2026-11-10",
         fontsize=12,
@@ -421,6 +425,16 @@ def main() -> int:
         ),
         plot_sequential_forecasts(
             forecasts, args.figure_dir / "shortlist_sequential_forecasts.png"
+        ),
+        plot_sequential_forecasts(
+            forecasts,
+            args.figure_dir / "selected_sequential_forecasts.png",
+            (
+                "hist_gradient_boosting_ohlc",
+                "harx_ohlc",
+                "garchx_ohlc_range",
+                "egarchx",
+            ),
         ),
         plot_residuals_time(errors, args.figure_dir / "shortlist_residuals_time.png"),
     ]

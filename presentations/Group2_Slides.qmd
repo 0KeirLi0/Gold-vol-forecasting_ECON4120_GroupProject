@@ -10,7 +10,7 @@ format:
       - progressbar=frametitle
       - numbering=fraction
     aspectratio: 169
-    fontsize: 11pt
+    fontsize: 10pt
     slide-level: 2
     navigation: empty
     section-titles: false
@@ -20,6 +20,10 @@ format:
       - \setbeamercolor{alerted text}{fg=goldaccent}
       - \setbeamercolor{frametitle}{bg=black!88}
       - \usepackage{tikz}
+      - \setbeamersize{text margin left=8mm,text margin right=8mm}
+      - \setlength{\tabcolsep}{4pt}
+      - \setlength{\parskip}{2pt plus 1pt}
+      - \setlength{\itemsep}{1pt}
 execute:
   echo: false
   warning: false
@@ -155,78 +159,270 @@ Do not say $n=2$ is optimal; the later window check shows longer $n$
 makes overlap worse.
 :::
 
-## Seasonality (descriptive, then a check)
+## Yang–Zhang volatility is mean-reverting and clustered
+
+- The **gold price level is not stationary**.
+- Yang–Zhang volatility $y_t$ **and its logged value $\log y_t$ are
+  stationary**.
+- This volatility is a **mean-reverting, volatility-clustered series**.
+
+Its autocorrelation is long-lasting: it is still **about 0.14 at lag 30**
+(0.647 at lag 1 and 0.363 at lag 2).
+
+1. **Construction effect.** Adjacent $n=2$ Yang–Zhang windows share one
+   OHLC bar, mechanically inflating lag-1 correlation.
+2. **Economic effect.** Volatility clustering keeps the autocorrelation
+   positive at longer lags.
+
+![Training autocorrelation and partial autocorrelation](../report_group2/figures/yz_acf_pacf.png){width=50%}
+
+::: notes
+Do not interpret the first lag as pure market dependence. The longer
+positive tail remains evidence of clustered volatility, but the overlapping
+target complicates its magnitude.
+:::
+
+## Calendar patterns: descriptive, but weak after adjustment
+
+HAC joint tests find **no statistically reliable weekday effects**.
+
+Across the 3,801 targets, February–April are elevated:
+
+- **March:** highest mean, $0.00899$
+- **July:** lowest mean, $0.00694$
+
+With broader HAC lags, the evidence is too weak ($p=0.068$ at lag 10;
+$p=0.122$ at lag 20) to confirm a reliable month effect.
+
+![Mean volatility by month](../report_group2/figures/month_means.png){width=48%}
+
+::: notes
+The February-April elevation is real descriptively. Because adjacent
+windows overlap, uncertainty needs broad HAC correction. This is not a
+basis for adding deterministic month dummies to the forecasting model.
+:::
+
+## Baseline and linear mean model
+
+**Baseline: persistence**
+
+$$
+\hat y_{t+1\mid t}=y_t.
+$$
+
+It directly exploits volatility clustering, including the overlap in the
+target.
+
+**Linear mean: ARIMA(1,1,3)**, selected by the Hyndman–Khandakar
+algorithm.
+
+For $w_t=\log y_t$:
+
+$$
+\Delta w_t=c+\phi_1\Delta w_{t-1}
++\varepsilon_t-\theta_1\varepsilon_{t-1}
+-\theta_2\varepsilon_{t-2}
+-\theta_3\varepsilon_{t-3}.
+$$
+
+| Candidate | AICc |
+|---|---:|
+| **ARIMA(1,1,3)** | **3352.52** |
+| ARIMA(1,1,2) | 3353.54 |
+| ARIMA(3,1,1) | 3354.00 |
+
+::: notes
+The ARIMA model supplies a linear conditional-mean specification, not a
+complete model of the changing variance. GARCH-family models are the next
+layer because their innovations need not have constant variance.
+:::
+
+## Conditional variance: GARCH and EGARCH
+
+- **GARCH(1,1):** today’s conditional variance depends on yesterday’s
+  squared forecast error and yesterday’s variance.
+- **EGARCH(1,1):** the same persistence is modelled in log variance, while
+  allowing positive and negative shocks to have different effects.
+
+The mean and variance equations are
+
+$$
+y_t=\mu_t+\varepsilon_t,\qquad
+\varepsilon_t=\sigma_t z_t.
+$$
+
+$$
+\text{GARCH:}\quad
+\sigma_t^2=\omega+\alpha\varepsilon_{t-1}^2+\beta\sigma_{t-1}^2.
+$$
+
+$$
+\text{EGARCH:}\quad
+\log \sigma_t^2=\omega+\beta\log\sigma_{t-1}^2
++\gamma z_{t-1}+\alpha\left(|z_{t-1}|-E|z_{t-1}|\right).
+$$
+
+::: notes
+EGARCH permits different responses to positive and negative shocks.
+Neither specification alone uses information beyond the target series.
+The next step adds observed origin-known predictors.
+:::
+
+## Predictors retained for GARCH-X and EGARCH-X
+
+Eleven LSEG predictors were screened. The retained external signals are:
+
+- **Gold implied volatility: 1 month**
+- **Gold implied volatility: 1 year**
+- **U.S. Dollar Index (DXY)**
+
+Origin-known OHLC features are also available:
+
+- lagged Yang–Zhang volatility, range, gaps, and rolling summaries
+- information dated no later than the forecast origin
+- no future target-window values enter the predictor set
+
+These inputs extend the variance/mean specifications to
+**GARCH-X** and **EGARCH-X**.
+
+$$
+\text{GARCH-X:}\quad
+\sigma_t^2=\omega+\alpha\varepsilon_{t-1}^2+\beta\sigma_{t-1}^2
++\delta R_{t-1}+\boldsymbol{\lambda}^{\top}\mathbf{x}_{t-1}.
+$$
+
+$$
+\text{EGARCH-X mean:}\quad
+y_t=c+\phi y_{t-1}
++\boldsymbol{\eta}^{\top}\mathbf{x}_{t-1}+\varepsilon_t.
+$$
+
+::: notes
+The IV tenors and DXY enter jointly after the screen. Do not infer that
+each component causes future volatility, or that this proves a deployable
+predictor ranking.
+:::
+
+## Advanced forecasts: HAR-X and HGB
 
 ::: columns
-::: {.column width="50%"}
-![Month means](../report_group2/figures/month_means.png){width=95%}
-:::
-::: {.column width="50%"}
-![Weekday means](../report_group2/figures/weekday_means.png){width=95%}
-:::
-:::
+::: {.column width="49%"}
+**HAR-X**
 
-- February–April elevation; March highest, July lowest
-- HAR-X month dummies: MAE $0.002711\to 0.002739$ (Q5/Q1 $11.55\to 11.92$)
-- Calendar dummies known at the origin do **not** fix Q5
+- Daily lag
+- weekly average of Yang–Zhang volatility ($\approx 5$ sessions)
+- monthly average of Yang–Zhang volatility ($\approx 22$ sessions)
+- retained predictors
+
+\small
+\begin{align*}
+\log y_{t+1}={}&\beta_0+\beta_d\log y_t\\
+&+\beta_w\overline{\log y}_{t}^{(5)}
++\beta_m\overline{\log y}_{t}^{(22)}\\
+&+\boldsymbol{\theta}^{\top}\mathbf{x}_t.
+\end{align*}
+\normalsize
+
+Linear regression approximation to long-memory-like dependence.
+:::
+::: {.column width="49%"}
+**Histogram Gradient Boosting**
+
+- Same origin-known predictor set
+- Non-linear tree-based machine learning
+- Allows thresholds and feature interactions
+
+\small
+\begin{align*}
+\log \hat y_{t+1}=f_{\mathrm{HGB}}\big(&
+\log y_t,\overline{\log y}_{t}^{(5)},\\
+&\overline{\log y}_{t}^{(22)},\mathbf{x}_t\big).
+\end{align*}
+\normalsize
+
+Tests whether non-linearity improves out-of-sample forecasts.
+:::
+:::
 
 ::: notes
-Month pattern is real descriptively. Overlapping $n=2$ windows make
-calendar tests lag-sensitive. The robustness check is a failed forecasting
-fix, not a reason to ignore the plot.
+HAR-X follows a multi-horizon lag-aggregation idea; it does not formally
+estimate a fractional-integration parameter. HGB uses the same predictor
+information, so it is a comparison of functional form.
 :::
 
-## Course ladder
+## Compare all five models
 
-Each step is a response to the previous limit.
+Holdout: 761 common origins, expanding one-step forecasts.
 
-| Step | Models | Limit that motivates the next step |
-|---|---|---|
-| 1 | AR / MA / ARIMA on $\log y_t$ | Constant innovation variance; vol clusters |
-| 2 | ARCH / GARCH / EGARCH | Own shocks only |
-| 3 | Range GARCH-X, EGARCH-X | Need multi-horizon features |
-| 4 | HAR / HAR-X | Linear in features |
-| 5 | HGB | No likelihood; trees |
-
-Engle (1982), Bollerslev (1986), Nelson (1991); gold: Tully and Lucey (2007), Baur (2012), Bentes (2015, FIGARCH). HAR: Corsi (2009); Todorova (2017) on COMEX gold. We do **not** estimate FIGARCH.
-
-::: notes
-Walk the ladder. Stay with course EGARCH. HAR here is Corsi-style on
-Yang–Zhang, not tick RV. Student-$t$ is scored later as a Q5 patch, not
-as a reason to pick $t$-GARCH on MAE.
-:::
-
-## Holdout MAE (761 common dates)
-
-| Model | Role | MAE |
+| Model | Main forecasting role | MAE |
 |---|---|---:|
-| **HGB** | Trees | **0.002418** |
-| HAR-X | Multi-horizon | 0.002711 |
-| EGARCH-X | -X in the mean | 0.002833 |
-| GARCH(1,1) | Persistent variance | 0.002912 |
-| Persistence | Naive | 0.003190 |
+| **HGB** | Non-linear trees and interactions | **0.002418** |
+| HAR-X | Multi-horizon linear regression | 0.002711 |
+| EGARCH-X | Asymmetric variance / external inputs | 0.002833 |
+| GARCH(1,1) | Persistent conditional variance | 0.002912 |
+| Persistence | Last observed volatility | 0.003190 |
 
-HGB vs persistence MAE gap $0.000772$ ($24\%$).
-$\times\sqrt{252}\approx 1.23$ annualised vol points.
-At mean holdout price $\approx 3{,}136$ USD/oz, $1.65\sigma$ of that gap
-is about $\$4$/oz, or about $\$400$ on a 100 oz COMEX contract.
-
-**Shortlist:** GARCH, EGARCH, range GARCH-X, EGARCH-X, HAR-X, HGB.
+HGB improves on persistence by $0.000772$, a **24\% MAE reduction**.
 
 ::: notes
-Illustration, not option pricing or regulatory VaR. Ranking is descriptive;
-overlapping targets; leader chosen on this holdout. Squared-loss: HGB does
-not significantly beat GARCH. Absolute-loss Holm $p$ vs persistence / HAR /
-GARCH: $7.95\times10^{-14}$, $1.15\times10^{-13}$, $1.78\times10^{-9}$.
+These are the five models used in the direct comparison requested here.
+The ranking is descriptive for this holdout; it does not by itself establish
+a universal winner.
 :::
 
-## Forecasts versus actuals
+## Diebold–Mariano tests
 
-![HGB against persistence, HAR, and GARCH (no-external run)](../report_group2/figures/yz_top_models_actual_vs_forecast.png){width=82%}
+**Purpose:** compare the forecast errors from two models and test whether
+one model is reliably more accurate than the other. The test adjusts for
+serially related errors when observations and forecast windows overlap.
+
+**Absolute loss / MAE**
+
+HGB's gains are overwhelmingly statistically significant:
+
+| Comparator | DM $p$-value |
+|---|---:|
+| Persistence | $7.95\times10^{-14}$ |
+| HAR | $1.15\times10^{-13}$ |
+| GARCH(1,1) | $1.78\times10^{-9}$ |
+
+**Squared loss / RMSE**
+
+- HGB is still better descriptively.
+- The gain is **not statistically significant against GARCH(1,1)**.
+- A few large shocks create enough loss-differential variance that the
+  evidence cannot establish HGB's superiority for tail or spike errors.
 
 ::: notes
-Scatter is for clustering and large misses, not for declaring a DGP.
-High actuals sit above the 45-degree line: average under-forecasting.
+RMSE heavily weights the largest misses. The disagreement between MAE and
+RMSE is an informative distinction: HGB wins on ordinary accuracy; it
+does not prove better control of extreme spike error.
+:::
+
+## HGB leads on ordinary days, but all models miss the spike
+
+HGB versus persistence: $0.003190-0.002418=0.000772$.
+
+::: columns
+::: {.column width="52%"}
+- **Quiet 2023–2025 periods:** all shortlisted models track normal,
+  calm conditions closely.
+- **HGB tightness:** HGB remains closest to realised values on ordinary
+  days, matching its lower MAE.
+- **2026-02-02 extreme:** realised volatility reaches $0.0775$, while
+  the forecasts are roughly $0.01$–$0.015$: a five- to seven-fold miss.
+- **HAR-X:** produces a pronounced spike near the volatile cluster,
+  but still falls far below the $0.0775$ peak.
+:::
+::: {.column width="47%"}
+![Four selected forecasts](../report_group2/figures/selected_sequential_forecasts.png){width=100%}
+:::
+:::
+
+::: notes
+The MAE gain is economically useful in the typical regime. It is not a
+promise of accurate tail forecasts. The shared spike miss explains why
+the residual and Q5 analysis remains central.
 :::
 
 ## Residuals versus predicted volatility

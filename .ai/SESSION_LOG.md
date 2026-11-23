@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-23 — Regenerated the Beamer sequence after page 9
+- Author: Copilot at Samuel's request
+- Type: implementation
+- Context: The team requested a revised post-page-9 narrative covering stationarity, ACF overlap, calendar effects, the ARIMA/GARCH ladder, retained predictors, HAR-X/HGB, five-model comparison, and DM evidence.
+- Outcome: Replaced pages 10 onward through the new model-comparison and forecast-interpretation sequence, while preserving the existing residual-diagnostics and later robustness slides unchanged. Tightened the deck to 10pt with smaller margins/paragraph spacing and resized the new figures so the content fits each page. Consolidated the Yang-Zhang ACF/overlap narrative, removed the redundant "Seasonality (descriptive, then a check)" slide, added model equations and DM-test purpose, and replaced the final forecast panel with HGB, HAR-X, GARCH-X, and EGARCH-X. The updated 33-page 16:9 Beamer PDF rendered without LaTeX overflow warnings and was mirrored into `report_group2/`.
+- Artifacts: `presentations/Group2_Slides.qmd`, `presentations/Group2_Slides.pdf`, `report_group2/Group2_Slides.pdf`.
+- Next: Team review of the revised slide flow and pacing.
+
 ## 2026-11-22 — Updated Beamer with geopolitical event context
 - Author: Copilot at Samuel's request
 - Type: implementation
