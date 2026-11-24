@@ -2,6 +2,22 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-24 — All shortlisted models beat persistence
+- Author: Grok with Keir
+- Type: implementation
+- Context: Keir asked the conclusion to name the other candidates as well; all of them beat persistence.
+- Outcome: Report and slides now state that all six shortlisted models beat last-value persistence (MAE 0.003190): HGB about 24%, HAR-X 15%, EGARCH-X 11%, GARCH / EGARCH / range GARCH-X about 9%. Report 15 pages; slides 27 frames.
+- Artifacts: `report_group2/Group2_Report.qmd`/`.pdf`, `report_group2/presentations/Group2_Slides.qmd`/`.pdf`.
+- Next: Commit and push when asked.
+
+## 2026-11-24 — Conclusion point versus persistence
+- Author: Grok with Keir
+- Type: implementation
+- Context: Keir asked both the report and the slides to conclude that the selected model outperforms the persistence benchmark by X%.
+- Outcome: Added a first conclusion point: HGB MAE 0.002418 versus persistence 0.003190, about a 24% MAE reduction. Residual points stay as items 2 and 3. Report 15 pages; slides 27 frames.
+- Artifacts: `report_group2/Group2_Report.qmd`/`.pdf`, `report_group2/presentations/Group2_Slides.qmd`/`.pdf`.
+- Next: Commit and push when asked.
+
 ## 2026-11-24 — Report §3.5 HAR-X and HGB stacked
 - Author: Grok with Keir
 - Type: implementation

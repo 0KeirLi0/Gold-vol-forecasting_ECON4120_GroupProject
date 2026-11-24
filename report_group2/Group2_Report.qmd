@@ -364,12 +364,11 @@ Retraining Yang–Zhang at $n=5$ and $n=10$ on the same last training date makes
 
 # Conclusion and limitations
 
-The submitted analysis is next-day unannualised Yang–Zhang volatility of `GCc1`. Among six shortlisted models, **HGB has the lowest test MAE**. The result we emphasise is residual: forecast-error variance inflates when predicted volatility is high.
+The submitted analysis is next-day unannualised Yang–Zhang volatility of `GCc1`. The result we emphasise is residual: forecast-error variance inflates when predicted volatility is high.
 
-Limits we state:
-
-1. **Heteroskedasticity.** Forecast errors fan out with $\hat y$ for every shortlisted model. A single MAE ranking does not describe that changing dispersion.
-2. **High predicted volatility is the unreliable region.** Raw Q5/Q1 is about 9 to 15. The 2026-02-02 cluster accounts for much of the headline ratio; the remaining elevation is still in the high-$\hat y$ bin.
+1. **Versus persistence.** All six shortlisted models beat the last-value benchmark $\hat y_{t+1\mid t}=y_t$ (MAE 0.003190): HGB by about **24%** (0.002418), HAR-X by about 15%, EGARCH-X by about 11%, and GARCH, EGARCH, and range GARCH-X by about 9%.
+2. **Heteroskedasticity.** Forecast errors fan out with $\hat y$ for every shortlisted model. A single MAE ranking does not describe that changing dispersion.
+3. **High predicted volatility is the unreliable region.** Raw Q5/Q1 is about 9 to 15. The 2026-02-02 cluster accounts for much of the headline ratio; the remaining elevation is still in the high-$\hat y$ bin.
 
 # Use of AI
 

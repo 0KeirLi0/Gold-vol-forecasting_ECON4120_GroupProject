@@ -494,8 +494,9 @@ A heavier tail is a better density. It is not a Q5 point-forecast fix.
 
 The result we emphasise is residual, not a unique winner.
 
-1. **Heteroskedasticity.** Errors fan out with $\hat y$ for every shortlisted model.
-2. **High predicted volatility is the unreliable region.** Raw Q5/Q1 about 9 to 15. The 2026-02-02 cluster accounts for much of that ratio.
+1. **Versus persistence.** All six shortlisted models beat last-value persistence (MAE 0.003190). HGB **24%**; HAR-X 15%; EGARCH-X 11%; GARCH, EGARCH, and range GARCH-X about 9%.
+2. **Heteroskedasticity.** Errors fan out with $\hat y$ for every shortlisted model.
+3. **High predicted volatility is the unreliable region.** Raw Q5/Q1 about 9 to 15. The 2026-02-02 cluster accounts for much of that ratio.
 
 ## AI and contributions
 
