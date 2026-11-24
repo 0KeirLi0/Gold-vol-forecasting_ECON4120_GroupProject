@@ -2,6 +2,38 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-24 — Report §3.5 HAR-X and HGB stacked
+- Author: Grok with Keir
+- Type: implementation
+- Context: Keir asked that the HAR-X display equation and the HGB function in report §3.5 be stacked vertically, not two-column.
+- Outcome: Replaced the minipage pair with two full-width displays. Report remains 15 pages. Slides re-rendered unchanged at 27 frames.
+- Artifacts: `report_group2/Group2_Report.qmd`/`.pdf`, `report_group2/presentations/Group2_Slides.pdf`.
+- Next: Commit and push when asked.
+
+## 2026-11-24 — Tick-path realised volatility formula
+- Author: Grok with Keir
+- Type: implementation
+- Context: Keir supplied the high-frequency RV definition from the full tick path.
+- Outcome: Added $RV_t=\sum_i r_{t,i}^2$, $\sigma_t^{\mathrm{HF}}=\sqrt{RV_t}$, and $r_{t,i}=\log P_{t,i}-\log P_{t,i-1}$ on the First idea Beamer frame and in report §2.3 before Table 1. Punchline remains: LSEG is one OHLC bar per date, so tick RV is not feasible. Beamer still 26 frames with no footer overflow. Report still 15 pages A4. Local speaker script updated; still gitignored.
+- Artifacts: `report_group2/presentations/Group2_Slides.qmd`/`.pdf`, `report_group2/Group2_Report.qmd`/`.pdf`.
+- Next: Commit and push when asked.
+
+## 2026-11-24 — OCR overflow check on Beamer footer
+- Author: Grok with Keir
+- Type: finding
+- Context: After the four-chip footer, Keir asked for an OCR check of slide overflow.
+- Outcome: Tesseract + visual check of all 26 frames. Two real overflows: Diebold–Mariano last bullet sat on the chips (slide 17); forecast-error scatter x-axes sat in the footer (slide 20). Fixed by shortening the DM purpose/RMSE line and shrinking the scatter figure to 62% width. Remaining dense frames (formula, two-path caption, residual table, HAR-X) are tight but fully readable above the chips.
+- Artifacts: `report_group2/presentations/Group2_Slides.qmd`, `report_group2/presentations/Group2_Slides.pdf`, `report_group2/presentations/nav-footline.tex`.
+- Next: Commit and push when asked.
+
+## 2026-11-24 — Four-section clickable Beamer footer
+- Author: Grok with Keir
+- Type: implementation
+- Context: Keir asked for a section 導覽列 / clickable progress element at the bottom of each slide, using the four talk sections.
+- Outcome: Every frame of `report_group2/presentations/Group2_Slides.pdf` has four clickable chips (Data, Models, Residuals, Conclusion). Current section is gold; completed sections are a gold wash; later sections are grey. Chips jump to the first frame of that section. Deck stays 26 frames; Metropolis section pages are off (`sectionpage=none` plus `\AtBeginSection[]{}`).
+- Artifacts: `report_group2/presentations/Group2_Slides.qmd`, `report_group2/presentations/nav-footline.tex`, `report_group2/presentations/Group2_Slides.pdf`.
+- Next: Commit and push when asked.
+
 ## 2026-11-24 — Move presentations into report_group2
 - Author: Grok with Keir
 - Type: implementation

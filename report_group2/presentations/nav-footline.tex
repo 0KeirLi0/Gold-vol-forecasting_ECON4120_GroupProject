@@ -1,0 +1,53 @@
+\definecolor{goldaccent}{HTML}{B58A3A}
+\setbeamercolor{progress bar}{fg=goldaccent}
+\setbeamercolor{alerted text}{fg=goldaccent}
+\setbeamercolor{frametitle}{bg=black!88}
+\setbeamercolor{footline}{bg=black!5, fg=black!50}
+\setbeamersize{text margin left=8mm,text margin right=8mm}
+\setlength{\tabcolsep}{4pt}
+\setlength{\parskip}{2pt plus 1pt}
+\hypersetup{hidelinks}
+\AtBeginSection[]{}
+\AtBeginSubsection[]{}
+
+% #1 destination, #2 section number, #3 label
+% current = gold fill; earlier = gold wash; later = grey
+\newcommand{\navchip}[3]{%
+  \hyperlink{#1}{%
+    \ifnum\value{section}=#2
+      \colorbox{goldaccent}{\makebox[0.168\paperwidth][c]{\textcolor{white}{\scriptsize\bfseries #3}}}%
+    \else
+      \ifnum\value{section}>#2
+        \colorbox{goldaccent!25}{\makebox[0.168\paperwidth][c]{\textcolor{goldaccent}{\scriptsize\bfseries #3}}}%
+      \else
+        \colorbox{black!8}{\makebox[0.168\paperwidth][c]{\textcolor{black!40}{\scriptsize #3}}}%
+      \fi
+    \fi
+  }%
+}
+
+\setbeamertemplate{footline}{%
+  \leavevmode
+  {\color{goldaccent}\hrule height 0.4pt}%
+  \hbox{%
+    \begin{beamercolorbox}[wd=\paperwidth,ht=4.4ex,dp=1.8ex]{footline}%
+      \hspace{5.5mm}%
+      \navchip{nav-data}{1}{Data}%
+      \hspace{1.1mm}%
+      \navchip{nav-models}{2}{Models}%
+      \hspace{1.1mm}%
+      \navchip{nav-residuals}{3}{Residuals}%
+      \hspace{1.1mm}%
+      \navchip{nav-conclusion}{4}{Conclusion}%
+      \hfill
+      \raisebox{0.4ex}{\tiny\insertframenumber/\inserttotalframenumber}%
+      \hspace{5.5mm}%
+    \end{beamercolorbox}%
+  }%
+}
+\makeatletter
+\AtBeginDocument{%
+  \setlength{\footheight}{7.2ex}%
+  \beamer@calculateheadfoot
+}
+\makeatother
