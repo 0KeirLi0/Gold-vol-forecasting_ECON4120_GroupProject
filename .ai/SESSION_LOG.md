@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-24 — Two-path figure: same close-to-close, different range
+- Author: Grok with Keir
+- Type: implementation
+- Context: Keir asked Path A to share Path B’s close-to-close, with Path B keeping the wider high–low range.
+- Outcome: Redrew `close_to_close_two_path.png` so both paths end at $C_t=C_{t-1}$ ($r^{cc}_t=0$); Path A is quiet, Path B swings. Updated report §2.3, Beamer close-to-close slide, and the gitignored speaker script. Report stays 15 pages; slides 27 frames.
+- Artifacts: `report_group2/figures/close_to_close_two_path.png`, `Group2_Report.qmd`/`.pdf`, `presentations/Group2_Slides.qmd`/`.pdf`, `presentations/script_slides_1-7.md`.
+- Next: Commit and push when asked.
+
 ## 2026-11-24 — All shortlisted models beat persistence
 - Author: Grok with Keir
 - Type: implementation

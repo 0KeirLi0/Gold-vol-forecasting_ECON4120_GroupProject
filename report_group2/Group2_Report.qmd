@@ -99,9 +99,9 @@ where $r_{t,i}=\log P_{t,i}-\log P_{t,i-1}$ is the $i$-th tick log-return on day
 
 : Daily volatility estimators compared. {#tbl-vol-est}
 
-Two sessions can share the same close-to-close return and have very different volatility (@fig-two-path). Path A walks almost straight from open to close. Path B swings, but $C_t=C_{t-1}$ so $r^{cc}_t=0$. Close-to-close treats them as identical. Gold futures also gap overnight; close-to-close misses that jump.
+Two sessions can share the same close-to-close return and have very different volatility (@fig-two-path). Path A and Path B both end at $C_t=C_{t-1}$, so $r^{cc}_t=0$. Path A is quiet; Path B has a much wider high–low range. Close-to-close treats them as identical. Gold futures also gap overnight; close-to-close misses that jump.
 
-![Same close-to-close return, different paths. Path B has $C_t=C_{t-1}$ and a wide high–low range.](figures/close_to_close_two_path.png){#fig-two-path width=60% fig-align="center" fig-pos="H"}
+![Same close-to-close return, different intraday paths. Both have $C_t=C_{t-1}$; Path B has a wider high–low range.](figures/close_to_close_two_path.png){#fig-two-path width=52% fig-align="center" fig-pos="H"}
 
 Yang and Zhang (2000) is drift-independent, accounts for opening jumps, and is more efficient than close-to-close. Let $O_t,H_t,L_t,C_t$ be open, high, low, and last. Overnight and open-to-close log returns and the Rogers–Satchell (RS) range term (Rogers & Satchell, 1991) are
 

@@ -2,7 +2,7 @@
 title: "Forecasting Next-Day Yang–Zhang Volatility of COMEX Gold Futures"
 subtitle: "ECON4120 Applied Forecasting Methods · Group 2"
 author: "Luo Pui Ki Enoch · Li Hung Kui · Siriasavakul Hok Sum"
-date: "2026-11-23"
+date: "2026-11-25"
 format:
   beamer:
     theme: metropolis
@@ -100,9 +100,9 @@ $$
 r^{cc}_t=\log(C_t/C_{t-1}).
 $$
 
-**Limitation:** the high, the low, and the overnight jump are thrown away. Path A is quiet; Path B swings but $C_t=C_{t-1}$.
+**Limitation:** both paths have $C_t=C_{t-1}$ so $r^{cc}_t=0$; Path B has a much wider high–low range.
 
-![Same close-to-close return, different paths. Path B has $C_t=C_{t-1}$ and a wide high–low range.](../figures/close_to_close_two_path.png){width=72%}
+![Same close-to-close return, different intraday paths. Both have $C_t=C_{t-1}$; Path B has a wider high–low range.](../figures/close_to_close_two_path.png){width=70%}
 
 ## Then Yang–Zhang Volatility
 
