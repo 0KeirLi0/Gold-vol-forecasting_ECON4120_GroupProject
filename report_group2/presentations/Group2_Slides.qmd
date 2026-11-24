@@ -313,8 +313,8 @@ predictor ranking.
 **HAR-X**
 
 - Daily lag
-- weekly average of Yang–Zhang volatility ($\approx 5$ sessions)
-- monthly average of Yang–Zhang volatility ($\approx 22$ sessions)
+- weekly average of Yang–Zhang volatility ($\approx 5$ trading days)
+- monthly average of Yang–Zhang volatility ($\approx 22$ trading days)
 - retained predictors
 
 \small
