@@ -138,7 +138,7 @@ Before rendering, fetch the shared `main` branch so the report includes its late
 
 ```bash
 git fetch origin main
-quarto render presentations/project-progress.qmd
+quarto render report_group2/presentations/project-progress.qmd
 ```
 
 ## Decisions to revisit with the team
@@ -148,6 +148,6 @@ quarto render presentations/project-progress.qmd
 3. Forecast horizon, target definition, predictor transformations, and missing-data policy.
 4. Data access and redistribution constraints.
 
-Update this deck and the shared [AI/team handoff log](../.ai/SESSION_LOG.md) when the team confirms decisions or completes a meaningful handoff.
+Update this deck and the shared [AI/team handoff log](../../.ai/SESSION_LOG.md) when the team confirms decisions or completes a meaningful handoff.
 
 The model-development report is available as a [Beamer PDF](iteration-1-summary.pdf) with its [Quarto source](iteration-1-summary.qmd).

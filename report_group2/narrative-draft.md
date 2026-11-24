@@ -190,4 +190,4 @@ High predicted volatility is the unreliable region. Two implemented fixes did no
 
 - Approve or edit this story.
 - Run Student-t holdout or leave it as design-only.
-- Then convert to `Group2_Report.qmd` and `presentations/Group2_Slides.qmd`.
+- Then convert to `Group2_Report.qmd` and `report_group2/presentations/Group2_Slides.qmd`.

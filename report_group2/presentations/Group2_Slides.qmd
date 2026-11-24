@@ -68,7 +68,7 @@ COMEX gold futures, daily OHLC from LSEG Workspace, 2010-01-01 to 2026-11-10.
 
 ## Test-period price regime
 
-![GCc1 last-trade price. Shaded window is the chronological test period.](../report_group2/figures/gcc1_price_date.png){width=86%}
+![GCc1 last-trade price. Shaded window is the chronological test period.](../figures/gcc1_price_date.png){width=86%}
 
 ::: notes
 Training mostly 1,050–1,900 USD/oz. Test runs from about 2,000 to above 5,000.
@@ -97,7 +97,7 @@ $$
 
 **Limitation:** the high, the low, and the overnight jump are thrown away. Path A is quiet; Path B swings but $C_t=C_{t-1}$.
 
-![Same close-to-close return, different paths. Path B has $C_t=C_{t-1}$ and a wide high–low range.](../report_group2/figures/close_to_close_two_path.png){width=72%}
+![Same close-to-close return, different paths. Path B has $C_t=C_{t-1}$ and a wide high–low range.](../figures/close_to_close_two_path.png){width=72%}
 
 ## Then Yang–Zhang
 
@@ -138,7 +138,7 @@ $$
 
 ## The Yang–Zhang series
 
-![Yang–Zhang $y_t$. Shaded window is the test period; 2026-02-02 is $0.0775$.](../report_group2/figures/yz_volatility_date.png){width=86%}
+![Yang–Zhang $y_t$. Shaded window is the test period; 2026-02-02 is $0.0775$.](../figures/yz_volatility_date.png){width=86%}
 
 ## Yang–Zhang volatility is mean-reverting and clustered
 
@@ -155,7 +155,7 @@ Its autocorrelation is long-lasting: it is still **about 0.14 at lag 30**
 2. **Economic effect.** Volatility clustering keeps the autocorrelation
    positive at longer lags.
 
-![Training autocorrelation and partial autocorrelation](../report_group2/figures/yz_acf_pacf.png){width=50%}
+![Training autocorrelation and partial autocorrelation](../figures/yz_acf_pacf.png){width=50%}
 
 ::: notes
 Do not interpret the first lag as pure market dependence. The longer
@@ -175,7 +175,7 @@ Across the 3,801 targets, February–April are elevated:
 With broader HAC lags, the evidence is too weak ($p=0.068$ at lag 10;
 $p=0.122$ at lag 20) to confirm a reliable month effect.
 
-![Mean volatility by month](../report_group2/figures/month_means.png){width=48%}
+![Mean volatility by month](../figures/month_means.png){width=48%}
 
 ::: notes
 The February-April elevation is real descriptively. Because adjacent
@@ -396,7 +396,7 @@ HGB versus persistence: $0.003190-0.002418=0.000772$.
   but still falls far below the $0.0775$ peak.
 :::
 ::: {.column width="47%"}
-![Four selected forecasts](../report_group2/figures/selected_sequential_forecasts.png){width=100%}
+![Four selected forecasts](../figures/selected_sequential_forecasts.png){width=100%}
 :::
 :::
 
@@ -430,11 +430,11 @@ Raw ratios **9–15**. Relative and log-error ratios stay near or below 1.
 
 Fan shape. Positive values are under-forecasts. Isolated miss is 2026-02-02.
 
-![](../report_group2/figures/forecast_errors_vs_forecast.png){width=74%}
+![](../figures/forecast_errors_vs_forecast.png){width=74%}
 
 ## Error variance by forecast quintile
 
-![Raw variance inflates in Q5; relative and log errors do not.](../report_group2/figures/variance_by_forecast_quintile.png){width=90%}
+![Raw variance inflates in Q5; relative and log errors do not.](../figures/variance_by_forecast_quintile.png){width=90%}
 
 ## Extreme event: 2026-02-02
 
@@ -453,7 +453,7 @@ Raw Q5/Q1 after dropping the largest misses (original Q5 set kept):
 
 ## Q5/Q1 falls as the largest misses are dropped
 
-![Raw Q5/Q1 after dropping the largest 1, 2, or 5 absolute misses.](../report_group2/figures/q5_error_influence.png){width=88%}
+![Raw Q5/Q1 after dropping the largest 1, 2, or 5 absolute misses.](../figures/q5_error_influence.png){width=88%}
 
 ## Three remedies, none fix Q5
 

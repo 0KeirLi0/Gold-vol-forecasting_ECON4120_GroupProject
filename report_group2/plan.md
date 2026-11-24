@@ -9,7 +9,7 @@ Working copy of the Group 2 story plan. Saved 2026-11-20. This is not the format
 - **Headline finding:** among the shortlisted models, forecast-error variance rises when the fitted value is in the top 20% (Q5).
 - **Yahoo five-session GARCH-X:** omit from the submitted report and slides.
 - **AI reflection and contribution statement:** placeholders only; the group fills them.
-- **Process:** draft the **story in Markdown first**. After you approve the narrative, convert it into `Group2_Report.qmd` (15-page PDF) and `presentations/Group2_Slides.qmd` (20-minute Beamer).
+- **Process:** draft the **story in Markdown first**. After you approve the narrative, convert it into `Group2_Report.qmd` (15-page PDF) and `report_group2/presentations/Group2_Slides.qmd` (20-minute Beamer).
 
 ## Two-step process
 
@@ -22,9 +22,9 @@ It will contain the three-part story below, the numbers we already have, and a c
 ### Step 2 — After you approve the story
 
 - Rewrite `report_group2/Group2_Report.qmd` from that draft (A4, 12 pt, 1.5 spacing, 2.5 cm, ≤15 pages, names + student IDs).
-- Fill `presentations/Group2_Slides.qmd` as the 20-minute Metropolis deck with speaker notes.
-- Render `Group2_Report.pdf` and `Group2_Slides.pdf`; copy the slides PDF into `report_group2/`.
-- Update `REPRODUCE.md`, `presentations/project-progress.qmd`, and `.ai/SESSION_LOG.md`.
+- Fill `report_group2/presentations/Group2_Slides.qmd` as the 20-minute Metropolis deck with speaker notes.
+- Render `Group2_Report.pdf` and `report_group2/presentations/Group2_Slides.pdf`.
+- Update `REPRODUCE.md`, `report_group2/presentations/project-progress.qmd`, and `.ai/SESSION_LOG.md`.
 - Leave AI and contribution text as `[team to complete]`.
 
 Do not mix the two instruments or targets. Do not invent results.

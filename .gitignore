@@ -6,11 +6,11 @@ __pycache__/
 *.pyc
 *.egg-info/
 .DS_Store
-/presentations/project-progress.html
-/presentations/project-progress_files/
-/presentations/iteration-1-summary_files/
-presentations/*_files/
-presentations/script_slides_1-7.md
+/report_group2/presentations/project-progress.html
+/report_group2/presentations/project-progress_files/
+/report_group2/presentations/iteration-1-summary_files/
+report_group2/presentations/*_files/
+report_group2/presentations/script_slides_1-7.md
 /data/processed/stage2_yz_diagnostics/
 /data/processed/stage2_yz_calendar/
 /data/processed/stage2_yz_distributions/

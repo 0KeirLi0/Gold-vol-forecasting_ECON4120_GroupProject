@@ -2,6 +2,14 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-24 — Move presentations into report_group2
+- Author: Grok with Keir
+- Type: implementation
+- Context: Keir asked to move `presentations/` into `report_group2/` and push.
+- Outcome: Canonical slides live at `report_group2/presentations/Group2_Slides.qmd`. Figure paths are `../figures/`. Render command is `quarto render report_group2/presentations/Group2_Slides.qmd --to beamer`. Local speaker script remains gitignored at the new path. Removed the duplicate `report_group2/Group2_Slides.pdf`.
+- Artifacts: `report_group2/presentations/`, `REPRODUCE.md`, `.gitignore`, `.github/copilot-instructions.md`.
+- Next: None.
+
 ## 2026-11-24 — Explain RS, n, and k on the Yang–Zhang formula
 - Author: Grok with Keir
 - Type: implementation

@@ -21,7 +21,7 @@ Early iterations may explore methods from the course, for example AR, MA, ARMA, 
 - When comparing models, explain the criteria and evidence used, their limitations, and any unresolved issues; do not prescribe a model-selection method on behalf of the team.
 - Keep shared interfaces and artifacts clear between data preparation, model development, and model analysis. If a change affects another stage, identify the affected inputs or outputs in the change.
 - Update the project’s existing status or decision-tracking artifact when one is present. If none exists, ask Keir before introducing a new source of truth for project status.
-- Keep [`presentations/project-progress.qmd`](../presentations/project-progress.qmd) accurate when meaningful project milestones, decisions, or handoffs change. Its Git contribution table is generated at render time; do not hard-code commit counts.
+- Keep [`report_group2/presentations/project-progress.qmd`](../report_group2/presentations/project-progress.qmd) accurate when meaningful project milestones, decisions, or handoffs change. Its Git contribution table is generated at render time; do not hard-code commit counts.
 - Do not invent project decisions, data details, or results. Ask the team when missing information would change an implementation or interpretation.
 - Follow [`GIT_WORKFLOW.md`](../GIT_WORKFLOW.md): use `main` as the sole working branch, coordinate shared changes, validate before committing, and push directly to `main`. Do not create topic branches or PRs; never bypass repository protection.
 

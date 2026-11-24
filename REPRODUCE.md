@@ -6,8 +6,7 @@ Render the report and slides from separate Quarto sources:
 
 ```bash
 quarto render report_group2/Group2_Report.qmd --to pdf
-quarto render presentations/Group2_Slides.qmd --to beamer
-cp presentations/Group2_Slides.pdf report_group2/Group2_Slides.pdf
+quarto render report_group2/presentations/Group2_Slides.qmd --to beamer
 ```
 
 Figures already in `report_group2/figures/` are used as-is; the render does
