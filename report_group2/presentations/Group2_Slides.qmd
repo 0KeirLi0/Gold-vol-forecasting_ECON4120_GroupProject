@@ -476,9 +476,22 @@ Raw Q5/Q1 after dropping the largest misses (original Q5 set kept):
 
 ![Raw Q5/Q1 after dropping the largest 1, 2, or 5 absolute misses.](../figures/q5_error_influence.png){width=88%}
 
-## Three remedies, none fix Q5
+## Student-$t$ does not fix Q5
 
-**Student-$t$** ($df\approx 4$): density scores improve; Q5/Q1 stays about 9–16.
+Normal columns reuse the Stage 2 shortlist. $df\approx 4$.
+
+| Model | Normal MAE | $t$ MAE | N Q5/Q1 | $t$ Q5/Q1 |
+|---|---:|---:|---:|---:|
+| GARCH(1,1) | 0.002912 | 0.002921 | 9.19 | 9.49 |
+| EGARCH(1,1) | 0.002912 | 0.002917 | 9.19 | 9.48 |
+| Range GARCH-X | 0.002914 | 0.002925 | 9.33 | 9.49 |
+| HGB | 0.002418 | --- | 12.28 | --- |
+
+HGB has no $t$ point forecast. HAR-X and EGARCH-X have no same-spec $t$ holdout.
+
+Density scores improve. Q5/Q1 stays about 9–15. A heavier tail is a better density, not a Q5 point-forecast fix.
+
+## Other remedies still fail Q5
 
 **Segmented high-vol parameters:** MAE worse (HGB 0.002418 $\to$ 0.002680 / 0.002760).
 
@@ -486,7 +499,7 @@ Raw Q5/Q1 after dropping the largest misses (original Q5 set kept):
 
 **Window $n=2,5,10$:** longer windows raise lag-1 ACF $0.65\to 0.90\to 0.96$ and **raise** Q5/Q1 (about 9–12, 30–35, 58–63). Persistence then has the lowest MAE.
 
-A heavier tail is a better density. It is not a Q5 point-forecast fix.
+None of these patches removes the Q5 failure.
 
 # Conclusion
 

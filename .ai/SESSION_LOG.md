@@ -2,6 +2,53 @@
 
 This is an append-only record of project context that may help future sessions. Confirm current implementation and Git state before acting on entries.
 
+## 2026-11-24 — Rebuilt Group2.zip
+- Author: Grok with Keir
+- Type: implementation
+- Context: Keir asked to zip the current submission after Table 7 / Student-t edits.
+- Outcome: Rebuilt repo-root `Group2.zip` (4.1 MB). Archive root has `Group2_Report.qmd`/`.pdf` (15 pp A4), `Group2_Slides.pdf` (28 frames), report `figures/`, `src/gold_vol_pipeline/`, selected `scripts/`, `pyproject.toml`, and `README.md` (LSEG `GCc1` cannot be redistributed). Unzipped copy re-rendered the report QMD to 15 pages. Raw LSEG and speaker script are not in the ZIP. Not committed.
+- Artifacts: `Group2.zip`; unzipped mirror `Group2/`.
+- Next: Submit `Group2.zip`; commit the ZIP only if the team wants it in the repo.
+
+## 2026-11-24 — HGB Student-t cells dashed
+- Author: Grok with Keir
+- Type: implementation
+- Context: Keir asked to ignore HGB in the Student-t comparison, with t MAE shown as a dash.
+- Outcome: Table 7 and the Beamer Student-t table keep HGB Normal MAE 0.002418 / Q5/Q1 12.28 from Stage 2, and dash t MAE, t Q5/Q1, and median df. Copy notes that HGB is a squared-error tree forecast with no t point-forecast column. Report 15 pages; slides 28 frames.
+- Artifacts: `report_group2/Group2_Report.qmd`/`.pdf`, `report_group2/presentations/Group2_Slides.qmd`/`.pdf`.
+- Next: Commit and push when asked.
+
+## 2026-11-24 — Table 7 Normal columns reuse Stage 2
+- Author: Grok with Keir
+- Type: implementation
+- Context: Keir asked to line up Table 7 with Table 4 by reusing the Stage 2 Normal forecasts, in the report and slides.
+- Outcome: Table 7 Normal MAE matches Table 4 (HGB 0.002418, HAR-X 0.002711, EGARCH-X 0.002833, GARCH/EGARCH 0.002912, range GARCH-X 0.002914). Normal Q5/Q1 matches Table 5. Student-t is kept only for same-specification fits (GARCH, EGARCH, range GARCH-X, HGB). HAR-X and EGARCH-X t cells are dashes: the saved t run used extra predictors or a different variance equation. Report stays 15 pages. Beamer is 28 frames after splitting the remedies slide so the t table does not overflow the footer.
+- Artifacts: `report_group2/Group2_Report.qmd`/`.pdf`, `report_group2/presentations/Group2_Slides.qmd`/`.pdf`.
+- Next: Commit and push when asked.
+
+## 2026-11-24 — Table 4 Test MAE vs Table 7 Normal MAE
+- Author: Grok with Keir
+- Type: finding
+- Context: Keir asked whether Table 7 Normal MAE differing from Table 4 Test MAE is an error.
+- Outcome: Not a transcription error. Table 4 is the original Stage 2 shortlist (`stage2_yz_summary.csv` plus `stage2_yz_egarchx`). Table 7 Normal is the later Student-t experiment (`distribution_summary.csv`), which re-estimates some models. GARCH and EGARCH match. HAR-X 0.002711 vs 0.002758 is OHLC-only vs OHLC+DXY+gold IV. EGARCH-X 0.002833 vs 0.002912 is ARX-mean `arch` vs custom SLSQP with range and predictors in variance. Range GARCH-X 0.002914 vs 0.002913 and HGB 0.002418 vs 0.002421 are the same kind of re-run difference. Q5/Q1 also differs (e.g. EGARCH-X 15.05 vs 9.48; HAR-X 11.55 vs 18.55).
+- Artifacts: `report_group2/Group2_Report.qmd` Tables 4 and 7; `report_group2/diagnostics/distribution_summary.csv`; `data/processed/stage2_yz_summary.csv`.
+- Next: If the team wants the tables aligned, either reuse Stage 2 Normal forecasts in Table 7 or add a one-line note that Table 7 re-estimates HAR-X/HGB with DXY+IV and EGARCH-X/range GARCH-X under the custom likelihood.
+
+## 2026-11-24 — EGARCH formula in the report
+- Author: Grok with Keir
+- Type: implementation
+- Context: Keir asked for the EGARCH equation in the report.
+- Outcome: §3.3 now displays GARCH(1,1) and Nelson (1991) EGARCH(1,1) together. Report stays 15 pages. Slides already had this formula.
+- Artifacts: `report_group2/Group2_Report.qmd`/`.pdf`.
+- Next: Commit and push when asked.
+
+## 2026-11-24 — Group 2 submission ZIP
+- Author: Grok with Keir
+- Type: implementation
+- Context: Course requires a ZIP with GroupID_Report.qmd/pdf, GroupID_Slides.pdf, render dependencies, and a short README for data that cannot be redistributed.
+- Outcome: Built `Group2.zip` at the repo root (4.1 MB). Contents at archive root: `Group2_Report.qmd`, `Group2_Report.pdf` (15 pp A4), `Group2_Slides.pdf` (27 frames), `figures/` used by the report, `src/gold_vol_pipeline/`, selected `scripts/`, `pyproject.toml`, and `README.md` explaining LSEG `GCc1` cannot be redistributed. Unzipped copy re-rendered the report QMD to 15 pages with no missing figures. Raw LSEG and speaker script are not in the ZIP. Not committed.
+- Next: Submit `Group2.zip`; commit the ZIP only if the team wants it in the repo.
+
 ## 2026-11-24 — Two-path figure: same close-to-close, different range
 - Author: Grok with Keir
 - Type: implementation

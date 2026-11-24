@@ -175,13 +175,18 @@ The point forecast is exponentiated back to the volatility scale. Linear ARIMA h
 
 ## Conditional variance: ARCH, GARCH, EGARCH
 
-ARCH (Engle, 1982), GARCH (Bollerslev, 1986), and EGARCH (Nelson, 1991) model the innovation variance. The implemented fits use an AR(1) mean on a scaled target $x_t=100y_t$, $\epsilon_t=\sigma_t u_t$, and GARCH(1,1)
+ARCH (Engle, 1982), GARCH (Bollerslev, 1986), and EGARCH (Nelson, 1991) model the innovation variance. The implemented fits use an AR(1) mean on a scaled target $x_t=100y_t$ with $\epsilon_t=\sigma_t u_t$.
 
 $$
-\sigma_t^2=\omega+\alpha_1\epsilon_{t-1}^2+\beta_1\sigma_{t-1}^2.
+\begin{aligned}
+\text{GARCH(1,1):}\quad
+\sigma_t^2&=\omega+\alpha_1\epsilon_{t-1}^2+\beta_1\sigma_{t-1}^2,\\
+\text{EGARCH(1,1):}\quad
+\log\sigma_t^2&=\omega+\beta_1\log\sigma_{t-1}^2+\gamma u_{t-1}+\alpha_1\bigl(|u_{t-1}|-E|u_{t-1}|\bigr).
+\end{aligned}
 $$
 
-EGARCH models $\log\sigma_t^2$ and allows signed shocks to enter asymmetrically, keeping variance positive without inequality constraints. The one-step point forecast is the fitted conditional mean, scaled back to $y$ units. ARCH(1), GARCH(1,1), and EGARCH(1,1) are course specifications; $p$ and $q$ are not grid-searched.
+EGARCH lets signed shocks enter through $\gamma$ and keeps $\sigma_t^2>0$ without inequality constraints. The one-step point forecast is the fitted conditional mean, scaled back to $y$ units. ARCH(1), GARCH(1,1), and EGARCH(1,1) are course specifications; $p$ and $q$ are not grid-searched.
 
 ## Exogenous predictors
 
@@ -305,14 +310,14 @@ The single date 2026-02-02 is the largest miss for every shortlisted model. Cont
 
 ## Proposed remedies
 
-1.**Student-$t$ MLE.** A natural response to heavy Q5 tails is a standardised Student-$t$ likelihood ($df>2$). All 761 origins $\times$ 6 models $\times$ 2 distributions converged. GARCH and EGARCH use `arch` with `dist='t'`; range GARCH-X and EGARCH-X use custom SLSQP likelihoods; HAR-X and HGB include DXY and gold IV. HGB keeps one point forecast; Normal versus $t$ changes only a training residual density.
+1.**Student-$t$ MLE.** A natural response to heavy Q5 tails is a standardised Student-$t$ likelihood ($df>2$). @tbl-studentt reuses the Stage 2 Normal forecasts from @tbl-mae and @tbl-q5. GARCH and EGARCH use `arch` with `dist='t'`; range GARCH-X uses a custom SLSQP $t$ likelihood. HGB is a squared-error tree forecast, so it has no Student-$t$ point-forecast column. HAR-X and EGARCH-X have no same-specification $t$ holdout.
 
 ```{=latex}
 \begin{table}[H]
 \centering
 \small
 \setlength{\tabcolsep}{4.5pt}
-\caption{Normal versus standardised Student-$t$ on 761 common dates. HGB $df$ is a residual-density parameter only.}
+\caption{Normal versus standardised Student-$t$ on 761 common dates. Normal MAE and Q5/Q1 reuse the Stage 2 shortlist (Tables 4 and 5). A dash marks no same-specification $t$ holdout.}
 \label{tbl-studentt}
 \begin{tabular}{lrrrrr}
 \toprule
@@ -320,18 +325,18 @@ Model & Normal MAE & $t$ MAE & Normal Q5/Q1 & $t$ Q5/Q1 & Median $df$ \\
 \midrule
 GARCH(1,1) & 0.002912 & 0.002921 & 9.19 & 9.49 & 4.14 \\
 EGARCH(1,1) & 0.002912 & 0.002917 & 9.19 & 9.48 & 4.11 \\
-Range GARCH-X & 0.002913 & 0.002925 & 9.21 & 9.49 & 4.36 \\
-EGARCH-X & 0.002912 & 0.002916 & 9.48 & 9.47 & 4.41 \\
-HAR-X & 0.002758 & 0.002726 & 18.55 & 15.76 & 4.38 \\
-HGB & 0.002421 & 0.002421 & 13.39 & 13.39 & 3.51 \\
+Range GARCH-X & 0.002914 & 0.002925 & 9.33 & 9.49 & 4.36 \\
+EGARCH-X & 0.002833 & --- & 15.05 & --- & --- \\
+HAR-X & 0.002711 & --- & 11.55 & --- & --- \\
+HGB & 0.002418 & --- & 12.28 & --- & --- \\
 \bottomrule
 \end{tabular}
 \end{table}
 ```
 
-Estimated $df$ near 4 confirms fat tails, and mean negative log scores improve under $t$, but Q5/Q1 stays about 9–16. A heavier-tailed innovation is a better density; it is not a Q5 point-forecast fix.
+Estimated $df$ near 4 confirms fat tails, and mean negative log scores improve under $t$, but Q5/Q1 stays about 9–15. A heavier-tailed innovation is a better density; it is not a Q5 point-forecast fix.
 
-2. **Segmented / Q5-regime parameters.** Separate normal and extreme parameter sets are estimated for the six models. The threshold is the training-history 80th percentile of realised volatility. Two triggers select the set at each origin: a pilot full-history forecast, or the latest observed target. Each selected set is refit on prior observations whose lagged realised volatility is in that regime. All 12 combinations completed 761 dates with no fit failures.
+2.**Segmented / Q5-regime parameters.** Separate normal and extreme parameter sets are estimated for the six models. The threshold is the training-history 80th percentile of realised volatility. Two triggers select the set at each origin: a pilot full-history forecast, or the latest observed target. Each selected set is refit on prior observations whose lagged realised volatility is in that regime. All 12 combinations completed 761 dates with no fit failures.
 
 | Model | Unsegmented MAE | Forecast trigger | Lagged-target trigger |
 |---|---:|---:|---:|
@@ -343,7 +348,7 @@ Estimated $df$ near 4 confirms fat tails, and mean negative log scores improve u
 
 Segmented MAE is worse than the unsegmented shortlist for these models (and for EGARCH, range GARCH-X, and EGARCH-X in the same run).
 
-3. **Log $y$ plus $\exp(\hat\mu+\hat\sigma^{2}/2)$.** Each of the six models is fit to $\log y_t$ and mapped back by the conditional-mean correction if log errors are normal. All 761 dates succeeded.
+3.**Log $y$ plus $\exp(\hat\mu+\hat\sigma^{2}/2)$.** Each of the six models is fit to $\log y_t$ and mapped back by the conditional-mean correction if log errors are normal. All 761 dates succeeded.
 
 | Model | Q5 residual-variance change |
 |---|---:|
